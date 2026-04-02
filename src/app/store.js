@@ -1,8 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
-import counterReducer from '../features/counter/counterSlice';
+import tilesReducer from '../features/tiles/tilesSlice';
+import viewportReducer from '../features/viewport/viewportSlice';
+import uiReducer from '../features/ui/uiSlice';
 
 export const store = configureStore({
   reducer: {
-    counter: counterReducer,
+    tiles: tilesReducer,
+    viewport: viewportReducer,
+    ui: uiReducer,
   },
 });
