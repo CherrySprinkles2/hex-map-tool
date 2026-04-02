@@ -3,7 +3,7 @@ import { toKey } from '../../components/HexGrid/HexUtils';
 
 const initialState = {
   // keyed by "q,r"
-  [toKey(0, 0)]: { q: 0, r: 0, terrain: 'plain' },
+  [toKey(0, 0)]: { q: 0, r: 0, terrain: 'grass' },
 };
 
 const tilesSlice = createSlice({
@@ -11,7 +11,7 @@ const tilesSlice = createSlice({
   initialState,
   reducers: {
     addTile: (state, action) => {
-      const { q, r, terrain = 'plain' } = action.payload;
+      const { q, r, terrain = 'grass' } = action.payload;
       const key = toKey(q, r);
       if (!state[key]) {
         state[key] = { q, r, terrain };

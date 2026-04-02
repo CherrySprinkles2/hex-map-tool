@@ -7,7 +7,8 @@ export const theme = {
   accent: '#e94560',
 
   terrain: {
-    plain:    { color: '#c8a96e', label: 'Plain',    icon: '🌾' },
+    grass:    { color: '#7ec850', label: 'Grass',    icon: '🌿' },
+    farm:     { color: '#c8a96e', label: 'Farm',     icon: '🌾' },
     forest:   { color: '#2d6a4f', label: 'Forest',   icon: '🌲' },
     mountain: { color: '#6b6b6b', label: 'Mountain', icon: '⛰️'  },
     lake:     { color: '#1a78c2', label: 'Lake',     icon: '🏞️'  },
