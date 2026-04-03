@@ -40,6 +40,8 @@ const HexGrid = () => {
       delta: e.deltaY,
       focalX: e.clientX - rect.left,
       focalY: e.clientY - rect.top,
+      svgWidth: rect.width,
+      svgHeight: rect.height,
     }));
   }, [dispatch]);
 

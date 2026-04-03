@@ -17,6 +17,7 @@ export const theme = {
 
   river: { color: '#4499cc', width: 4, linecap: 'round',  tension: 0.7, poolRadius: 7  },
   road:  { color: '#8B7355', width: 3, linecap: 'square', tension: 0.5, poolRadius: 5  },
+  town:  { color: '#f5a623' },
 
   ghostFill: 'rgba(255,255,255,0.05)',
   ghostStroke: 'rgba(255,255,255,0.25)',

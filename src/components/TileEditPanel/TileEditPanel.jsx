@@ -1,9 +1,10 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
-import { updateTile, deleteTile, toggleTileFlag } from '../../features/tiles/tilesSlice';
+import { updateTile, deleteTile, toggleTileFlag, setTownName, blockConnection, unblockConnection } from '../../features/tiles/tilesSlice';
 import { deselectTile } from '../../features/ui/uiSlice';
 import { theme } from '../../styles/theme';
+import { NEIGHBOR_DIRS, toKey } from '../HexGrid/HexUtils';
 
 const Panel = styled.div`
   position: fixed;
@@ -132,15 +133,74 @@ const DeleteBtn = styled.button`
   &:hover { background: ${({ theme }) => theme.accent}22; }
 `;
 
+const TownNameInput = styled.input`
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 2px solid ${({ theme }) => theme.town.color}66;
+  background: rgba(255,255,255,0.05);
+  color: ${({ theme }) => theme.text};
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.town.color};
+  }
+
+  &::placeholder {
+    color: ${({ theme }) => theme.textMuted};
+  }
+`;
+
+const ConnectionList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 8px;
+  padding-left: 4px;
+`;
+
+const ConnectionRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: ${({ theme }) => theme.textMuted};
+`;
+
+const ConnectionBtn = styled.button`
+  margin-left: auto;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid ${({ $blocked, $color }) => $blocked ? 'rgba(255,255,255,0.15)' : `${$color}66`};
+  background: transparent;
+  color: ${({ $blocked, theme }) => $blocked ? theme.textMuted : theme.text};
+  font-size: 0.7rem;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: border-color 0.15s, color 0.15s;
+  &:hover {
+    border-color: ${({ $color }) => $color};
+    color: ${({ theme }) => theme.text};
+  }
+`;
+
+const DIR_LABELS = ['E', 'NE', 'NW', 'W', 'SW', 'SE'];
+const FLAG_BLOCKED_KEY = { hasRiver: 'riverBlocked', hasRoad: 'roadBlocked' };
+
 const FLAGS = [
   { key: 'hasRiver', label: 'River', icon: '🌊', color: theme.river.color },
   { key: 'hasRoad',  label: 'Road',  icon: '🛤️',  color: theme.road.color  },
+  { key: 'hasTown',  label: 'Town',  icon: '🏘️',  color: theme.town.color  },
 ];
 
 const TileEditPanel = () => {
   const dispatch = useDispatch();
   const selectedKey = useSelector((state) => state.ui.selectedTile);
   const tile = useSelector((state) => selectedKey ? state.tiles[selectedKey] : null);
+  const allTiles = useSelector((state) => state.tiles);
 
   const handleTerrainChange = (terrainType) => {
     if (!tile) return;
@@ -150,6 +210,20 @@ const TileEditPanel = () => {
   const handleFlagToggle = (flag) => {
     if (!tile) return;
     dispatch(toggleTileFlag({ q: tile.q, r: tile.r, flag }));
+  };
+
+  const handleConnectionToggle = (flag, neighborKey, isBlocked) => {
+    if (!tile) return;
+    if (isBlocked) {
+      dispatch(unblockConnection({ q: tile.q, r: tile.r, flag, neighborKey }));
+    } else {
+      dispatch(blockConnection({ q: tile.q, r: tile.r, flag, neighborKey }));
+    }
+  };
+
+  const handleNameChange = (e) => {
+    if (!tile) return;
+    dispatch(setTownName({ q: tile.q, r: tile.r, name: e.target.value }));
   };
 
   const handleDelete = () => {
@@ -190,21 +264,62 @@ const TileEditPanel = () => {
         <FlagList>
           {FLAGS.map(({ key, label, icon, color }) => {
             const active = !!(tile?.[key]);
+            const blockedKey = FLAG_BLOCKED_KEY[key];
+            const flagNeighbors = active && blockedKey
+              ? NEIGHBOR_DIRS.map((dir, i) => {
+                  const nk = toKey((tile?.q ?? 0) + dir.q, (tile?.r ?? 0) + dir.r);
+                  const neighbor = allTiles[nk];
+                  if (!neighbor?.[key]) return null;
+                  const isBlocked = (tile?.[blockedKey] || []).includes(nk)
+                    || (neighbor[blockedKey] || []).includes(selectedKey);
+                  return { nk, dirLabel: DIR_LABELS[i], terrain: neighbor.terrain, isBlocked };
+                }).filter(Boolean)
+              : [];
             return (
-              <FlagToggle
-                key={key}
-                $active={active}
-                $color={color}
-                theme={theme}
-                onClick={() => handleFlagToggle(key)}
-              >
-                <span className="flag-icon">{icon}</span>
-                <span className="flag-label">{label}</span>
-                <span className="flag-state">{active ? 'on' : 'off'}</span>
-              </FlagToggle>
+              <div key={key}>
+                <FlagToggle
+                  $active={active}
+                  $color={color}
+                  theme={theme}
+                  onClick={() => handleFlagToggle(key)}
+                >
+                  <span className="flag-icon">{icon}</span>
+                  <span className="flag-label">{label}</span>
+                  <span className="flag-state">{active ? 'on' : 'off'}</span>
+                </FlagToggle>
+                {flagNeighbors.length > 0 && (
+                  <ConnectionList>
+                    {flagNeighbors.map(({ nk, dirLabel, terrain, isBlocked }) => (
+                      <ConnectionRow key={nk} theme={theme}>
+                        <span>{theme.terrain[terrain]?.icon ?? terrain}</span>
+                        <span>{dirLabel}</span>
+                        {isBlocked && <span style={{ opacity: 0.45 }}>blocked</span>}
+                        <ConnectionBtn
+                          $blocked={isBlocked}
+                          $color={color}
+                          theme={theme}
+                          onClick={() => handleConnectionToggle(key, nk, isBlocked)}
+                        >
+                          {isBlocked ? 'Restore' : 'Disconnect'}
+                        </ConnectionBtn>
+                      </ConnectionRow>
+                    ))}
+                  </ConnectionList>
+                )}
+              </div>
             );
           })}
         </FlagList>
+        {tile?.hasTown && (
+          <TownNameInput
+            theme={theme}
+            value={tile.townName ?? ''}
+            onChange={handleNameChange}
+            placeholder="Town name…"
+            maxLength={32}
+            style={{ marginTop: '8px' }}
+          />
+        )}
       </div>
 
       <DeleteBtn onClick={handleDelete} theme={theme}>

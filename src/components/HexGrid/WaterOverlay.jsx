@@ -1,7 +1,9 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { axialToPixel, edgeMidpoint, hexCorners, hexPointsString, HEX_SIZE, NEIGHBOR_DIRS, toKey } from './HexUtils';
 import { theme } from '../../styles/theme';
+import { selectTile, deselectTile } from '../../features/ui/uiSlice';
+import { deleteTile } from '../../features/tiles/tilesSlice';
 
 // Terrain types that behave like deep water: rivers terminate at their edge,
 // their fill renders on top of river/road paths, and shared edges are suppressed.
@@ -35,20 +37,30 @@ const curvedStub = (ax, ay, tx, ty, tension) => {
   return `M ${ax},${ay} Q ${cpx},${cpy} ${tx},${ty}`;
 };
 
+// Maps feature flag → the tile property storing manually blocked neighbor keys
+const FLAG_BLOCKED_KEY = { hasRiver: 'riverBlocked', hasRoad: 'roadBlocked' };
+
 // Renders all paths for a single flag (hasRiver or hasRoad) across all tiles
 const renderFlagPaths = (tiles, flag, style) =>
   Object.values(tiles).flatMap((tile) => {
     if (!tile[flag]) return [];
 
     const { q, r, terrain } = tile;
+    const myKey = toKey(q, r);
     const isDeepWater = DEEP_WATER.has(terrain);
     const { x: cx, y: cy } = axialToPixel(q, r);
+    const blockedKey = FLAG_BLOCKED_KEY[flag];
+    const blocked = tile[blockedKey] || [];
 
-    // Connected edge indices: neighbours that share the same flag
+    // Connected edge indices: neighbours that share the same flag and aren't blocked
     const connectedEdges = NEIGHBOR_DIRS
       .map((dir, i) => {
-        const neighbor = tiles[toKey(q + dir.q, r + dir.r)];
-        return neighbor?.[flag] ? i : null;
+        const nk = toKey(q + dir.q, r + dir.r);
+        const neighbor = tiles[nk];
+        if (!neighbor?.[flag]) return null;
+        if (blocked.includes(nk)) return null;
+        if ((neighbor[blockedKey] || []).includes(myKey)) return null;
+        return i;
       })
       .filter((i) => i !== null);
 
@@ -128,7 +140,116 @@ const renderWaterEdges = (tiles, terrainType) =>
     });
   });
 
+// Renders a small house icon on tiles that have hasTown, suppressed on deep water.
+const renderTowns = (tiles) =>
+  Object.values(tiles).flatMap((tile) => {
+    if (!tile.hasTown) return [];
+    const { q, r, terrain, townName } = tile;
+    if (DEEP_WATER.has(terrain)) return [];
+    const { x: cx, y: cy } = axialToPixel(q, r);
+    const bx = cx - 9, by = cy - 3;
+    const bw = 18,      bh = 13;
+    const roofPeak = `${cx},${cy - 16}`;
+    const roofLeft = `${cx - 12},${cy - 3}`;
+    const roofRight = `${cx + 12},${cy - 3}`;
+    return [
+      <g key={`town-${toKey(q, r)}`} style={{ pointerEvents: 'none' }}>
+        {/* Roof */}
+        <polygon
+          points={`${roofPeak} ${roofLeft} ${roofRight}`}
+          fill={theme.town.color}
+          opacity={0.92}
+        />
+        {/* Body */}
+        <rect x={bx} y={by} width={bw} height={bh} fill={theme.town.color} opacity={0.92} />
+        {/* Door */}
+        <rect x={cx - 3} y={by + bh - 7} width={6} height={7} fill="rgba(0,0,0,0.45)" />
+        {/* Windows */}
+        <rect x={cx + 3} y={by + 2} width={4} height={4} fill="rgba(0,0,0,0.35)" />
+        <rect x={cx - 7} y={by + 2} width={4} height={4} fill="rgba(0,0,0,0.35)" />
+        {/* Town name */}
+        {townName && (
+          <>
+            <text
+              x={cx} y={cy + 16}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize="10"
+              fontWeight="bold"
+              fontFamily="sans-serif"
+              stroke="rgba(0,0,0,0.7)"
+              strokeWidth={3}
+              strokeLinejoin="round"
+              paintOrder="stroke"
+              fill={theme.town.color}
+            >
+              {townName}
+            </text>
+          </>
+        )}
+      </g>,
+    ];
+  });
+
+
+// Renders a dock symbol on each water tile edge that faces an adjacent town tile.
+// The dock: a plank along the edge + 3 pilings extending inward toward the tile center.
+const renderPorts = (tiles) =>
+  Object.values(tiles).flatMap((tile) => {
+    if (!DEEP_WATER.has(tile.terrain)) return [];
+    const { q, r } = tile;
+    const { x: cx, y: cy } = axialToPixel(q, r);
+
+    return NEIGHBOR_DIRS.flatMap((dir, i) => {
+      const neighbor = tiles[toKey(q + dir.q, r + dir.r)];
+      if (!neighbor?.hasTown) return [];
+
+      const em = edgeMidpoint(cx, cy, i);
+      // Unit vector pointing inward (edge → tile center)
+      const dx = cx - em.x, dy = cy - em.y;
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      const nx = dx / len, ny = dy / len;
+      // Perpendicular unit vector (along the plank)
+      const px = -ny, py = nx;
+
+      const plankHalf = 10;
+      const pilingLen = 13;
+      const color = '#7a5c1e';
+
+      const pilingOffsets = [-plankHalf * 0.65, 0, plankHalf * 0.65];
+
+      return [
+        <g key={`port-${toKey(q, r)}-${i}`} style={{ pointerEvents: 'none' }}>
+          {pilingOffsets.map((offset, j) => (
+            <line
+              key={j}
+              x1={em.x + px * offset}
+              y1={em.y + py * offset}
+              x2={em.x + px * offset + nx * pilingLen}
+              y2={em.y + py * offset + ny * pilingLen}
+              stroke={color}
+              strokeWidth={2.5}
+              strokeLinecap="round"
+            />
+          ))}
+          {/* Plank on top of pilings */}
+          <line
+            x1={em.x + px * plankHalf}
+            y1={em.y + py * plankHalf}
+            x2={em.x - px * plankHalf}
+            y2={em.y - py * plankHalf}
+            stroke={color}
+            strokeWidth={4}
+            strokeLinecap="round"
+          />
+        </g>,
+      ];
+    });
+  });
+
+
 const WaterOverlay = ({ tiles }) => {
+  const dispatch = useDispatch();
   const selectedTile = useSelector((state) => state.ui.selectedTile);
   const [hoveredTile, setHoveredTile] = React.useState(null);
   return (
@@ -137,6 +258,7 @@ const WaterOverlay = ({ tiles }) => {
     {renderWaterEdges(tiles, 'ocean')}
     {renderFlagPaths(tiles, 'hasRiver', theme.river)}
     {renderFlagPaths(tiles, 'hasRoad', theme.road)}
+    {renderTowns(tiles)}
     {/* Water caps: re-draw lake/ocean fill on top of rivers/roads so water texture covers them */}
     {Object.values(tiles).map(({ q, r, terrain }) => {
       if (!DEEP_WATER.has(terrain)) return null;
@@ -145,9 +267,28 @@ const WaterOverlay = ({ tiles }) => {
       const key = toKey(q, r);
       const isSelected = selectedTile === key;
       const isHovered = hoveredTile === key;
+
+      const handleClick = (e) => {
+        e.stopPropagation();
+        if (isSelected) {
+          dispatch(deselectTile());
+        } else {
+          dispatch(selectTile(key));
+        }
+      };
+
+      const handleContextMenu = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isSelected) dispatch(deselectTile());
+        dispatch(deleteTile({ q, r }));
+      };
+
       return (
         <g
           key={`water-cap-${key}`}
+          onClick={handleClick}
+          onContextMenu={handleContextMenu}
           onMouseEnter={() => setHoveredTile(key)}
           onMouseLeave={() => setHoveredTile(null)}
           style={{ cursor: 'pointer' }}
@@ -171,6 +312,7 @@ const WaterOverlay = ({ tiles }) => {
         </g>
       );
     })}
+    {renderPorts(tiles)}
   </g>
   );
 };

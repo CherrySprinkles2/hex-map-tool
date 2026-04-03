@@ -18,12 +18,18 @@ const viewportSlice = createSlice({
       state.y += action.payload.dy;
     },
     zoom: (state, action) => {
-      const { delta, focalX, focalY } = action.payload;
+      const { delta, focalX, focalY, svgWidth, svgHeight } = action.payload;
       const factor = delta < 0 ? 1.1 : 0.9;
       const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, state.scale * factor));
-      // Adjust translation so zoom is centred on the focal point
-      state.x = focalX - (focalX - state.x) * (newScale / state.scale);
-      state.y = focalY - (focalY - state.y) * (newScale / state.scale);
+      // The SVG transform is translate(svgWidth/2 + x, svgHeight/2 + y) scale(scale).
+      // To zoom centred on the cursor, we solve for x/y such that the world point
+      // under the cursor stays fixed in screen space.
+      const tx = svgWidth / 2 + state.x;
+      const ty = svgHeight / 2 + state.y;
+      const wx = (focalX - tx) / state.scale;
+      const wy = (focalY - ty) / state.scale;
+      state.x = focalX - svgWidth / 2 - wx * newScale;
+      state.y = focalY - svgHeight / 2 - wy * newScale;
       state.scale = newScale;
     },
     resetViewport: () => initialState,
