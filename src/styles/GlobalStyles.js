@@ -22,6 +22,10 @@ const GlobalStyles = createGlobalStyle`
     display: flex;
     flex-direction: column;
   }
+
+  @keyframes marchingAnts {
+    to { stroke-dashoffset: -9; }
+  }
 `;
 
 export default GlobalStyles;

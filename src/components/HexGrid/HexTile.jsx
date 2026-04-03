@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { hexPointsString, axialToPixel } from './HexUtils';
+import { hexPointsString, axialToPixel, HEX_SIZE } from './HexUtils';
 import { selectTile, deselectTile } from '../../features/ui/uiSlice';
 import { deleteTile } from '../../features/tiles/tilesSlice';
 import { toKey } from './HexUtils';
@@ -46,8 +46,8 @@ const HexTile = ({ q, r }) => {
       <polygon
         points={points}
         fill={terrainData.color}
-        stroke={isSelected ? theme.selectedStroke : theme.tileStroke}
-        strokeWidth={isSelected ? 3 : 1.5}
+        stroke={theme.tileStroke}
+        strokeWidth={1.5}
       />
       {/* Texture pattern overlay */}
       <polygon
@@ -56,6 +56,18 @@ const HexTile = ({ q, r }) => {
         stroke="none"
         style={{ pointerEvents: 'none' }}
       />
+      {/* Selection ring — inset so it stays inside the tile and isn't overlapped by neighbours */}
+      {isSelected && (
+        <polygon
+          points={hexPointsString(x, y, HEX_SIZE - 5)}
+          fill="none"
+          stroke={theme.selectedStroke}
+          strokeWidth={2.5}
+          strokeDasharray="6 3"
+          strokeLinecap="round"
+          style={{ animation: 'marchingAnts 1s linear infinite', pointerEvents: 'none' }}
+        />
+      )}
       {/* Hover highlight */}
       {hovered && (
         <polygon

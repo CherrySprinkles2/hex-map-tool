@@ -1,5 +1,6 @@
 import React from 'react';
-import { axialToPixel, edgeMidpoint, hexCorners, hexPointsString, NEIGHBOR_DIRS, toKey } from './HexUtils';
+import { useSelector } from 'react-redux';
+import { axialToPixel, edgeMidpoint, hexCorners, hexPointsString, HEX_SIZE, NEIGHBOR_DIRS, toKey } from './HexUtils';
 import { theme } from '../../styles/theme';
 
 // Terrain types that behave like deep water: rivers terminate at their edge,
@@ -127,7 +128,10 @@ const renderWaterEdges = (tiles, terrainType) =>
     });
   });
 
-const WaterOverlay = ({ tiles }) => (
+const WaterOverlay = ({ tiles }) => {
+  const selectedTile = useSelector((state) => state.ui.selectedTile);
+  const [hoveredTile, setHoveredTile] = React.useState(null);
+  return (
   <g>
     {renderWaterEdges(tiles, 'lake')}
     {renderWaterEdges(tiles, 'ocean')}
@@ -138,14 +142,37 @@ const WaterOverlay = ({ tiles }) => (
       if (!DEEP_WATER.has(terrain)) return null;
       const { x, y } = axialToPixel(q, r);
       const pts = hexPointsString(x, y);
+      const key = toKey(q, r);
+      const isSelected = selectedTile === key;
+      const isHovered = hoveredTile === key;
       return (
-        <g key={`water-cap-${toKey(q, r)}`} style={{ pointerEvents: 'none' }}>
+        <g
+          key={`water-cap-${key}`}
+          onMouseEnter={() => setHoveredTile(key)}
+          onMouseLeave={() => setHoveredTile(null)}
+          style={{ cursor: 'pointer' }}
+        >
           <polygon points={pts} fill={theme.terrain[terrain].color} stroke="none" />
-          <polygon points={pts} fill={`url(#pattern-${terrain})`} stroke="none" />
+          <polygon points={pts} fill={`url(#pattern-${terrain})`} stroke="none" style={{ pointerEvents: 'none' }} />
+          {isHovered && (
+            <polygon points={pts} fill="white" opacity={0.12} stroke="none" style={{ pointerEvents: 'none' }} />
+          )}
+          {isSelected && (
+            <polygon
+              points={hexPointsString(x, y, HEX_SIZE - 5)}
+              fill="none"
+              stroke={theme.selectedStroke}
+              strokeWidth={2.5}
+              strokeDasharray="6 3"
+              strokeLinecap="round"
+              style={{ animation: 'marchingAnts 1s linear infinite', pointerEvents: 'none' }}
+            />
+          )}
         </g>
       );
     })}
   </g>
-);
+  );
+};
 
 export default WaterOverlay;
