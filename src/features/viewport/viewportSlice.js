@@ -32,9 +32,20 @@ const viewportSlice = createSlice({
       state.y = focalY - svgHeight / 2 - wy * newScale;
       state.scale = newScale;
     },
+    pinchZoom: (state, action) => {
+      const { ratio, focalX, focalY, svgWidth, svgHeight } = action.payload;
+      const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, state.scale * ratio));
+      const tx = svgWidth / 2 + state.x;
+      const ty = svgHeight / 2 + state.y;
+      const wx = (focalX - tx) / state.scale;
+      const wy = (focalY - ty) / state.scale;
+      state.x = focalX - svgWidth / 2 - wx * newScale;
+      state.y = focalY - svgHeight / 2 - wy * newScale;
+      state.scale = newScale;
+    },
     resetViewport: () => initialState,
   },
 });
 
-export const { pan, zoom, resetViewport } = viewportSlice.actions;
+export const { pan, zoom, pinchZoom, resetViewport } = viewportSlice.actions;
 export default viewportSlice.reducer;

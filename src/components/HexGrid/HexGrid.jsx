@@ -1,7 +1,7 @@
 import React, { useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
-import { pan, zoom } from '../../features/viewport/viewportSlice';
+import { pan, zoom, pinchZoom } from '../../features/viewport/viewportSlice';
 import { deselectTile } from '../../features/ui/uiSlice';
 import { getNeighbors, toKey } from './HexUtils';
 import HexTile from './HexTile';
@@ -97,10 +97,9 @@ const HexGrid = () => {
       const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
       const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
       const rect = e.currentTarget.getBoundingClientRect();
-      // Convert pinch distance change into a zoom delta (negative = zoom in)
-      const delta = (lastPinchDist.current - dist) * 3;
-      dispatch(zoom({
-        delta,
+      const ratio = dist / lastPinchDist.current;
+      dispatch(pinchZoom({
+        ratio,
         focalX: midX - rect.left,
         focalY: midY - rect.top,
         svgWidth: rect.width,
