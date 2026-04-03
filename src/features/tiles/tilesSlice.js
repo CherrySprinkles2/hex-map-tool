@@ -2,8 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { toKey } from '../../components/HexGrid/HexUtils';
 
 const initialState = {
-  // keyed by "q,r"
-  [toKey(0, 0)]: { q: 0, r: 0, terrain: 'grass' },
+  [toKey(0, 0)]: { q: 0, r: 0, terrain: 'grass', hasRiver: false, hasRoad: false },
 };
 
 const tilesSlice = createSlice({
@@ -11,10 +10,10 @@ const tilesSlice = createSlice({
   initialState,
   reducers: {
     addTile: (state, action) => {
-      const { q, r, terrain = 'grass' } = action.payload;
+      const { q, r, terrain = 'grass', hasRiver = false, hasRoad = false } = action.payload;
       const key = toKey(q, r);
       if (!state[key]) {
-        state[key] = { q, r, terrain };
+        state[key] = { q, r, terrain, hasRiver, hasRoad };
       }
     },
     updateTile: (state, action) => {
@@ -22,6 +21,13 @@ const tilesSlice = createSlice({
       const key = toKey(q, r);
       if (state[key]) {
         state[key].terrain = terrain;
+      }
+    },
+    toggleTileFlag: (state, action) => {
+      const { q, r, flag } = action.payload;
+      const key = toKey(q, r);
+      if (state[key]) {
+        state[key][flag] = !state[key][flag];
       }
     },
     deleteTile: (state, action) => {
@@ -34,5 +40,5 @@ const tilesSlice = createSlice({
   },
 });
 
-export const { addTile, updateTile, deleteTile, importTiles } = tilesSlice.actions;
+export const { addTile, updateTile, toggleTileFlag, deleteTile, importTiles } = tilesSlice.actions;
 export default tilesSlice.reducer;

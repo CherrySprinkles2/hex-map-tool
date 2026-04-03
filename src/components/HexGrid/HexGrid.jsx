@@ -7,6 +7,7 @@ import { getNeighbors, toKey } from './HexUtils';
 import HexTile from './HexTile';
 import GhostTile from './GhostTile';
 import WaterOverlay from './WaterOverlay';
+import TerrainPatterns from './TerrainPatterns';
 
 const SvgCanvas = styled.svg`
   flex: 1;
@@ -73,6 +74,9 @@ const HexGrid = () => {
       onMouseLeave={handleMouseUp}
       onClick={handleSvgClick}
     >
+      {/* Pattern definitions — referenced by HexTile via fill="url(#pattern-TERRAIN)" */}
+      <TerrainPatterns />
+
       {/* Center the grid in the viewport */}
       <g transform={`translate(${window.innerWidth / 2 + x}, ${window.innerHeight / 2 + y}) scale(${scale})`}>
         {/* Ghost tiles (behind real tiles) */}

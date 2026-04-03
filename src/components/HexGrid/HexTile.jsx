@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { hexPointsString, axialToPixel } from './HexUtils';
 import { selectTile, deselectTile } from '../../features/ui/uiSlice';
+import { deleteTile } from '../../features/tiles/tilesSlice';
 import { toKey } from './HexUtils';
 import { theme } from '../../styles/theme';
 
@@ -15,6 +16,7 @@ const HexTile = ({ q, r }) => {
   const key = toKey(q, r);
   const isSelected = selectedTile === key;
   const terrainData = theme.terrain[terrain] ?? theme.terrain.grass;
+  const points = hexPointsString(x, y);
 
   const handleClick = (e) => {
     e.stopPropagation();
@@ -25,39 +27,45 @@ const HexTile = ({ q, r }) => {
     }
   };
 
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isSelected) dispatch(deselectTile());
+    dispatch(deleteTile({ q, r }));
+  };
+
   return (
     <g
       onClick={handleClick}
+      onContextMenu={handleContextMenu}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{ cursor: 'pointer' }}
     >
+      {/* Base terrain colour */}
       <polygon
-        points={hexPointsString(x, y)}
+        points={points}
         fill={terrainData.color}
         stroke={isSelected ? theme.selectedStroke : theme.tileStroke}
         strokeWidth={isSelected ? 3 : 1.5}
-        filter={hovered && !isSelected ? 'brightness(1.3)' : undefined}
       />
-      {/* Highlight overlay on hover */}
+      {/* Texture pattern overlay */}
+      <polygon
+        points={points}
+        fill={`url(#pattern-${terrain})`}
+        stroke="none"
+        style={{ pointerEvents: 'none' }}
+      />
+      {/* Hover highlight */}
       {hovered && (
         <polygon
-          points={hexPointsString(x, y)}
+          points={points}
           fill="white"
           opacity={0.12}
           stroke="none"
           style={{ pointerEvents: 'none' }}
         />
       )}
-      <text
-        x={x}
-        y={y + 6}
-        textAnchor="middle"
-        fontSize="20"
-        style={{ pointerEvents: 'none', userSelect: 'none' }}
-      >
-        {terrainData.icon}
-      </text>
     </g>
   );
 };

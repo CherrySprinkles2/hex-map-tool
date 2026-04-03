@@ -69,11 +69,18 @@ export const hexPointsString = (cx, cy, size = HEX_SIZE) =>
     .map(({ x, y }) => `${x},${y}`)
     .join(' ');
 
+// Maps NEIGHBOR_DIRS index → the starting corner index of the shared edge.
+// Edge between corners[i] and corners[(i+1)%6] faces outward at angle 60*i°.
+// Neighbour directions (in screen space): 0=right(0°), 1=upper-right(300°),
+// 2=upper-left(240°), 3=left(180°), 4=lower-left(120°), 5=lower-right(60°).
+const DIR_TO_EDGE_CORNER = [0, 5, 4, 3, 2, 1];
+
 // Returns the midpoint pixel of the edge between a tile and one of its neighbours
 // dirIndex: 0–5 corresponding to NEIGHBOR_DIRS
 export const edgeMidpoint = (cx, cy, dirIndex, size = HEX_SIZE) => {
   const corners = hexCorners(cx, cy, size);
-  const a = corners[dirIndex];
-  const b = corners[(dirIndex + 1) % 6];
+  const ci = DIR_TO_EDGE_CORNER[dirIndex];
+  const a = corners[ci];
+  const b = corners[(ci + 1) % 6];
   return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
 };
