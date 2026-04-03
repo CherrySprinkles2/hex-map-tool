@@ -21,6 +21,19 @@ const Panel = styled.div`
   gap: 20px;
   z-index: 100;
   overflow-y: auto;
+
+  @media (max-width: 600px) {
+    top: auto;
+    right: 0;
+    bottom: ${({ $open }) => ($open ? '0' : '-60vh')};
+    width: 100%;
+    height: 60vh;
+    border-left: none;
+    border-top: 2px solid ${({ theme }) => theme.panelBorder};
+    border-radius: 16px 16px 0 0;
+    padding: 16px 16px 32px;
+    transition: bottom 0.25s ease;
+  }
 `;
 
 const PanelTitle = styled.h2`
@@ -29,6 +42,19 @@ const PanelTitle = styled.h2`
   color: ${({ theme }) => theme.text};
   text-transform: uppercase;
   letter-spacing: 0.08em;
+`;
+
+const DragHandle = styled.div`
+  display: none;
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: ${({ theme }) => theme.panelBorder};
+  margin: 0 auto -8px;
+
+  @media (max-width: 600px) {
+    display: block;
+  }
 `;
 
 const CloseBtn = styled.button`
@@ -267,6 +293,7 @@ const TileEditPanel = () => {
 
   return (
     <Panel $open={!!selectedKey} theme={theme}>
+      <DragHandle theme={theme} />
       <PanelTitle theme={theme}>Edit Tile</PanelTitle>
       <CloseBtn onClick={handleClose} theme={theme}>✕</CloseBtn>
 

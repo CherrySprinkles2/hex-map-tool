@@ -148,6 +148,10 @@ const DeleteBtn = styled.button`
   &:hover {
     color: ${({ theme }) => theme.accent};
   }
+
+  @media (hover: none) {
+    opacity: 1;
+  }
 `;
 
 const ExampleBadge = styled.div`

@@ -15,6 +15,7 @@ const Bar = styled.div`
   background: ${({ theme }) => theme.panelBackground};
   border-bottom: 2px solid ${({ theme }) => theme.panelBorder};
   z-index: 50;
+  flex-shrink: 0;
 `;
 
 const BackBtn = styled.button`
@@ -65,8 +66,15 @@ const Btn = styled.button`
   letter-spacing: 0.04em;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
   &:hover {
     background: ${({ theme }) => theme.panelBorder};
+  }
+`;
+
+const BtnLabel = styled.span`
+  @media (max-width: 600px) {
+    display: none;
   }
 `;
 
@@ -144,8 +152,8 @@ const Toolbar = () => {
         onKeyDown={handleNameKeyDown}
         maxLength={48}
       />
-      <Btn theme={theme} onClick={handleExport}>⬇ Export JSON</Btn>
-      <Btn theme={theme} onClick={() => fileInput.current?.click()}>⬆ Import JSON</Btn>
+      <Btn theme={theme} onClick={handleExport}>⬇<BtnLabel> Export JSON</BtnLabel></Btn>
+      <Btn theme={theme} onClick={() => fileInput.current?.click()}>⬆<BtnLabel> Import JSON</BtnLabel></Btn>
       <input
         ref={fileInput}
         type="file"

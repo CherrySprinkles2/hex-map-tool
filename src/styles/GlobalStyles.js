@@ -14,6 +14,7 @@ const GlobalStyles = createGlobalStyle`
     overflow: hidden;
     height: 100vh;
     width: 100vw;
+    overscroll-behavior: none;
   }
 
   #root {
