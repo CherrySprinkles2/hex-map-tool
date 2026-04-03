@@ -2,10 +2,14 @@ import { createSlice } from '@reduxjs/toolkit';
 import { toKey } from '../../components/HexGrid/HexUtils';
 
 // Maps a feature flag to its corresponding blocked-connections array key
-const BLOCKED_KEY = { hasRiver: 'riverBlocked', hasRoad: 'roadBlocked' };
+const BLOCKED_KEY = { hasRiver: 'riverBlocked', hasRoad: 'roadBlocked', hasTown: 'portBlocked' };
+
+// Flags whose block state is stored only on the "source" tile (not mirrored on the neighbor).
+// hasTown: the port lives on the water tile but the block decision belongs to the town tile.
+const ONE_SIDED = new Set(['hasTown']);
 
 const initialState = {
-  [toKey(0, 0)]: { q: 0, r: 0, terrain: 'grass', hasRiver: false, hasRoad: false, riverBlocked: [], roadBlocked: [], hasTown: false, townName: '' },
+  [toKey(0, 0)]: { q: 0, r: 0, terrain: 'grass', hasRiver: false, hasRoad: false, riverBlocked: [], roadBlocked: [], hasTown: false, townName: '', portBlocked: [], notes: '' },
 };
 
 const tilesSlice = createSlice({
@@ -13,10 +17,10 @@ const tilesSlice = createSlice({
   initialState,
   reducers: {
     addTile: (state, action) => {
-      const { q, r, terrain = 'grass', hasRiver = false, hasRoad = false, hasTown = false, townName = '' } = action.payload;
+      const { q, r, terrain = 'grass', hasRiver = false, hasRoad = false, hasTown = false, townName = '', notes = '' } = action.payload;
       const key = toKey(q, r);
       if (!state[key]) {
-        state[key] = { q, r, terrain, hasRiver, hasRoad, riverBlocked: [], roadBlocked: [], hasTown, townName };
+        state[key] = { q, r, terrain, hasRiver, hasRoad, riverBlocked: [], roadBlocked: [], hasTown, townName, portBlocked: [], notes };
       }
     },
     updateTile: (state, action) => {
@@ -51,8 +55,11 @@ const tilesSlice = createSlice({
       if (state[myKey] && !(state[myKey][blockedKey] || []).includes(neighborKey)) {
         (state[myKey][blockedKey] = state[myKey][blockedKey] || []).push(neighborKey);
       }
-      if (state[neighborKey] && !(state[neighborKey][blockedKey] || []).includes(myKey)) {
-        (state[neighborKey][blockedKey] = state[neighborKey][blockedKey] || []).push(myKey);
+      // Symmetric flags also store the block on the neighbor tile
+      if (!ONE_SIDED.has(flag)) {
+        if (state[neighborKey] && !(state[neighborKey][blockedKey] || []).includes(myKey)) {
+          (state[neighborKey][blockedKey] = state[neighborKey][blockedKey] || []).push(myKey);
+        }
       }
     },
     unblockConnection: (state, action) => {
@@ -63,7 +70,8 @@ const tilesSlice = createSlice({
       if (state[myKey]?.[blockedKey]) {
         state[myKey][blockedKey] = state[myKey][blockedKey].filter((k) => k !== neighborKey);
       }
-      if (state[neighborKey]?.[blockedKey]) {
+      // Symmetric flags also remove the block from the neighbor tile
+      if (!ONE_SIDED.has(flag) && state[neighborKey]?.[blockedKey]) {
         state[neighborKey][blockedKey] = state[neighborKey][blockedKey].filter((k) => k !== myKey);
       }
     },
@@ -72,6 +80,13 @@ const tilesSlice = createSlice({
       const key = toKey(q, r);
       if (state[key]) {
         state[key].townName = name;
+      }
+    },
+    setTileNotes: (state, action) => {
+      const { q, r, notes } = action.payload;
+      const key = toKey(q, r);
+      if (state[key]) {
+        state[key].notes = notes;
       }
     },
     deleteTile: (state, action) => {
@@ -84,5 +99,5 @@ const tilesSlice = createSlice({
   },
 });
 
-export const { addTile, updateTile, toggleTileFlag, blockConnection, unblockConnection, setTownName, deleteTile, importTiles } = tilesSlice.actions;
+export const { addTile, updateTile, toggleTileFlag, blockConnection, unblockConnection, setTownName, setTileNotes, deleteTile, importTiles } = tilesSlice.actions;
 export default tilesSlice.reducer;

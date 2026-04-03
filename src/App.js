@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ThemeProvider } from 'styled-components';
 import styled from 'styled-components';
+import { useSelector } from 'react-redux';
 import { theme } from './styles/theme';
 import GlobalStyles from './styles/GlobalStyles';
 import HexGrid from './components/HexGrid/HexGrid';
 import TileEditPanel from './components/TileEditPanel/TileEditPanel';
 import Toolbar from './components/Toolbar/Toolbar';
+import HomeScreen from './components/HomeScreen/HomeScreen';
 import useLocalStorageSync from './hooks/useLocalStorageSync';
+import { migrateFromLegacy } from './utils/mapsStorage';
 
 const AppShell = styled.div`
   display: flex;
@@ -22,7 +25,7 @@ const CanvasArea = styled.div`
   display: flex;
 `;
 
-const AppInner = () => {
+const EditorInner = () => {
   useLocalStorageSync();
   return (
     <AppShell>
@@ -36,10 +39,16 @@ const AppInner = () => {
 };
 
 function App() {
+  const screen = useSelector((state) => state.ui.screen);
+
+  useEffect(() => {
+    migrateFromLegacy();
+  }, []);
+
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyles />
-      <AppInner />
+      {screen === 'editor' ? <EditorInner /> : <HomeScreen />}
     </ThemeProvider>
   );
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
-import { updateTile, deleteTile, toggleTileFlag, setTownName, blockConnection, unblockConnection } from '../../features/tiles/tilesSlice';
+import { updateTile, deleteTile, toggleTileFlag, setTownName, setTileNotes, blockConnection, unblockConnection } from '../../features/tiles/tilesSlice';
 import { deselectTile } from '../../features/ui/uiSlice';
 import { theme } from '../../styles/theme';
 import { NEIGHBOR_DIRS, toKey } from '../HexGrid/HexUtils';
@@ -154,6 +154,31 @@ const TownNameInput = styled.input`
   }
 `;
 
+const NotesTextarea = styled.textarea`
+  width: 100%;
+  min-height: 160px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: ${({ theme }) => theme.text};
+  font-size: 0.875rem;
+  line-height: 1.5;
+  box-sizing: border-box;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.15s;
+
+  &:focus {
+    border-color: rgba(255,255,255,0.35);
+  }
+
+  &::placeholder {
+    color: ${({ theme }) => theme.textMuted};
+  }
+`;
+
 const ConnectionList = styled.div`
   display: flex;
   flex-direction: column;
@@ -188,7 +213,8 @@ const ConnectionBtn = styled.button`
 `;
 
 const DIR_LABELS = ['E', 'NE', 'NW', 'W', 'SW', 'SE'];
-const FLAG_BLOCKED_KEY = { hasRiver: 'riverBlocked', hasRoad: 'roadBlocked' };
+const FLAG_BLOCKED_KEY = { hasRiver: 'riverBlocked', hasRoad: 'roadBlocked', hasTown: 'portBlocked' };
+const DEEP_WATER_TERRAINS = new Set(['ocean', 'lake']);
 
 const FLAGS = [
   { key: 'hasRiver', label: 'River', icon: '🌊', color: theme.river.color },
@@ -224,6 +250,11 @@ const TileEditPanel = () => {
   const handleNameChange = (e) => {
     if (!tile) return;
     dispatch(setTownName({ q: tile.q, r: tile.r, name: e.target.value }));
+  };
+
+  const handleNotesChange = (e) => {
+    if (!tile) return;
+    dispatch(setTileNotes({ q: tile.q, r: tile.r, notes: e.target.value }));
   };
 
   const handleDelete = () => {
@@ -265,14 +296,23 @@ const TileEditPanel = () => {
           {FLAGS.map(({ key, label, icon, color }) => {
             const active = !!(tile?.[key]);
             const blockedKey = FLAG_BLOCKED_KEY[key];
+            const isPort = key === 'hasTown';
             const flagNeighbors = active && blockedKey
               ? NEIGHBOR_DIRS.map((dir, i) => {
                   const nk = toKey((tile?.q ?? 0) + dir.q, (tile?.r ?? 0) + dir.r);
                   const neighbor = allTiles[nk];
-                  if (!neighbor?.[key]) return null;
-                  const isBlocked = (tile?.[blockedKey] || []).includes(nk)
-                    || (neighbor[blockedKey] || []).includes(selectedKey);
-                  return { nk, dirLabel: DIR_LABELS[i], terrain: neighbor.terrain, isBlocked };
+                  if (isPort) {
+                    // Port: show adjacent water tiles regardless of their flags
+                    if (!DEEP_WATER_TERRAINS.has(neighbor?.terrain)) return null;
+                    const isBlocked = (tile?.[blockedKey] || []).includes(nk);
+                    return { nk, dirLabel: DIR_LABELS[i], terrain: neighbor.terrain, isBlocked };
+                  } else {
+                    // River/road: show adjacent tiles that share the same flag
+                    if (!neighbor?.[key]) return null;
+                    const isBlocked = (tile?.[blockedKey] || []).includes(nk)
+                      || (neighbor[blockedKey] || []).includes(selectedKey);
+                    return { nk, dirLabel: DIR_LABELS[i], terrain: neighbor.terrain, isBlocked };
+                  }
                 }).filter(Boolean)
               : [];
             return (
@@ -293,14 +333,18 @@ const TileEditPanel = () => {
                       <ConnectionRow key={nk} theme={theme}>
                         <span>{theme.terrain[terrain]?.icon ?? terrain}</span>
                         <span>{dirLabel}</span>
-                        {isBlocked && <span style={{ opacity: 0.45 }}>blocked</span>}
+                        {isBlocked && (
+                          <span style={{ opacity: 0.45 }}>{isPort ? 'no port' : 'blocked'}</span>
+                        )}
                         <ConnectionBtn
                           $blocked={isBlocked}
                           $color={color}
                           theme={theme}
                           onClick={() => handleConnectionToggle(key, nk, isBlocked)}
                         >
-                          {isBlocked ? 'Restore' : 'Disconnect'}
+                          {isPort
+                            ? (isBlocked ? 'Add Port' : 'Remove Port')
+                            : (isBlocked ? 'Restore' : 'Disconnect')}
                         </ConnectionBtn>
                       </ConnectionRow>
                     ))}
@@ -320,6 +364,18 @@ const TileEditPanel = () => {
             style={{ marginTop: '8px' }}
           />
         )}
+      </div>
+
+      <Divider theme={theme} />
+
+      <div>
+        <SectionLabel theme={theme}>Notes</SectionLabel>
+        <NotesTextarea
+          theme={theme}
+          value={tile?.notes ?? ''}
+          onChange={handleNotesChange}
+          placeholder="Add notes about this tile…"
+        />
       </div>
 
       <DeleteBtn onClick={handleDelete} theme={theme}>

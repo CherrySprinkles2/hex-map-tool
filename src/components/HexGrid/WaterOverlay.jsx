@@ -198,11 +198,14 @@ const renderPorts = (tiles) =>
   Object.values(tiles).flatMap((tile) => {
     if (!DEEP_WATER.has(tile.terrain)) return [];
     const { q, r } = tile;
+    const myKey = toKey(q, r);
     const { x: cx, y: cy } = axialToPixel(q, r);
 
     return NEIGHBOR_DIRS.flatMap((dir, i) => {
       const neighbor = tiles[toKey(q + dir.q, r + dir.r)];
       if (!neighbor?.hasTown) return [];
+      // Skip if the town tile has blocked the port on this water tile
+      if ((neighbor.portBlocked || []).includes(myKey)) return [];
 
       const em = edgeMidpoint(cx, cy, i);
       // Unit vector pointing inward (edge → tile center)

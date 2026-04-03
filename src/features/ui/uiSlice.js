@@ -3,7 +3,8 @@ import { createSlice } from '@reduxjs/toolkit';
 const uiSlice = createSlice({
   name: 'ui',
   initialState: {
-    selectedTile: null, // coordKey string or null
+    selectedTile: null,
+    screen: 'home',
   },
   reducers: {
     selectTile: (state, action) => {
@@ -12,8 +13,11 @@ const uiSlice = createSlice({
     deselectTile: (state) => {
       state.selectedTile = null;
     },
+    setScreen: (state, action) => {
+      state.screen = action.payload;
+    },
   },
 });
 
-export const { selectTile, deselectTile } = uiSlice.actions;
+export const { selectTile, deselectTile, setScreen } = uiSlice.actions;
 export default uiSlice.reducer;
