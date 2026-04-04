@@ -7,7 +7,7 @@ import { deleteTile } from '../../features/tiles/tilesSlice';
 
 // Terrain types that behave like deep water: rivers terminate at their edge,
 // their fill renders on top of river/road paths, and shared edges are suppressed.
-const DEEP_WATER = new Set(['lake', 'ocean']);
+export const DEEP_WATER = new Set(['lake', 'ocean']);
 
 // How far toward center to draw stubs on deep-water tiles (so fill "covers" the interior)
 const WATER_STUB_RATIO = 0.38;
@@ -135,61 +135,109 @@ const renderWaterEdges = (tiles, terrainType) =>
           key={`${terrainType}-edge-${toKey(q, r)}-${i}`}
           x1={a.x} y1={a.y} x2={b.x} y2={b.y}
           stroke={theme.terrain[terrainType].color}
-          strokeWidth={terrainType === 'ocean' ? 4 : 3}
+          strokeWidth={terrainType === 'ocean' ? theme.waterEdge.oceanWidth : theme.waterEdge.lakeWidth}
           strokeLinecap="round"
-          opacity={0.9}
+          opacity={theme.waterEdge.opacity}
           style={{ pointerEvents: 'none' }}
         />,
       ];
     });
   });
 
-// Renders a small house icon on tiles that have hasTown, suppressed on deep water.
-const renderTowns = (tiles) =>
+// Renders a town icon. When garrisoned (armies present), shows castle battlements +
+// a gold garrison ring. Single army: shows army name above. Multiple armies: ring only.
+const renderTowns = (tiles, armiesByTile = {}) =>
   Object.values(tiles).flatMap((tile) => {
     if (!tile.hasTown) return [];
     const { q, r, terrain, townName } = tile;
     if (DEEP_WATER.has(terrain)) return [];
     const { x: cx, y: cy } = axialToPixel(q, r);
+    const key = toKey(q, r);
+    const armies = armiesByTile[key] ?? [];
+    const garrisoned = armies.length > 0;
+
     const bx = cx - 9, by = cy - 3;
     const bw = 18,      bh = 13;
-    const roofPeak = `${cx},${cy - 16}`;
-    const roofLeft = `${cx - 12},${cy - 3}`;
-    const roofRight = `${cx + 12},${cy - 3}`;
+
     return [
-      <g key={`town-${toKey(q, r)}`} style={{ pointerEvents: 'none' }}>
-        {/* Roof */}
-        <polygon
-          points={`${roofPeak} ${roofLeft} ${roofRight}`}
-          fill={theme.town.color}
-          opacity={0.92}
-        />
-        {/* Body */}
-        <rect x={bx} y={by} width={bw} height={bh} fill={theme.town.color} opacity={0.92} />
-        {/* Door */}
-        <rect x={cx - 3} y={by + bh - 7} width={6} height={7} fill="rgba(0,0,0,0.45)" />
-        {/* Windows */}
-        <rect x={cx + 3} y={by + 2} width={4} height={4} fill="rgba(0,0,0,0.35)" />
-        <rect x={cx - 7} y={by + 2} width={4} height={4} fill="rgba(0,0,0,0.35)" />
-        {/* Town name */}
-        {townName && (
+      <g key={`town-${key}`} style={{ pointerEvents: 'none' }}>
+        {garrisoned ? (
           <>
-            <text
-              x={cx} y={cy + 16}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize="10"
-              fontWeight="bold"
-              fontFamily="sans-serif"
-              stroke="rgba(0,0,0,0.7)"
-              strokeWidth={3}
-              strokeLinejoin="round"
-              paintOrder="stroke"
-              fill={theme.town.color}
-            >
-              {townName}
-            </text>
+            {/* Garrison ring */}
+            <circle
+              cx={cx} cy={cy - 3} r={21}
+              fill="none"
+              stroke={theme.garrison.ringColor}
+              strokeWidth={theme.garrison.ringWidth}
+              strokeDasharray={theme.garrison.ringDash}
+              opacity={0.85}
+            />
+            {/* Castle body */}
+            <rect x={bx} y={by} width={bw} height={bh} fill={theme.town.color} opacity={0.92} />
+            {/* Battlement wall */}
+            <rect x={cx - 11} y={cy - 8} width={22} height={5} fill={theme.town.color} opacity={0.92} />
+            {/* Merlons (crenellations) */}
+            <rect x={cx - 10} y={cy - 14} width={5} height={6} fill={theme.town.color} opacity={0.92} />
+            <rect x={cx - 3}  y={cy - 14} width={5} height={6} fill={theme.town.color} opacity={0.92} />
+            <rect x={cx + 4}  y={cy - 14} width={5} height={6} fill={theme.town.color} opacity={0.92} />
+            {/* Door */}
+            <rect x={cx - 3} y={by + bh - 7} width={6} height={7} fill={theme.town.door} />
+            {/* Windows */}
+            <rect x={cx + 3} y={by + 2} width={4} height={4} fill={theme.town.window} />
+            <rect x={cx - 7} y={by + 2} width={4} height={4} fill={theme.town.window} />
+            {/* Army name above — only when exactly 1 army */}
+            {armies.length === 1 && armies[0].name && (
+              <text
+                x={cx} y={cy - 24}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize="9"
+                fontWeight="bold"
+                fontFamily="sans-serif"
+                stroke={theme.garrison.nameShadow}
+                strokeWidth={3}
+                strokeLinejoin="round"
+                paintOrder="stroke"
+                fill={theme.garrison.nameColor}
+              >
+                {armies[0].name}
+              </text>
+            )}
           </>
+        ) : (
+          <>
+            {/* Standard house — roof */}
+            <polygon
+              points={`${cx},${cy - 16} ${cx - 12},${cy - 3} ${cx + 12},${cy - 3}`}
+              fill={theme.town.color}
+              opacity={0.92}
+            />
+            {/* Body */}
+            <rect x={bx} y={by} width={bw} height={bh} fill={theme.town.color} opacity={0.92} />
+            {/* Door */}
+            <rect x={cx - 3} y={by + bh - 7} width={6} height={7} fill={theme.town.door} />
+            {/* Windows */}
+            <rect x={cx + 3} y={by + 2} width={4} height={4} fill={theme.town.window} />
+            <rect x={cx - 7} y={by + 2} width={4} height={4} fill={theme.town.window} />
+          </>
+        )}
+        {/* Town name below */}
+        {townName && (
+          <text
+            x={cx} y={cy + 16}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="10"
+            fontWeight="bold"
+            fontFamily="sans-serif"
+            stroke={theme.town.labelShadow}
+            strokeWidth={3}
+            strokeLinejoin="round"
+            paintOrder="stroke"
+            fill={theme.town.labelColor}
+          >
+            {townName}
+          </text>
         )}
       </g>,
     ];
@@ -225,9 +273,9 @@ const renderPorts = (tiles) =>
       // Perpendicular unit vector (along the plank)
       const px = -ny, py = nx;
 
-      const plankHalf = 10;
-      const pilingLen = 13;
-      const color = '#7a5c1e';
+      const plankHalf = theme.port.plankHalf;
+      const pilingLen = theme.port.pilingLen;
+      const color = theme.port.color;
 
       const pilingOffsets = [-plankHalf * 0.65, 0, plankHalf * 0.65];
 
@@ -241,7 +289,7 @@ const renderPorts = (tiles) =>
               x2={em.x + px * offset + nx * pilingLen}
               y2={em.y + py * offset + ny * pilingLen}
               stroke={color}
-              strokeWidth={2.5}
+              strokeWidth={theme.port.pilingWidth}
               strokeLinecap="round"
             />
           ))}
@@ -252,7 +300,7 @@ const renderPorts = (tiles) =>
             x2={em.x - px * plankHalf}
             y2={em.y - py * plankHalf}
             stroke={color}
-            strokeWidth={4}
+            strokeWidth={theme.port.plankWidth}
             strokeLinecap="round"
           />
         </g>,
@@ -316,15 +364,13 @@ const WaterCap = React.memo(({ q, r, terrain }) => {
 });
 
 
-const WaterOverlay = React.memo(({ tiles }) => {
-  // Each render sub-section is memoized: only recomputes when tiles change,
-  // not on viewport pan/zoom (tiles reference is stable during those).
-  const waterEdgesLake  = useMemo(() => renderWaterEdges(tiles, 'lake'),            [tiles]);
-  const waterEdgesOcean = useMemo(() => renderWaterEdges(tiles, 'ocean'),           [tiles]);
+const WaterOverlay = React.memo(({ tiles, armiesByTile }) => {
+  const waterEdgesLake  = useMemo(() => renderWaterEdges(tiles, 'lake'),                 [tiles]);
+  const waterEdgesOcean = useMemo(() => renderWaterEdges(tiles, 'ocean'),                [tiles]);
   const riverPaths      = useMemo(() => renderFlagPaths(tiles, 'hasRiver', theme.river), [tiles]);
   const roadPaths       = useMemo(() => renderFlagPaths(tiles, 'hasRoad',  theme.road),  [tiles]);
-  const towns           = useMemo(() => renderTowns(tiles),                          [tiles]);
-  const ports           = useMemo(() => renderPorts(tiles),                          [tiles]);
+  const towns           = useMemo(() => renderTowns(tiles, armiesByTile ?? {}),          [tiles, armiesByTile]);
+  const ports           = useMemo(() => renderPorts(tiles),                              [tiles]);
   const waterTiles      = useMemo(
     () => Object.values(tiles).filter(({ terrain }) => DEEP_WATER.has(terrain)),
     [tiles],

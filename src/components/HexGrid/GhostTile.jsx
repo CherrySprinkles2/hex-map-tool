@@ -2,7 +2,8 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useDispatch, useStore } from 'react-redux';
 import { hexPointsString, axialToPixel, toKey, getNeighbors } from './HexUtils';
 import { addTile } from '../../features/tiles/tilesSlice';
-import { selectTile } from '../../features/ui/uiSlice';
+import { selectTile, setPlacingArmy, stopMovingArmy } from '../../features/ui/uiSlice';
+import { addArmy, moveArmy } from '../../features/armies/armiesSlice';
 import { theme } from '../../styles/theme';
 
 // Infer the best terrain for a new tile at (q, r) based on existing neighbours.
@@ -50,8 +51,26 @@ const GhostTile = React.memo(({ q, r }) => {
 
   const handleClick = useCallback((e) => {
     e.stopPropagation();
-    const tiles = store.getState().tiles;
+    const state = store.getState();
+    const { movingArmyId, placingArmy } = state.ui;
+    const tiles = state.tiles;
     const terrain = inferTerrain(q, r, tiles);
+
+    if (movingArmyId) {
+      // Create the tile (so the army has a valid tile to stand on) then move
+      dispatch(addTile({ q, r, terrain }));
+      dispatch(moveArmy({ id: movingArmyId, q, r }));
+      dispatch(stopMovingArmy());
+      return;
+    }
+
+    if (placingArmy) {
+      dispatch(addTile({ q, r, terrain }));
+      dispatch(addArmy({ q, r }));
+      dispatch(setPlacingArmy(false));
+      return;
+    }
+
     dispatch(addTile({ q, r, terrain }));
     dispatch(selectTile(toKey(q, r)));
   }, [q, r, store, dispatch]);

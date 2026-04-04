@@ -2,7 +2,8 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { updateTile, deleteTile, toggleTileFlag, setTownName, setTileNotes, blockConnection, unblockConnection } from '../../features/tiles/tilesSlice';
-import { deselectTile } from '../../features/ui/uiSlice';
+import { addArmy } from '../../features/armies/armiesSlice';
+import { deselectTile, selectArmy } from '../../features/ui/uiSlice';
 import { theme } from '../../styles/theme';
 import { NEIGHBOR_DIRS, toKey } from '../HexGrid/HexUtils';
 
@@ -144,6 +145,56 @@ const Divider = styled.hr`
   border-top: 1px solid ${({ theme }) => theme.panelBorder};
 `;
 
+const ArmyList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const ArmyRow = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(212, 160, 23, 0.35);
+  background: rgba(212, 160, 23, 0.06);
+  color: ${({ theme }) => theme.text};
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-size: 0.85rem;
+  transition: background 0.15s, border-color 0.15s;
+  &:hover {
+    background: rgba(212, 160, 23, 0.15);
+    border-color: rgba(212, 160, 23, 0.6);
+  }
+`;
+
+const ArmyRowName = styled.span`
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const AddArmyBtn = styled.button`
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+  color: ${({ theme }) => theme.text};
+  cursor: pointer;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: background 0.15s, border-color 0.15s;
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+`;
+
 const DeleteBtn = styled.button`
   margin-top: auto;
   padding: 10px;
@@ -253,6 +304,11 @@ const TileEditPanel = () => {
   const selectedKey = useSelector((state) => state.ui.selectedTile);
   const tile = useSelector((state) => selectedKey ? state.tiles[selectedKey] : null);
   const allTiles = useSelector((state) => state.tiles);
+  const tileArmies = useSelector((state) =>
+    selectedKey
+      ? Object.values(state.armies).filter((a) => toKey(a.q, a.r) === selectedKey)
+      : []
+  );
 
   const handleTerrainChange = (terrainType) => {
     if (!tile) return;
@@ -404,6 +460,25 @@ const TileEditPanel = () => {
           placeholder="Add notes about this tile…"
         />
       </div>
+
+      {tileArmies.length > 0 && (
+        <div>
+          <SectionLabel theme={theme}>Armies on this tile</SectionLabel>
+          <ArmyList>
+            {tileArmies.map((army) => (
+              <ArmyRow key={army.id} theme={theme} onClick={() => dispatch(selectArmy(army.id))}>
+                <span>⚔️</span>
+                <ArmyRowName>{army.name || 'Unnamed Army'}</ArmyRowName>
+                <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>Select →</span>
+              </ArmyRow>
+            ))}
+          </ArmyList>
+        </div>
+      )}
+
+      <AddArmyBtn onClick={() => tile && dispatch(addArmy({ q: tile.q, r: tile.r }))} theme={theme}>
+        ⚔ Add Army to Tile
+      </AddArmyBtn>
 
       <DeleteBtn onClick={handleDelete} theme={theme}>
         🗑 Delete Tile

@@ -6,6 +6,7 @@ import { theme } from './styles/theme';
 import GlobalStyles from './styles/GlobalStyles';
 import HexGrid from './components/HexGrid/HexGrid';
 import TileEditPanel from './components/TileEditPanel/TileEditPanel';
+import ArmyPanel from './components/ArmyPanel/ArmyPanel';
 import Toolbar from './components/Toolbar/Toolbar';
 import HomeScreen from './components/HomeScreen/HomeScreen';
 import useLocalStorageSync from './hooks/useLocalStorageSync';
@@ -31,6 +32,7 @@ const EditorInner = () => {
     <AppShell>
       <Toolbar />
       <CanvasArea>
+        <ArmyPanel />
         <HexGrid />
         <TileEditPanel />
       </CanvasArea>

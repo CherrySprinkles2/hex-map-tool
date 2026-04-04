@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { store } from '../app/store';
 import { importTiles } from '../features/tiles/tilesSlice';
+import { importArmies } from '../features/armies/armiesSlice';
 import { loadMap } from '../features/currentMap/currentMapSlice';
-import { saveMapTiles, loadMapTiles, createMap } from '../utils/mapsStorage';
+import { saveMapTiles, loadMapTiles, saveMapArmies, loadMapArmies, createMap } from '../utils/mapsStorage';
 
 // Load tiles for the current map on mount, then auto-save on every store change.
 const useLocalStorageSync = () => {
@@ -19,7 +20,7 @@ const useLocalStorageSync = () => {
     if (!mapId) return;
 
     if (justSavedPendingRef.current) {
-      // Tiles are already correct in Redux; skip reloading from localStorage.
+      // Tiles and armies are already correct in Redux; skip reloading from localStorage.
       justSavedPendingRef.current = false;
     } else {
       const saved = loadMapTiles(mapId);
@@ -30,16 +31,19 @@ const useLocalStorageSync = () => {
           // corrupted — start fresh
         }
       } else {
-        // New map: reset to empty tiles
         dispatch(importTiles({}));
       }
+
+      const savedArmies = loadMapArmies(mapId);
+      dispatch(importArmies(savedArmies ?? {}));
     }
 
     const unsubscribe = store.subscribe(() => {
       const currentId = store.getState().currentMap.id;
       if (!currentId) return;
-      const tiles = store.getState().tiles;
+      const { tiles, armies } = store.getState();
       saveMapTiles(currentId, tiles);
+      saveMapArmies(currentId, armies);
     });
 
     return unsubscribe;
@@ -53,21 +57,22 @@ const useLocalStorageSync = () => {
   useEffect(() => {
     if (mapId !== null) return;
 
-    const cleanTiles = store.getState().tiles;
+    const cleanTiles  = store.getState().tiles;
+    const cleanArmies = store.getState().armies;
 
     let unsubscribe;
     unsubscribe = store.subscribe(() => {
       const state = store.getState();
-      if (state.tiles === cleanTiles) return;           // no tile change yet
-      if (state.currentMap.name === '') return;         // navigating away — don't save
+      if (state.tiles === cleanTiles && state.armies === cleanArmies) return;
+      if (state.currentMap.name === '') return;
 
-      unsubscribe(); // stop watching before dispatching to avoid re-entry
+      unsubscribe();
       justSavedPendingRef.current = true;
       const name = state.currentMap.name;
       const map = createMap(name);
       saveMapTiles(map.id, state.tiles);
+      saveMapArmies(map.id, state.armies);
       dispatch(loadMap({ id: map.id, name }));
-      // Effect 1 re-runs with the new id and takes over auto-saving from here.
     });
 
     return () => unsubscribe();

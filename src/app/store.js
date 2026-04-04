@@ -3,6 +3,7 @@ import tilesReducer from '../features/tiles/tilesSlice';
 import viewportReducer from '../features/viewport/viewportSlice';
 import uiReducer from '../features/ui/uiSlice';
 import currentMapReducer from '../features/currentMap/currentMapSlice';
+import armiesReducer from '../features/armies/armiesSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,5 +11,6 @@ export const store = configureStore({
     viewport: viewportReducer,
     ui: uiReducer,
     currentMap: currentMapReducer,
+    armies: armiesReducer,
   },
 });

@@ -2,11 +2,12 @@ import React, { useRef, useCallback, useMemo, useLayoutEffect } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import styled from 'styled-components';
 import { setViewport, MIN_SCALE, MAX_SCALE } from '../../features/viewport/viewportSlice';
-import { deselectTile } from '../../features/ui/uiSlice';
+import { deselectTile, deselectArmy, setPlacingArmy, stopMovingArmy } from '../../features/ui/uiSlice';
 import { getNeighbors, toKey } from './HexUtils';
 import HexTile from './HexTile';
 import GhostTile from './GhostTile';
 import WaterOverlay from './WaterOverlay';
+import ArmyToken from './ArmyToken';
 import TerrainPatterns from './TerrainPatterns';
 
 const SvgCanvas = styled.svg`
@@ -21,6 +22,21 @@ const HexGrid = () => {
   const dispatch = useDispatch();
   const store = useStore();
   const tiles = useSelector((state) => state.tiles);
+
+  // Armies — only subscribed for rendering tokens; count is typically small
+  const armies      = useSelector((state) => state.armies);
+  const placingArmy = useSelector((state) => state.ui.placingArmy);
+
+  // Group armies by tile key for stacking offset calculations
+  const armiesByTile = useMemo(() => {
+    const grouped = {};
+    Object.values(armies).forEach((army) => {
+      const key = toKey(army.q, army.r);
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(army);
+    });
+    return grouped;
+  }, [armies]);
 
   // ─── Viewport: managed imperatively to bypass React on every pan/zoom ──────
   // viewportRef is the live source of truth during interactions.
@@ -110,8 +126,12 @@ const HexGrid = () => {
   }, [commitViewport]);
 
   const handleSvgClick = useCallback(() => {
+    const ui = store.getState().ui;
     dispatch(deselectTile());
-  }, [dispatch]);
+    if (ui.selectedArmyId) dispatch(deselectArmy());
+    if (ui.placingArmy) dispatch(setPlacingArmy(false));
+    if (ui.movingArmyId) dispatch(stopMovingArmy());
+  }, [dispatch, store]);
 
   const handleTouchStart = useCallback((e) => {
     if (e.touches.length === 1) {
@@ -191,6 +211,7 @@ const HexGrid = () => {
 
   return (
     <SvgCanvas
+      style={{ cursor: placingArmy ? 'crosshair' : undefined }}
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -218,7 +239,20 @@ const HexGrid = () => {
         ))}
 
         {/* Water connectivity overlay */}
-        <WaterOverlay tiles={tiles} />
+        <WaterOverlay tiles={tiles} armiesByTile={armiesByTile} />
+
+        {/* Army tokens — only on non-town tiles; towns show garrison visual instead */}
+        {Object.entries(armiesByTile).map(([tileKey, tileArmies]) => {
+          if (tiles[tileKey]?.hasTown) return null;
+          return tileArmies.map((army, idx) => (
+            <ArmyToken
+              key={army.id}
+              army={army}
+              tileIndex={idx}
+              total={tileArmies.length}
+            />
+          ));
+        })}
       </g>
     </SvgCanvas>
   );

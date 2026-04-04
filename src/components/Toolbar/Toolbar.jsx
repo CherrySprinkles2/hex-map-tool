@@ -2,7 +2,8 @@ import React, { useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { importTiles } from '../../features/tiles/tilesSlice';
-import { deselectTile, setScreen } from '../../features/ui/uiSlice';
+import { importArmies } from '../../features/armies/armiesSlice';
+import { deselectTile, deselectArmy, setScreen } from '../../features/ui/uiSlice';
 import { renameCurrentMap, unloadMap } from '../../features/currentMap/currentMapSlice';
 import { renameMap } from '../../utils/mapsStorage';
 import { theme } from '../../styles/theme';
@@ -108,8 +109,10 @@ const Toolbar = () => {
 
   const handleBack = () => {
     dispatch(deselectTile());
+    dispatch(deselectArmy());
     dispatch(unloadMap());
     dispatch(importTiles({}));
+    dispatch(importArmies({}));
     dispatch(setScreen('home'));
   };
 

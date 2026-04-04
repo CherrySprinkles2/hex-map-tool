@@ -4,9 +4,10 @@
 // Tiles key:   hex-map-tool-map-{id}  →  tiles JSON object (same shape as before)
 // Legacy key:  hex-map-tool-tiles  →  migrated on first access
 
-const INDEX_KEY = 'hex-map-tool-index';
-const TILES_KEY = (id) => `hex-map-tool-map-${id}`;
-const LEGACY_KEY = 'hex-map-tool-tiles';
+const INDEX_KEY   = 'hex-map-tool-index';
+const TILES_KEY   = (id) => `hex-map-tool-map-${id}`;
+const ARMIES_KEY  = (id) => `hex-map-tool-armies-${id}`;
+const LEGACY_KEY  = 'hex-map-tool-tiles';
 
 const generateId = () => `map-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
@@ -66,6 +67,7 @@ export const renameMap = (id, name) => {
 export const deleteMap = (id) => {
   writeIndex(getAllMaps().filter((m) => m.id !== id));
   localStorage.removeItem(TILES_KEY(id));
+  localStorage.removeItem(ARMIES_KEY(id));
 };
 
 export const touchMap = (id) => {
@@ -89,4 +91,19 @@ export const loadMapTiles = (id) => {
 export const saveMapTiles = (id, tiles) => {
   localStorage.setItem(TILES_KEY(id), JSON.stringify(tiles));
   touchMap(id);
+};
+
+// ── Armies I/O ────────────────────────────────────────────────────────────────
+
+export const loadMapArmies = (id) => {
+  try {
+    const raw = localStorage.getItem(ARMIES_KEY(id));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const saveMapArmies = (id, armies) => {
+  localStorage.setItem(ARMIES_KEY(id), JSON.stringify(armies));
 };

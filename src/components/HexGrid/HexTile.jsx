@@ -1,12 +1,14 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import { hexPointsString, axialToPixel, HEX_SIZE, toKey } from './HexUtils';
-import { selectTile, deselectTile } from '../../features/ui/uiSlice';
+import { selectTile, deselectTile, setPlacingArmy, stopMovingArmy } from '../../features/ui/uiSlice';
 import { deleteTile } from '../../features/tiles/tilesSlice';
+import { addArmy, moveArmy } from '../../features/armies/armiesSlice';
 import { theme } from '../../styles/theme';
 
 const HexTile = React.memo(({ q, r }) => {
   const dispatch = useDispatch();
+  const store = useStore();
   const [hovered, setHovered] = useState(false);
 
   // Stable key for this tile — q and r never change for a given instance
@@ -25,9 +27,23 @@ const HexTile = React.memo(({ q, r }) => {
 
   const handleClick = useCallback((e) => {
     e.stopPropagation();
+    const ui = store.getState().ui;
+
+    if (ui.movingArmyId) {
+      dispatch(moveArmy({ id: ui.movingArmyId, q, r }));
+      dispatch(stopMovingArmy());
+      return;
+    }
+
+    if (ui.placingArmy) {
+      dispatch(addArmy({ q, r }));
+      dispatch(setPlacingArmy(false));
+      return;
+    }
+
     if (isSelected) dispatch(deselectTile());
     else dispatch(selectTile(key));
-  }, [isSelected, dispatch, key]);
+  }, [isSelected, dispatch, key, q, r, store]);
 
   const handleContextMenu = useCallback((e) => {
     e.preventDefault();

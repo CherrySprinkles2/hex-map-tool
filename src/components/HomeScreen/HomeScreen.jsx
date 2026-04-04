@@ -237,9 +237,9 @@ const HomeScreen = () => {
         <Title theme={theme}>⬡ Hex Map Tool</Title>
         <Subtitle theme={theme}>Select a map to edit, or create a new one.</Subtitle>
         <Description theme={theme}>
-          Hex Map Tool is a browser-based hex grid editor for designing fantasy maps, game worlds,
-          and strategic layouts. Place terrain, trace rivers and roads, found towns, and mark ports —
-          all rendered live as SVG. Maps are saved automatically in your browser.
+          Design worlds and command armies. Build hex maps for wargames, campaigns, and strategic
+          planning — place terrain, found towns, deploy forces, and trace the lines of battle.
+          All rendered live as SVG, saved automatically in your browser.
         </Description>
         <Notice theme={theme}>
           <span>⚠️</span>
