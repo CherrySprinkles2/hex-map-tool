@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { axialToPixel, edgeMidpoint, hexCorners, hexPointsString, HEX_SIZE, NEIGHBOR_DIRS, toKey } from './HexUtils';
+import { axialToPixel, hexCorners, hexPointsString, HEX_SIZE, NEIGHBOR_DIRS, toKey, DIR_TO_EDGE_CORNER } from './HexUtils';
 import { theme } from '../../styles/theme';
 import { selectTile, deselectTile } from '../../features/ui/uiSlice';
 import { deleteTile } from '../../features/tiles/tilesSlice';
@@ -64,8 +64,6 @@ const renderFlagPaths = (tiles, flag, style) =>
       })
       .filter((i) => i !== null);
 
-    const midpoints = connectedEdges.map((i) => edgeMidpoint(cx, cy, i));
-
     // Isolated tile: show pool dot (suppressed on deep water tiles)
     if (connectedEdges.length === 0) {
       if (isDeepWater) return [];
@@ -80,6 +78,15 @@ const renderFlagPaths = (tiles, flag, style) =>
         />,
       ];
     }
+
+    // Compute corners once for this tile, then derive all needed edge midpoints
+    const corners = hexCorners(cx, cy);
+    const midpoints = connectedEdges.map((i) => {
+      const ci = DIR_TO_EDGE_CORNER[i];
+      const a = corners[ci];
+      const b = corners[(ci + 1) % 6];
+      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    });
 
     const paths = [];
 
@@ -109,9 +116,6 @@ const renderFlagPaths = (tiles, flag, style) =>
       />
     ));
   });
-
-// Maps NEIGHBOR_DIRS index → starting corner of the shared edge (same logic as HexUtils DIR_TO_EDGE_CORNER)
-const DIR_TO_EDGE_CORNER = [0, 5, 4, 3, 2, 1];
 
 // Renders merged edge outlines for a given terrain type.
 // Draws a border on each edge where the neighbour is NOT the same terrain type.
@@ -200,6 +204,8 @@ const renderPorts = (tiles) =>
     const { q, r } = tile;
     const myKey = toKey(q, r);
     const { x: cx, y: cy } = axialToPixel(q, r);
+    // Compute corners once so each edgeMidpoint below reuses them
+    const corners = hexCorners(cx, cy);
 
     return NEIGHBOR_DIRS.flatMap((dir, i) => {
       const neighbor = tiles[toKey(q + dir.q, r + dir.r)];
@@ -207,7 +213,11 @@ const renderPorts = (tiles) =>
       // Skip if the town tile has blocked the port on this water tile
       if ((neighbor.portBlocked || []).includes(myKey)) return [];
 
-      const em = edgeMidpoint(cx, cy, i);
+      const ci = DIR_TO_EDGE_CORNER[i];
+      const a = corners[ci];
+      const b = corners[(ci + 1) % 6];
+      const em = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+
       // Unit vector pointing inward (edge → tile center)
       const dx = cx - em.x, dy = cy - em.y;
       const len = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -251,73 +261,89 @@ const renderPorts = (tiles) =>
   });
 
 
-const WaterOverlay = ({ tiles }) => {
+// WaterCap: renders the fill for a single water tile on top of river/road paths.
+// Extracted as its own component so selection and hover state are local — only this
+// tile re-renders on selection change rather than the entire WaterOverlay.
+const WaterCap = React.memo(({ q, r, terrain }) => {
   const dispatch = useDispatch();
-  const selectedTile = useSelector((state) => state.ui.selectedTile);
-  const [hoveredTile, setHoveredTile] = React.useState(null);
+  const key = useMemo(() => toKey(q, r), [q, r]);
+  const isSelected = useSelector((state) => state.ui.selectedTile === key);
+  const [hovered, setHovered] = useState(false);
+
+  const { x, y } = useMemo(() => axialToPixel(q, r), [q, r]);
+  const pts = useMemo(() => hexPointsString(x, y), [x, y]);
+  const selectionPts = useMemo(() => hexPointsString(x, y, HEX_SIZE - 5), [x, y]);
+
+  const handleClick = useCallback((e) => {
+    e.stopPropagation();
+    if (isSelected) dispatch(deselectTile());
+    else dispatch(selectTile(key));
+  }, [isSelected, dispatch, key]);
+
+  const handleContextMenu = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isSelected) dispatch(deselectTile());
+    dispatch(deleteTile({ q, r }));
+  }, [isSelected, dispatch, q, r]);
+
   return (
-  <g>
-    {renderWaterEdges(tiles, 'lake')}
-    {renderWaterEdges(tiles, 'ocean')}
-    {renderFlagPaths(tiles, 'hasRiver', theme.river)}
-    {renderFlagPaths(tiles, 'hasRoad', theme.road)}
-    {renderTowns(tiles)}
-    {/* Water caps: re-draw lake/ocean fill on top of rivers/roads so water texture covers them */}
-    {Object.values(tiles).map(({ q, r, terrain }) => {
-      if (!DEEP_WATER.has(terrain)) return null;
-      const { x, y } = axialToPixel(q, r);
-      const pts = hexPointsString(x, y);
-      const key = toKey(q, r);
-      const isSelected = selectedTile === key;
-      const isHovered = hoveredTile === key;
-
-      const handleClick = (e) => {
-        e.stopPropagation();
-        if (isSelected) {
-          dispatch(deselectTile());
-        } else {
-          dispatch(selectTile(key));
-        }
-      };
-
-      const handleContextMenu = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (isSelected) dispatch(deselectTile());
-        dispatch(deleteTile({ q, r }));
-      };
-
-      return (
-        <g
-          key={`water-cap-${key}`}
-          onClick={handleClick}
-          onContextMenu={handleContextMenu}
-          onMouseEnter={() => setHoveredTile(key)}
-          onMouseLeave={() => setHoveredTile(null)}
-          style={{ cursor: 'pointer' }}
-        >
-          <polygon points={pts} fill={theme.terrain[terrain].color} stroke="none" />
-          <polygon points={pts} fill={`url(#pattern-${terrain})`} stroke="none" style={{ pointerEvents: 'none' }} />
-          {isHovered && (
-            <polygon points={pts} fill="white" opacity={0.12} stroke="none" style={{ pointerEvents: 'none' }} />
-          )}
-          {isSelected && (
-            <polygon
-              points={hexPointsString(x, y, HEX_SIZE - 5)}
-              fill="none"
-              stroke={theme.selectedStroke}
-              strokeWidth={2.5}
-              strokeDasharray="6 3"
-              strokeLinecap="round"
-              style={{ animation: 'marchingAnts 1s linear infinite', pointerEvents: 'none' }}
-            />
-          )}
-        </g>
-      );
-    })}
-    {renderPorts(tiles)}
-  </g>
+    <g
+      onClick={handleClick}
+      onContextMenu={handleContextMenu}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ cursor: 'pointer' }}
+    >
+      <polygon points={pts} fill={theme.terrain[terrain].color} stroke="none" />
+      <polygon points={pts} fill={`url(#pattern-${terrain})`} stroke="none" style={{ pointerEvents: 'none' }} />
+      {hovered && (
+        <polygon points={pts} fill="white" opacity={0.12} stroke="none" style={{ pointerEvents: 'none' }} />
+      )}
+      {isSelected && (
+        <polygon
+          points={selectionPts}
+          fill="none"
+          stroke={theme.selectedStroke}
+          strokeWidth={2.5}
+          strokeDasharray="6 3"
+          strokeLinecap="round"
+          style={{ animation: 'marchingAnts 1s linear infinite', pointerEvents: 'none' }}
+        />
+      )}
+    </g>
   );
-};
+});
+
+
+const WaterOverlay = React.memo(({ tiles }) => {
+  // Each render sub-section is memoized: only recomputes when tiles change,
+  // not on viewport pan/zoom (tiles reference is stable during those).
+  const waterEdgesLake  = useMemo(() => renderWaterEdges(tiles, 'lake'),            [tiles]);
+  const waterEdgesOcean = useMemo(() => renderWaterEdges(tiles, 'ocean'),           [tiles]);
+  const riverPaths      = useMemo(() => renderFlagPaths(tiles, 'hasRiver', theme.river), [tiles]);
+  const roadPaths       = useMemo(() => renderFlagPaths(tiles, 'hasRoad',  theme.road),  [tiles]);
+  const towns           = useMemo(() => renderTowns(tiles),                          [tiles]);
+  const ports           = useMemo(() => renderPorts(tiles),                          [tiles]);
+  const waterTiles      = useMemo(
+    () => Object.values(tiles).filter(({ terrain }) => DEEP_WATER.has(terrain)),
+    [tiles],
+  );
+
+  return (
+    <g>
+      {waterEdgesLake}
+      {waterEdgesOcean}
+      {riverPaths}
+      {roadPaths}
+      {towns}
+      {/* Water caps: re-draw lake/ocean fill on top of rivers/roads so water texture covers them */}
+      {waterTiles.map(({ q, r, terrain }) => (
+        <WaterCap key={`water-cap-${toKey(q, r)}`} q={q} r={r} terrain={terrain} />
+      ))}
+      {ports}
+    </g>
+  );
+});
 
 export default WaterOverlay;

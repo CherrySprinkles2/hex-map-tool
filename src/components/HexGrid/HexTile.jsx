@@ -1,38 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { hexPointsString, axialToPixel, HEX_SIZE } from './HexUtils';
+import { hexPointsString, axialToPixel, HEX_SIZE, toKey } from './HexUtils';
 import { selectTile, deselectTile } from '../../features/ui/uiSlice';
 import { deleteTile } from '../../features/tiles/tilesSlice';
-import { toKey } from './HexUtils';
 import { theme } from '../../styles/theme';
 
-const HexTile = ({ q, r }) => {
+const HexTile = React.memo(({ q, r }) => {
   const dispatch = useDispatch();
   const [hovered, setHovered] = useState(false);
-  const selectedTile = useSelector((state) => state.ui.selectedTile);
-  const terrain = useSelector((state) => state.tiles[toKey(q, r)]?.terrain ?? 'grass');
 
-  const { x, y } = axialToPixel(q, r);
-  const key = toKey(q, r);
-  const isSelected = selectedTile === key;
+  // Stable key for this tile — q and r never change for a given instance
+  const key = useMemo(() => toKey(q, r), [q, r]);
+
+  // Tile-specific selectors: only this tile re-renders when its selection or terrain changes
+  const isSelected = useSelector((state) => state.ui.selectedTile === key);
+  const terrain = useSelector((state) => state.tiles[key]?.terrain ?? 'grass');
+
   const terrainData = theme.terrain[terrain] ?? theme.terrain.grass;
-  const points = hexPointsString(x, y);
 
-  const handleClick = (e) => {
+  // Geometry is fixed for a given (q, r) — compute once
+  const { x, y } = useMemo(() => axialToPixel(q, r), [q, r]);
+  const points = useMemo(() => hexPointsString(x, y), [x, y]);
+  const selectionPoints = useMemo(() => hexPointsString(x, y, HEX_SIZE - 5), [x, y]);
+
+  const handleClick = useCallback((e) => {
     e.stopPropagation();
-    if (isSelected) {
-      dispatch(deselectTile());
-    } else {
-      dispatch(selectTile(key));
-    }
-  };
+    if (isSelected) dispatch(deselectTile());
+    else dispatch(selectTile(key));
+  }, [isSelected, dispatch, key]);
 
-  const handleContextMenu = (e) => {
+  const handleContextMenu = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
     if (isSelected) dispatch(deselectTile());
     dispatch(deleteTile({ q, r }));
-  };
+  }, [isSelected, dispatch, q, r]);
 
   return (
     <g
@@ -59,7 +61,7 @@ const HexTile = ({ q, r }) => {
       {/* Selection ring — inset so it stays inside the tile and isn't overlapped by neighbours */}
       {isSelected && (
         <polygon
-          points={hexPointsString(x, y, HEX_SIZE - 5)}
+          points={selectionPoints}
           fill="none"
           stroke={theme.selectedStroke}
           strokeWidth={2.5}
@@ -80,6 +82,6 @@ const HexTile = ({ q, r }) => {
       )}
     </g>
   );
-};
+});
 
 export default HexTile;

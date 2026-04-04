@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useDispatch, useStore } from 'react-redux';
 import { hexPointsString, axialToPixel, toKey, getNeighbors } from './HexUtils';
 import { addTile } from '../../features/tiles/tilesSlice';
 import { selectTile } from '../../features/ui/uiSlice';
@@ -37,22 +37,28 @@ const inferTerrain = (q, r, tiles) => {
   return tied[0];
 };
 
-const GhostTile = ({ q, r }) => {
+const GhostTile = React.memo(({ q, r }) => {
   const dispatch = useDispatch();
-  const tiles = useSelector((state) => state.tiles);
+  // useStore gives a stable ref to the Redux store; tiles are read only on click,
+  // so GhostTile doesn't subscribe to tile state and won't re-render on tile changes.
+  const store = useStore();
   const [hovered, setHovered] = useState(false);
-  const { x, y } = axialToPixel(q, r);
 
-  const handleClick = (e) => {
+  // Geometry is fixed for a given (q, r) — compute once
+  const { x, y } = useMemo(() => axialToPixel(q, r), [q, r]);
+  const points = useMemo(() => hexPointsString(x, y), [x, y]);
+
+  const handleClick = useCallback((e) => {
     e.stopPropagation();
+    const tiles = store.getState().tiles;
     const terrain = inferTerrain(q, r, tiles);
     dispatch(addTile({ q, r, terrain }));
     dispatch(selectTile(toKey(q, r)));
-  };
+  }, [q, r, store, dispatch]);
 
   return (
     <polygon
-      points={hexPointsString(x, y)}
+      points={points}
       fill={hovered ? 'rgba(255,255,255,0.15)' : theme.ghostFill}
       stroke={hovered ? 'rgba(255,255,255,0.6)' : theme.ghostStroke}
       strokeWidth={hovered ? 2 : 1.5}
@@ -63,6 +69,6 @@ const GhostTile = ({ q, r }) => {
       style={{ cursor: 'pointer', transition: 'fill 0.15s, stroke 0.15s' }}
     />
   );
-};
+});
 
 export default GhostTile;

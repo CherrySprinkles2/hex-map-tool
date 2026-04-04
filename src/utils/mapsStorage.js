@@ -48,9 +48,9 @@ export const migrateFromLegacy = () => {
 
 export const getAllMaps = () => readIndex() ?? [];
 
-export const createMap = () => {
+export const createMap = (name = 'Untitled Map') => {
   const id = generateId();
-  const entry = { id, name: 'Untitled Map', updatedAt: new Date().toISOString() };
+  const entry = { id, name, updatedAt: new Date().toISOString() };
   const index = getAllMaps();
   writeIndex([...index, entry]);
   // Write empty tiles for the new map

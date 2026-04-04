@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
-import { getAllMaps, createMap, deleteMap, loadMapTiles, saveMapTiles } from '../../utils/mapsStorage';
+import { getAllMaps, createMap, deleteMap, loadMapTiles } from '../../utils/mapsStorage';
 import { loadMap } from '../../features/currentMap/currentMapSlice';
 import { importTiles } from '../../features/tiles/tilesSlice';
 import { setScreen } from '../../features/ui/uiSlice';
@@ -216,11 +216,10 @@ const HomeScreen = () => {
   };
 
   const handleOpenExample = (example) => {
-    // Create a user-owned copy of the example map
-    const map = createMap();
-    saveMapTiles(map.id, example.tiles);
+    // Load example tiles into Redux but don't create a localStorage entry yet.
+    // useLocalStorageSync will lazily create a copy on the first real tile change.
     dispatch(importTiles(example.tiles));
-    dispatch(loadMap({ id: map.id, name: `Copy of ${example.name}` }));
+    dispatch(loadMap({ id: null, name: `Copy of ${example.name}` }));
     dispatch(resetViewport());
     dispatch(setScreen('editor'));
   };

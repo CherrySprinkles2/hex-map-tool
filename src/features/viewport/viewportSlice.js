@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-const MIN_SCALE = 0.2;
-const MAX_SCALE = 4;
+export const MIN_SCALE = 0.2;
+export const MAX_SCALE = 4;
 
 const initialState = {
   x: 0,
@@ -43,9 +43,16 @@ const viewportSlice = createSlice({
       state.y = focalY - svgHeight / 2 - wy * newScale;
       state.scale = newScale;
     },
+    // Directly set all three viewport values; used by HexGrid to commit pan/zoom
+    // to Redux after the interaction ends (bypassing React during the hot path).
+    setViewport: (state, { payload: { x, y, scale } }) => {
+      state.x = x;
+      state.y = y;
+      state.scale = scale;
+    },
     resetViewport: () => initialState,
   },
 });
 
-export const { pan, zoom, pinchZoom, resetViewport } = viewportSlice.actions;
+export const { pan, zoom, pinchZoom, setViewport, resetViewport } = viewportSlice.actions;
 export default viewportSlice.reducer;

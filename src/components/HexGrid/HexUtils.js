@@ -2,6 +2,14 @@
 
 export const HEX_SIZE = 50; // radius in pixels (center to corner)
 
+// Pre-computed constants to avoid repeated Math.sqrt calls
+const SQRT3 = Math.sqrt(3);
+const SQRT3_OVER_2 = SQRT3 / 2;
+
+// Pre-computed unit corner cosines and sines (pointy-top, angles 30°, 90°, 150°, 210°, 270°, 330°)
+const UNIT_CORNER_COS = Array.from({ length: 6 }, (_, i) => Math.cos((Math.PI / 180) * (60 * i - 30)));
+const UNIT_CORNER_SIN = Array.from({ length: 6 }, (_, i) => Math.sin((Math.PI / 180) * (60 * i - 30)));
+
 // Encode/decode axial coords to/from a string key
 export const toKey = (q, r) => `${q},${r}`;
 export const fromKey = (key) => {
@@ -19,13 +27,17 @@ export const NEIGHBOR_DIRS = [
   { q: 0,  r: 1  },
 ];
 
+// Maps NEIGHBOR_DIRS index → starting corner index of the shared edge.
+// Exported so WaterOverlay can use the same mapping without duplicating it.
+export const DIR_TO_EDGE_CORNER = [0, 5, 4, 3, 2, 1];
+
 // Returns the 6 neighbour axial coords for a given tile
 export const getNeighbors = (q, r) =>
   NEIGHBOR_DIRS.map((d) => ({ q: q + d.q, r: r + d.r }));
 
 // Axial → pixel (pointy-top), returns { x, y } for the hex center
 export const axialToPixel = (q, r, size = HEX_SIZE) => ({
-  x: size * (Math.sqrt(3) * q + (Math.sqrt(3) / 2) * r),
+  x: size * (SQRT3 * q + SQRT3_OVER_2 * r),
   y: size * (3 / 2) * r,
 });
 
@@ -55,25 +67,16 @@ export const hexRound = (q, r) => {
 
 // Returns the 6 corner pixel positions for a pointy-top hex centered at (cx, cy)
 export const hexCorners = (cx, cy, size = HEX_SIZE) =>
-  Array.from({ length: 6 }, (_, i) => {
-    const angle = (Math.PI / 180) * (60 * i - 30);
-    return {
-      x: cx + size * Math.cos(angle),
-      y: cy + size * Math.sin(angle),
-    };
-  });
+  Array.from({ length: 6 }, (_, i) => ({
+    x: cx + size * UNIT_CORNER_COS[i],
+    y: cy + size * UNIT_CORNER_SIN[i],
+  }));
 
 // Returns a SVG points string for a hex centered at (cx, cy)
 export const hexPointsString = (cx, cy, size = HEX_SIZE) =>
   hexCorners(cx, cy, size)
     .map(({ x, y }) => `${x},${y}`)
     .join(' ');
-
-// Maps NEIGHBOR_DIRS index → the starting corner index of the shared edge.
-// Edge between corners[i] and corners[(i+1)%6] faces outward at angle 60*i°.
-// Neighbour directions (in screen space): 0=right(0°), 1=upper-right(300°),
-// 2=upper-left(240°), 3=left(180°), 4=lower-left(120°), 5=lower-right(60°).
-const DIR_TO_EDGE_CORNER = [0, 5, 4, 3, 2, 1];
 
 // Returns the midpoint pixel of the edge between a tile and one of its neighbours
 // dirIndex: 0–5 corresponding to NEIGHBOR_DIRS
