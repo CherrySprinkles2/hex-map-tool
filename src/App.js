@@ -9,6 +9,7 @@ import TileEditPanel from './components/TileEditPanel/TileEditPanel';
 import ArmyPanel from './components/ArmyPanel/ArmyPanel';
 import Toolbar from './components/Toolbar/Toolbar';
 import HomeScreen from './components/HomeScreen/HomeScreen';
+import FactionsPanel from './components/FactionsPanel/FactionsPanel';
 import useLocalStorageSync from './hooks/useLocalStorageSync';
 import { migrateFromLegacy } from './utils/mapsStorage';
 
@@ -35,6 +36,7 @@ const EditorInner = () => {
         <ArmyPanel />
         <HexGrid />
         <TileEditPanel />
+        <FactionsPanel />
       </CanvasArea>
     </AppShell>
   );

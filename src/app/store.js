@@ -4,6 +4,7 @@ import viewportReducer from '../features/viewport/viewportSlice';
 import uiReducer from '../features/ui/uiSlice';
 import currentMapReducer from '../features/currentMap/currentMapSlice';
 import armiesReducer from '../features/armies/armiesSlice';
+import factionsReducer from '../features/factions/factionsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,5 +13,6 @@ export const store = configureStore({
     ui: uiReducer,
     currentMap: currentMapReducer,
     armies: armiesReducer,
+    factions: factionsReducer,
   },
 });

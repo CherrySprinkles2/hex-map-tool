@@ -8,12 +8,14 @@ const uiSlice = createSlice({
     selectedArmyId: null,
     placingArmy: false,
     movingArmyId: null,
+    factionsOpen: false,
   },
   reducers: {
     selectTile: (state, action) => {
       state.selectedTile = action.payload;
       state.selectedArmyId = null;
       state.movingArmyId = null;
+      state.factionsOpen = false;
     },
     deselectTile: (state) => {
       state.selectedTile = null;
@@ -44,6 +46,15 @@ const uiSlice = createSlice({
     stopMovingArmy: (state) => {
       state.movingArmyId = null;
     },
+    toggleFactionsPanel: (state) => {
+      state.factionsOpen = !state.factionsOpen;
+      if (state.factionsOpen) {
+        state.selectedTile = null;
+      }
+    },
+    closeFactionsPanel: (state) => {
+      state.factionsOpen = false;
+    },
   },
 });
 
@@ -51,5 +62,6 @@ export const {
   selectTile, deselectTile, setScreen,
   selectArmy, deselectArmy, setPlacingArmy,
   startMovingArmy, stopMovingArmy,
+  toggleFactionsPanel, closeFactionsPanel,
 } = uiSlice.actions;
 export default uiSlice.reducer;

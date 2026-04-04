@@ -1,13 +1,16 @@
 // Manages the multi-map index and per-map tile storage in localStorage.
 //
-// Index key:   hex-map-tool-index  →  Array<{ id, name, updatedAt }>
-// Tiles key:   hex-map-tool-map-{id}  →  tiles JSON object (same shape as before)
-// Legacy key:  hex-map-tool-tiles  →  migrated on first access
+// Index key:     hex-map-tool-index          →  Array<{ id, name, updatedAt }>
+// Tiles key:     hex-map-tool-map-{id}       →  tiles JSON object
+// Armies key:    hex-map-tool-armies-{id}    →  armies JSON object
+// Factions key:  hex-map-tool-factions-{id}  →  factions JSON array
+// Legacy key:    hex-map-tool-tiles          →  migrated on first access
 
-const INDEX_KEY   = 'hex-map-tool-index';
-const TILES_KEY   = (id) => `hex-map-tool-map-${id}`;
-const ARMIES_KEY  = (id) => `hex-map-tool-armies-${id}`;
-const LEGACY_KEY  = 'hex-map-tool-tiles';
+const INDEX_KEY    = 'hex-map-tool-index';
+const TILES_KEY    = (id) => `hex-map-tool-map-${id}`;
+const ARMIES_KEY   = (id) => `hex-map-tool-armies-${id}`;
+const FACTIONS_KEY = (id) => `hex-map-tool-factions-${id}`;
+const LEGACY_KEY   = 'hex-map-tool-tiles';
 
 const generateId = () => `map-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
@@ -68,6 +71,7 @@ export const deleteMap = (id) => {
   writeIndex(getAllMaps().filter((m) => m.id !== id));
   localStorage.removeItem(TILES_KEY(id));
   localStorage.removeItem(ARMIES_KEY(id));
+  localStorage.removeItem(FACTIONS_KEY(id));
 };
 
 export const touchMap = (id) => {
@@ -106,4 +110,19 @@ export const loadMapArmies = (id) => {
 
 export const saveMapArmies = (id, armies) => {
   localStorage.setItem(ARMIES_KEY(id), JSON.stringify(armies));
+};
+
+// ── Factions I/O ─────────────────────────────────────────────────────────────
+
+export const loadMapFactions = (id) => {
+  try {
+    const raw = localStorage.getItem(FACTIONS_KEY(id));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const saveMapFactions = (id, factions) => {
+  localStorage.setItem(FACTIONS_KEY(id), JSON.stringify(factions));
 };

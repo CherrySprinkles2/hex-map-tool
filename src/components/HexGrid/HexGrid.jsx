@@ -200,6 +200,11 @@ const HexGrid = () => {
   // ─── Ghost tile keys ─────────────────────────────────────────────────────────
   const ghostKeys = useMemo(() => {
     const set = new Set();
+    if (Object.keys(tiles).length === 0) {
+      // Empty map — show a single ghost at the origin so the user can start placing tiles
+      set.add(toKey(0, 0));
+      return set;
+    }
     Object.values(tiles).forEach(({ q, r }) => {
       getNeighbors(q, r).forEach((n) => {
         const k = toKey(n.q, n.r);

@@ -75,6 +75,22 @@ export const theme = {
     pilingLen:   13,          // how far pilings extend inward
   },
 
+  // ── Faction colour palette ────────────────────────────────────────────────────
+  factionColors: [
+    '#e94560', // crimson
+    '#f5a623', // amber
+    '#f0e040', // gold
+    '#7ec850', // green
+    '#2dc7a0', // teal
+    '#4499cc', // blue
+    '#9b59b6', // purple
+    '#e67e22', // orange
+    '#ec407a', // pink
+    '#80cbc4', // mint
+    '#a1887f', // brown
+    '#90a4ae', // steel
+  ],
+
   // ── Army tokens ───────────────────────────────────────────────────────────────
   army: {
     tokenFill:        'rgba(0,0,0,0.7)',
