@@ -3,35 +3,66 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { importTiles } from '../../features/tiles/tilesSlice';
 import { importArmies } from '../../features/armies/armiesSlice';
-import { deselectTile, deselectArmy, setScreen, toggleFactionsPanel } from '../../features/ui/uiSlice';
+import {
+  deselectTile,
+  deselectArmy,
+  setScreen,
+  toggleFactionsPanel,
+  openShortcuts,
+  closeShortcuts,
+} from '../../features/ui/uiSlice';
 import { renameCurrentMap, unloadMap } from '../../features/currentMap/currentMapSlice';
 import { renameMap } from '../../utils/mapsStorage';
-import { theme } from '../../styles/theme';
 
 const Bar = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 8px 16px;
-  background: ${({ theme }) => theme.panelBackground};
-  border-bottom: 2px solid ${({ theme }) => theme.panelBorder};
-  z-index: 50;
+  background: ${({ theme }) => {
+    return theme.panelBackground;
+  }};
+  border-bottom: 2px solid
+    ${({ theme }) => {
+      return theme.panelBorder;
+    }};
+  z-index: ${({ theme }) => {
+    return theme.zIndex.toolbar;
+  }};
   flex-shrink: 0;
+
+  @media (min-width: 601px) {
+    padding-right: ${({ $rightPanelOpen }) => {
+      return $rightPanelOpen ? '296px' : '16px';
+    }};
+    transition: padding-right 0.25s ease;
+  }
 `;
 
 const BackBtn = styled.button`
   padding: 6px 12px;
   border-radius: 6px;
-  border: 1.5px solid ${({ theme }) => theme.panelBorder};
+  border: 1.5px solid
+    ${({ theme }) => {
+      return theme.panelBorder;
+    }};
   background: transparent;
-  color: ${({ theme }) => theme.textMuted};
+  color: ${({ theme }) => {
+    return theme.textMuted;
+  }};
   font-size: 0.8rem;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   white-space: nowrap;
   &:hover {
-    background: ${({ theme }) => theme.panelBorder};
-    color: ${({ theme }) => theme.text};
+    background: ${({ theme }) => {
+      return theme.panelBorder;
+    }};
+    color: ${({ theme }) => {
+      return theme.text;
+    }};
   }
 `;
 
@@ -39,7 +70,9 @@ const MapNameInput = styled.input`
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: ${({ theme }) => theme.text};
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
   background: transparent;
   border: none;
   border-bottom: 1.5px solid transparent;
@@ -57,23 +90,37 @@ const MapNameInput = styled.input`
     margin-right: auto;
   }
 
-  &:hover, &:focus {
-    border-bottom-color: ${({ theme }) => theme.textMuted};
+  &:hover,
+  &:focus {
+    border-bottom-color: ${({ theme }) => {
+      return theme.textMuted;
+    }};
   }
 `;
 
 const SettingsBtn = styled.button`
   padding: 6px 10px;
   border-radius: 6px;
-  border: 1.5px solid ${({ theme }) => theme.panelBorder};
-  background: ${({ $active }) => ($active ? theme.panelBorder : 'transparent')};
-  color: ${({ theme }) => theme.text};
+  border: 1.5px solid
+    ${({ theme }) => {
+      return theme.panelBorder;
+    }};
+  background: ${({ $active, theme }) => {
+    return $active ? theme.panelBorder : 'transparent';
+  }};
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
   font-size: 1rem;
   cursor: pointer;
   transition: background 0.15s;
   line-height: 1;
   flex-shrink: 0;
-  &:hover { background: ${() => theme.panelBorder}; }
+  &:hover {
+    background: ${({ theme }) => {
+      return theme.panelBorder;
+    }};
+  }
 `;
 
 const DesktopFactionsBtn = styled.button`
@@ -85,36 +132,91 @@ const DesktopFactionsBtn = styled.button`
     gap: 6px;
     padding: 6px 14px;
     border-radius: 6px;
-    border: 1.5px solid ${({ theme }) => theme.panelBorder};
-    background: ${({ $active, theme }) => ($active ? theme.panelBorder : 'transparent')};
-    color: ${({ theme }) => theme.text};
+    border: 1.5px solid
+      ${({ theme }) => {
+        return theme.panelBorder;
+      }};
+    background: ${({ $active, theme }) => {
+      return $active ? theme.panelBorder : 'transparent';
+    }};
+    color: ${({ theme }) => {
+      return theme.text;
+    }};
     font-size: 0.8rem;
     letter-spacing: 0.04em;
     cursor: pointer;
     transition: background 0.15s;
     white-space: nowrap;
     flex-shrink: 0;
-    &:hover { background: ${({ theme }) => theme.panelBorder}; }
+    &:hover {
+      background: ${({ theme }) => {
+        return theme.panelBorder;
+      }};
+    }
+  }
+`;
+
+const ShortcutsBtn = styled.button`
+  display: none;
+
+  @media (min-width: 601px) {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1.5px solid
+      ${({ theme }) => {
+        return theme.panelBorder;
+      }};
+    background: ${({ $active, theme }) => {
+      return $active ? theme.panelBorder : 'transparent';
+    }};
+    color: ${({ theme }) => {
+      return theme.text;
+    }};
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    line-height: 1;
+    flex-shrink: 0;
+    &:hover {
+      background: ${({ theme }) => {
+        return theme.panelBorder;
+      }};
+    }
   }
 `;
 
 // ── Bottom sheet ──────────────────────────────────────────────────────────────
 
 const Backdrop = styled.div`
-  display: ${({ $open }) => ($open ? 'block' : 'none')};
+  display: ${({ $open }) => {
+    return $open ? 'block' : 'none';
+  }};
   position: fixed;
   inset: 0;
-  z-index: 149;
+  z-index: ${({ theme }) => {
+    return theme.zIndex.backdrop;
+  }};
 `;
 
 const Sheet = styled.div`
   position: fixed;
   left: 0;
   right: 0;
-  bottom: ${({ $open }) => ($open ? '0' : '-100%')};
-  z-index: 150;
-  background: ${({ theme }) => theme.panelBackground};
-  border-top: 2px solid ${({ theme }) => theme.panelBorder};
+  bottom: ${({ $open }) => {
+    return $open ? '0' : '-100%';
+  }};
+  z-index: ${({ theme }) => {
+    return theme.zIndex.sheet;
+  }};
+  background: ${({ theme }) => {
+    return theme.panelBackground;
+  }};
+  border-top: 2px solid
+    ${({ theme }) => {
+      return theme.panelBorder;
+    }};
   border-radius: 16px 16px 0 0;
   padding: 8px 0 env(safe-area-inset-bottom, 0);
   transition: bottom 0.25s ease;
@@ -126,14 +228,25 @@ const Sheet = styled.div`
     left: auto;
     right: 16px;
     bottom: auto;
-    top: ${({ $open }) => ($open ? '52px' : '-200%')};
+    top: ${({ $open }) => {
+      return $open ? '52px' : '-200%';
+    }};
     border-radius: 8px;
-    border: 2px solid ${({ theme }) => theme.panelBorder};
+    border: 2px solid
+      ${({ theme }) => {
+        return theme.panelBorder;
+      }};
     min-width: 220px;
     padding: 4px 0;
-    transition: top 0.2s ease, opacity 0.2s ease;
-    opacity: ${({ $open }) => ($open ? 1 : 0)};
-    pointer-events: ${({ $open }) => ($open ? 'auto' : 'none')};
+    transition:
+      top 0.2s ease,
+      opacity 0.2s ease;
+    opacity: ${({ $open }) => {
+      return $open ? 1 : 0;
+    }};
+    pointer-events: ${({ $open }) => {
+      return $open ? 'auto' : 'none';
+    }};
   }
 `;
 
@@ -141,7 +254,9 @@ const SheetHandle = styled.div`
   width: 40px;
   height: 4px;
   border-radius: 2px;
-  background: ${({ theme }) => theme.panelBorder};
+  background: ${({ theme }) => {
+    return theme.panelBorder;
+  }};
   margin: 8px auto 12px;
 
   @media (min-width: 601px) {
@@ -155,21 +270,29 @@ const SheetItem = styled.button`
   gap: 14px;
   width: 100%;
   padding: 14px 24px;
-  background: ${({ $active }) => ($active ? 'rgba(255,255,255,0.06)' : 'transparent')};
+  background: ${({ $active }) => {
+    return $active ? 'rgba(255,255,255,0.06)' : 'transparent';
+  }};
   border: none;
-  color: ${({ theme }) => theme.text};
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
   font-size: 0.9rem;
   text-align: left;
   cursor: pointer;
   transition: background 0.12s;
   letter-spacing: 0.02em;
 
-  &:hover { background: rgba(255,255,255,0.08); }
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
 
   @media (min-width: 601px) {
     padding: 10px 20px;
     font-size: 0.85rem;
-    display: ${({ $desktopHide }) => ($desktopHide ? 'none' : 'flex')};
+    display: ${({ $desktopHide }) => {
+      return $desktopHide ? 'none' : 'flex';
+    }};
   }
 `;
 
@@ -182,14 +305,30 @@ const SheetIcon = styled.span`
 
 const Toolbar = () => {
   const dispatch = useDispatch();
-  const tiles = useSelector((state) => state.tiles);
-  const mapName = useSelector((state) => state.currentMap.name);
-  const mapId = useSelector((state) => state.currentMap.id);
-  const factionsOpen = useSelector((state) => state.ui.factionsOpen);
+  const tiles = useSelector((state) => {
+    return state.tiles;
+  });
+  const mapName = useSelector((state) => {
+    return state.currentMap.name;
+  });
+  const mapId = useSelector((state) => {
+    return state.currentMap.id;
+  });
+  const factionsOpen = useSelector((state) => {
+    return state.ui.factionsOpen;
+  });
+  const mapMode = useSelector((state) => {
+    return state.ui.mapMode;
+  });
+  const showShortcuts = useSelector((state) => {
+    return state.ui.showShortcuts;
+  });
   const fileInput = useRef(null);
   const [localName, setLocalName] = useState('');
   const [editing, setEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const rightPanelOpen = mapMode === 'terrain' || mapMode === 'faction' || showShortcuts;
 
   const displayName = editing ? localName : mapName;
 
@@ -207,7 +346,9 @@ const Toolbar = () => {
 
   const handleNameKeyDown = (e) => {
     if (e.key === 'Enter') e.target.blur();
-    if (e.key === 'Escape') { setEditing(false); }
+    if (e.key === 'Escape') {
+      setEditing(false);
+    }
   };
 
   const handleBack = () => {
@@ -252,47 +393,80 @@ const Toolbar = () => {
     dispatch(toggleFactionsPanel());
   };
 
+  const handleShortcutsToggle = () => {
+    if (showShortcuts) {
+      dispatch(closeShortcuts());
+    } else {
+      dispatch(openShortcuts());
+    }
+  };
+
+  const handleShortcutsMobile = () => {
+    setSettingsOpen(false);
+    dispatch(openShortcuts());
+  };
+
   return (
     <>
-      <Bar theme={theme}>
-        <BackBtn theme={theme} onClick={handleBack}>← Maps</BackBtn>
+      <Bar $rightPanelOpen={rightPanelOpen}>
+        <BackBtn onClick={handleBack}>← Maps</BackBtn>
         <MapNameInput
-          theme={theme}
           value={displayName}
-          onChange={(e) => setLocalName(e.target.value)}
+          onChange={(e) => {
+            return setLocalName(e.target.value);
+          }}
           onFocus={handleNameFocus}
           onBlur={handleNameBlur}
           onKeyDown={handleNameKeyDown}
           maxLength={48}
         />
-        <DesktopFactionsBtn
-          theme={theme}
-          $active={factionsOpen}
-          onClick={handleFactionsClick}
-        >
+        <DesktopFactionsBtn $active={factionsOpen} onClick={handleFactionsClick}>
           ⚑ Factions
         </DesktopFactionsBtn>
+        <ShortcutsBtn
+          $active={showShortcuts}
+          onClick={handleShortcutsToggle}
+          aria-label="Keyboard Shortcuts"
+        >
+          ⌨
+        </ShortcutsBtn>
         <SettingsBtn
-          theme={theme}
           $active={settingsOpen}
-          onClick={() => setSettingsOpen((o) => !o)}
+          onClick={() => {
+            return setSettingsOpen((o) => {
+              return !o;
+            });
+          }}
           aria-label="Settings"
         >
           ⚙
         </SettingsBtn>
       </Bar>
 
-      <Backdrop $open={settingsOpen} onClick={() => setSettingsOpen(false)} />
+      <Backdrop
+        $open={settingsOpen}
+        onClick={() => {
+          return setSettingsOpen(false);
+        }}
+      />
 
-      <Sheet theme={theme} $open={settingsOpen}>
-        <SheetHandle theme={theme} />
-        <SheetItem theme={theme} $active={factionsOpen} $desktopHide onClick={handleFactionsClick}>
+      <Sheet $open={settingsOpen}>
+        <SheetHandle />
+        <SheetItem $active={factionsOpen} $desktopHide onClick={handleFactionsClick}>
           <SheetIcon>⚑</SheetIcon>Factions
         </SheetItem>
-        <SheetItem theme={theme} onClick={handleExport}>
+        <SheetItem $desktopHide onClick={handleShortcutsMobile}>
+          <SheetIcon>⌨</SheetIcon>Keyboard Shortcuts
+        </SheetItem>
+        <SheetItem onClick={handleExport}>
           <SheetIcon>⬇</SheetIcon>Export JSON
         </SheetItem>
-        <SheetItem theme={theme} onClick={() => { setSettingsOpen(false); fileInput.current?.click(); }}>
+        <SheetItem
+          onClick={() => {
+            setSettingsOpen(false);
+            fileInput.current?.click();
+          }}
+        >
           <SheetIcon>⬆</SheetIcon>Import JSON
         </SheetItem>
       </Sheet>
@@ -309,4 +483,3 @@ const Toolbar = () => {
 };
 
 export default Toolbar;
-

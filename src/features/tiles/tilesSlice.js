@@ -1,5 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { toKey } from '../../components/HexGrid/HexUtils';
+import { toKey } from '../../utils/hexUtils';
+import { deleteFaction } from '../factions/factionsSlice';
+import { restoreSnapshot } from '../history/historyActions';
 
 // Maps a feature flag to its corresponding blocked-connections array key
 const BLOCKED_KEY = { hasRiver: 'riverBlocked', hasRoad: 'roadBlocked', hasTown: 'portBlocked' };
@@ -9,7 +11,20 @@ const BLOCKED_KEY = { hasRiver: 'riverBlocked', hasRoad: 'roadBlocked', hasTown:
 const ONE_SIDED = new Set(['hasTown']);
 
 const initialState = {
-  [toKey(0, 0)]: { q: 0, r: 0, terrain: 'grass', hasRiver: false, hasRoad: false, riverBlocked: [], roadBlocked: [], hasTown: false, townName: '', portBlocked: [], notes: '' },
+  [toKey(0, 0)]: {
+    q: 0,
+    r: 0,
+    terrain: 'grass',
+    hasRiver: false,
+    hasRoad: false,
+    riverBlocked: [],
+    roadBlocked: [],
+    hasTown: false,
+    townName: '',
+    portBlocked: [],
+    notes: '',
+    factionId: null,
+  },
 };
 
 const tilesSlice = createSlice({
@@ -17,10 +32,33 @@ const tilesSlice = createSlice({
   initialState,
   reducers: {
     addTile: (state, action) => {
-      const { q, r, terrain = 'grass', hasRiver = false, hasRoad = false, hasTown = false, townName = '', notes = '' } = action.payload;
+      const {
+        q,
+        r,
+        terrain = 'grass',
+        hasRiver = false,
+        hasRoad = false,
+        hasTown = false,
+        townName = '',
+        notes = '',
+        factionId = null,
+      } = action.payload;
       const key = toKey(q, r);
       if (!state[key]) {
-        state[key] = { q, r, terrain, hasRiver, hasRoad, riverBlocked: [], roadBlocked: [], hasTown, townName, portBlocked: [], notes };
+        state[key] = {
+          q,
+          r,
+          terrain,
+          hasRiver,
+          hasRoad,
+          riverBlocked: [],
+          roadBlocked: [],
+          hasTown,
+          townName,
+          portBlocked: [],
+          notes,
+          factionId,
+        };
       }
     },
     updateTile: (state, action) => {
@@ -41,7 +79,9 @@ const tilesSlice = createSlice({
         const blockedKey = BLOCKED_KEY[flag];
         (state[key][blockedKey] || []).forEach((nk) => {
           if (state[nk]?.[blockedKey]) {
-            state[nk][blockedKey] = state[nk][blockedKey].filter((k) => k !== key);
+            state[nk][blockedKey] = state[nk][blockedKey].filter((k) => {
+              return k !== key;
+            });
           }
         });
         state[key][blockedKey] = [];
@@ -68,11 +108,15 @@ const tilesSlice = createSlice({
       const blockedKey = BLOCKED_KEY[flag];
       if (!blockedKey) return;
       if (state[myKey]?.[blockedKey]) {
-        state[myKey][blockedKey] = state[myKey][blockedKey].filter((k) => k !== neighborKey);
+        state[myKey][blockedKey] = state[myKey][blockedKey].filter((k) => {
+          return k !== neighborKey;
+        });
       }
       // Symmetric flags also remove the block from the neighbor tile
       if (!ONE_SIDED.has(flag) && state[neighborKey]?.[blockedKey]) {
-        state[neighborKey][blockedKey] = state[neighborKey][blockedKey].filter((k) => k !== myKey);
+        state[neighborKey][blockedKey] = state[neighborKey][blockedKey].filter((k) => {
+          return k !== myKey;
+        });
       }
     },
     setTownName: (state, action) => {
@@ -89,6 +133,13 @@ const tilesSlice = createSlice({
         state[key].notes = notes;
       }
     },
+    setTileFaction: (state, action) => {
+      const { q, r, factionId } = action.payload;
+      const key = toKey(q, r);
+      if (state[key]) {
+        state[key].factionId = factionId ?? null;
+      }
+    },
     deleteTile: (state, action) => {
       const { q, r } = action.payload;
       delete state[toKey(q, r)];
@@ -97,7 +148,32 @@ const tilesSlice = createSlice({
       return action.payload;
     },
   },
+  extraReducers: (builder) => {
+    builder.addCase(restoreSnapshot, (_state, action) => {
+      return action.payload.tiles;
+    });
+    // When a faction is deleted, clear that factionId from all tiles that reference it
+    builder.addCase(deleteFaction, (state, action) => {
+      const deletedId = action.payload;
+      Object.values(state).forEach((tile) => {
+        if (tile.factionId === deletedId) {
+          tile.factionId = null;
+        }
+      });
+    });
+  },
 });
 
-export const { addTile, updateTile, toggleTileFlag, blockConnection, unblockConnection, setTownName, setTileNotes, deleteTile, importTiles } = tilesSlice.actions;
+export const {
+  addTile,
+  updateTile,
+  toggleTileFlag,
+  blockConnection,
+  unblockConnection,
+  setTownName,
+  setTileNotes,
+  setTileFaction,
+  deleteTile,
+  importTiles,
+} = tilesSlice.actions;
 export default tilesSlice.reducer;

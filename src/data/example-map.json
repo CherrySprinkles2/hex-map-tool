@@ -21,7 +21,8 @@
     "roadBlocked": [],
     "hasTown": false,
     "townName": "",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-b"
   },
   "0,-2": {
     "q": 0,
@@ -42,13 +43,11 @@
     "hasRiver": false,
     "hasRoad": true,
     "riverBlocked": [],
-    "roadBlocked": [
-      "2,-3",
-      "2,-2"
-    ],
+    "roadBlocked": ["2,-3", "2,-2"],
     "hasTown": true,
     "townName": "Tampere",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-b"
   },
   "1,-1": {
     "q": 1,
@@ -60,7 +59,8 @@
     "roadBlocked": [],
     "hasTown": false,
     "townName": "",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-b"
   },
   "1,0": {
     "q": 1,
@@ -96,7 +96,8 @@
     "roadBlocked": [],
     "hasTown": false,
     "townName": "",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-a"
   },
   "-1,-1": {
     "q": -1,
@@ -108,7 +109,8 @@
     "roadBlocked": [],
     "hasTown": false,
     "townName": "",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-a"
   },
   "-2,0": {
     "q": -2,
@@ -120,9 +122,8 @@
     "roadBlocked": [],
     "hasTown": true,
     "townName": "Helsinki",
-    "portBlocked": [
-      "-3,0"
-    ]
+    "portBlocked": ["-3,0"],
+    "factionId": "faction-example-1-a"
   },
   "1,1": {
     "q": 1,
@@ -158,7 +159,8 @@
     "roadBlocked": [],
     "hasTown": false,
     "townName": "",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-a"
   },
   "-1,-2": {
     "q": -1,
@@ -179,12 +181,11 @@
     "hasRiver": false,
     "hasRoad": true,
     "riverBlocked": [],
-    "roadBlocked": [
-      "1,-2"
-    ],
+    "roadBlocked": ["1,-2"],
     "hasTown": false,
     "townName": "",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-b"
   },
   "2,-3": {
     "q": 2,
@@ -193,12 +194,11 @@
     "hasRiver": false,
     "hasRoad": true,
     "riverBlocked": [],
-    "roadBlocked": [
-      "1,-2"
-    ],
+    "roadBlocked": ["1,-2"],
     "hasTown": false,
     "townName": "",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-b"
   },
   "-1,1": {
     "q": -1,
@@ -222,7 +222,8 @@
     "roadBlocked": [],
     "hasTown": false,
     "townName": "",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-a"
   },
   "-3,-1": {
     "q": -3,
@@ -270,7 +271,8 @@
     "roadBlocked": [],
     "hasTown": false,
     "townName": "",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-a"
   },
   "-4,-1": {
     "q": -4,
@@ -306,7 +308,8 @@
     "roadBlocked": [],
     "hasTown": false,
     "townName": "",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-a"
   },
   "-3,-3": {
     "q": -3,
@@ -354,7 +357,8 @@
     "roadBlocked": [],
     "hasTown": false,
     "townName": "",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-a"
   },
   "2,0": {
     "q": 2,
@@ -378,7 +382,8 @@
     "roadBlocked": [],
     "hasTown": true,
     "townName": "Turku",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-a"
   },
   "0,-4": {
     "q": 0,
@@ -390,7 +395,8 @@
     "roadBlocked": [],
     "hasTown": false,
     "townName": "",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-a"
   },
   "-1,-4": {
     "q": -1,
@@ -462,7 +468,8 @@
     "roadBlocked": [],
     "hasTown": false,
     "townName": "",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-b"
   },
   "2,-4": {
     "q": 2,
@@ -474,7 +481,8 @@
     "roadBlocked": [],
     "hasTown": true,
     "townName": "Pääsiäinenmies",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-b"
   },
   "3,-4": {
     "q": 3,
@@ -486,7 +494,8 @@
     "roadBlocked": [],
     "hasTown": false,
     "townName": "",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-b"
   },
   "-4,1": {
     "q": -4,
@@ -930,7 +939,8 @@
     "roadBlocked": [],
     "hasTown": false,
     "townName": "",
-    "portBlocked": []
+    "portBlocked": [],
+    "factionId": "faction-example-1-b"
   },
   "4,-5": {
     "q": 4,
@@ -1802,9 +1812,7 @@
     "terrain": "mountain",
     "hasRiver": true,
     "hasRoad": false,
-    "riverBlocked": [
-      "-5,-9"
-    ],
+    "riverBlocked": ["-5,-9"],
     "roadBlocked": [],
     "hasTown": false,
     "townName": "",
@@ -1852,9 +1860,7 @@
     "terrain": "forest",
     "hasRiver": true,
     "hasRoad": false,
-    "riverBlocked": [
-      "-4,-9"
-    ],
+    "riverBlocked": ["-4,-9"],
     "roadBlocked": [],
     "hasTown": false,
     "townName": "",

@@ -16,11 +16,12 @@
     "build": "react-scripts build",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "prepare": "husky"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app"
+  "lint-staged": {
+    "*.{js,jsx,json,css,md}": [
+      "prettier --write"
     ]
   },
   "browserslist": {
@@ -36,6 +37,9 @@
     ]
   },
   "devDependencies": {
-    "gh-pages": "^6.3.0"
+    "gh-pages": "^6.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1"
   }
 }

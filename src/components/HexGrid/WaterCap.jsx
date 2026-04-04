@@ -1,36 +1,23 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { useDispatch, useSelector, useStore } from 'react-redux';
-import { hexPointsString, axialToPixel, HEX_SIZE, toKey } from '../../utils/hexUtils';
-import {
-  selectTile,
-  deselectTile,
-  setPlacingArmy,
-  stopMovingArmy,
-} from '../../features/ui/uiSlice';
-import { deleteTile, setTileFaction } from '../../features/tiles/tilesSlice';
-import { addArmy, moveArmy } from '../../features/armies/armiesSlice';
+import { useSelector, useDispatch, useStore } from 'react-redux';
 import { useTheme } from 'styled-components';
+import { axialToPixel, hexPointsString, HEX_SIZE, toKey } from '../../utils/hexUtils';
+import { selectTile, deselectTile } from '../../features/ui/uiSlice';
+import { deleteTile, setTileFaction } from '../../features/tiles/tilesSlice';
 
-const HexTile = React.memo(({ q, r }) => {
+// WaterCap: renders the fill and interaction layer for a single water tile.
+// Extracted so selection/hover state is local — only this tile re-renders on selection change.
+const WaterCap = React.memo(({ q, r, terrain }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
   const store = useStore();
-  const [hovered, setHovered] = useState(false);
-
-  // Stable key for this tile — q and r never change for a given instance
   const key = useMemo(() => {
     return toKey(q, r);
   }, [q, r]);
 
-  // Tile-specific selectors: only this tile re-renders when its selection or terrain changes
   const isSelected = useSelector((state) => {
     return state.ui.selectedTile === key;
   });
-  const terrain = useSelector((state) => {
-    return state.tiles[key]?.terrain ?? 'grass';
-  });
-
-  // Faction overlay: only relevant in faction mode
   const factionColor = useSelector((state) => {
     if (state.ui.mapMode !== 'faction') return null;
     const factionId = state.tiles[key]?.factionId;
@@ -42,16 +29,14 @@ const HexTile = React.memo(({ q, r }) => {
     );
   });
 
-  const terrainData = theme.terrain[terrain] ?? theme.terrain.grass;
-
-  // Geometry is fixed for a given (q, r) — compute once
+  const [hovered, setHovered] = useState(false);
   const { x, y } = useMemo(() => {
     return axialToPixel(q, r);
   }, [q, r]);
-  const points = useMemo(() => {
+  const pts = useMemo(() => {
     return hexPointsString(x, y);
   }, [x, y]);
-  const selectionPoints = useMemo(() => {
+  const selectionPts = useMemo(() => {
     return hexPointsString(x, y, HEX_SIZE - 5);
   }, [x, y]);
 
@@ -62,18 +47,6 @@ const HexTile = React.memo(({ q, r }) => {
 
       if (ui.mapMode === 'faction') {
         dispatch(setTileFaction({ q, r, factionId: ui.activeFactionId }));
-        return;
-      }
-
-      if (ui.movingArmyId) {
-        dispatch(moveArmy({ id: ui.movingArmyId, q, r }));
-        dispatch(stopMovingArmy());
-        return;
-      }
-
-      if (ui.placingArmy) {
-        dispatch(addArmy({ q, r }));
-        dispatch(setPlacingArmy(false));
         return;
       }
 
@@ -105,34 +78,34 @@ const HexTile = React.memo(({ q, r }) => {
       }}
       style={{ cursor: 'pointer' }}
     >
-      {/* Base terrain colour */}
+      <polygon points={pts} fill={theme.terrain[terrain].color} stroke="none" />
       <polygon
-        points={points}
-        fill={terrainData.color}
-        stroke={theme.tileStroke}
-        strokeWidth={1.5}
-      />
-      {/* Texture pattern overlay */}
-      <polygon
-        points={points}
+        points={pts}
         fill={`url(#pattern-${terrain})`}
         stroke="none"
         style={{ pointerEvents: 'none' }}
       />
-      {/* Faction border — inset so it doesn't bleed onto neighbouring tiles */}
       {factionColor && (
         <polygon
-          points={selectionPoints}
+          points={selectionPts}
           fill="none"
           stroke={factionColor}
           strokeWidth={5}
           style={{ pointerEvents: 'none' }}
         />
       )}
-      {/* Selection ring — inset so it stays inside the tile and isn't overlapped by neighbours */}
+      {hovered && (
+        <polygon
+          points={pts}
+          fill="white"
+          opacity={0.12}
+          stroke="none"
+          style={{ pointerEvents: 'none' }}
+        />
+      )}
       {isSelected && (
         <polygon
-          points={selectionPoints}
+          points={selectionPts}
           fill="none"
           stroke={theme.selectedStroke}
           strokeWidth={2.5}
@@ -141,18 +114,8 @@ const HexTile = React.memo(({ q, r }) => {
           style={{ animation: 'marchingAnts 1s linear infinite', pointerEvents: 'none' }}
         />
       )}
-      {/* Hover highlight */}
-      {hovered && (
-        <polygon
-          points={points}
-          fill="white"
-          opacity={0.12}
-          stroke="none"
-          style={{ pointerEvents: 'none' }}
-        />
-      )}
     </g>
   );
 });
 
-export default HexTile;
+export default WaterCap;

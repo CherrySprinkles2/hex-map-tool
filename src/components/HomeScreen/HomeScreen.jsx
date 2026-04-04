@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import styled from 'styled-components';
-import { theme } from '../../styles/theme';
-import { getAllMaps, createMap, deleteMap, loadMapTiles } from '../../utils/mapsStorage';
+import { getAllMaps, createMap, deleteMap, loadMapData } from '../../utils/mapsStorage';
 import { loadMap } from '../../features/currentMap/currentMapSlice';
 import { importTiles } from '../../features/tiles/tilesSlice';
+import { importArmies } from '../../features/armies/armiesSlice';
+import { importFactions } from '../../features/factions/factionsSlice';
 import { setScreen } from '../../features/ui/uiSlice';
 import { resetViewport } from '../../features/viewport/viewportSlice';
 import MapThumbnail from './MapThumbnail';
@@ -15,7 +16,9 @@ const Shell = styled.div`
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  background: ${({ theme }) => theme.background};
+  background: ${({ theme }) => {
+    return theme.background;
+  }};
   overflow-y: auto;
 `;
 
@@ -26,20 +29,26 @@ const Header = styled.div`
 const Title = styled.h1`
   font-size: 1.5rem;
   font-weight: 700;
-  color: ${({ theme }) => theme.text};
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
   letter-spacing: 0.06em;
   margin: 0 0 4px;
 `;
 
 const Subtitle = styled.p`
   font-size: 0.85rem;
-  color: ${({ theme }) => theme.textMuted};
+  color: ${({ theme }) => {
+    return theme.textMuted;
+  }};
   margin: 0 0 16px;
 `;
 
 const Description = styled.p`
   font-size: 0.875rem;
-  color: ${({ theme }) => theme.textMuted};
+  color: ${({ theme }) => {
+    return theme.textMuted;
+  }};
   line-height: 1.6;
   margin: 0 0 20px;
   max-width: 560px;
@@ -55,11 +64,15 @@ const Notice = styled.div`
   border: 1px solid #0f3460;
   background: rgba(15, 52, 96, 0.25);
   font-size: 0.8rem;
-  color: ${({ theme }) => theme.textMuted};
+  color: ${({ theme }) => {
+    return theme.textMuted;
+  }};
   line-height: 1.5;
 
   strong {
-    color: ${({ theme }) => theme.text};
+    color: ${({ theme }) => {
+      return theme.text;
+    }};
   }
 `;
 
@@ -72,15 +85,24 @@ const Grid = styled.div`
 
 const Card = styled.div`
   border-radius: 8px;
-  border: 2px solid ${({ theme }) => theme.panelBorder};
-  background: ${({ theme }) => theme.panelBackground};
+  border: 2px solid
+    ${({ theme }) => {
+      return theme.panelBorder;
+    }};
+  background: ${({ theme }) => {
+    return theme.panelBackground;
+  }};
   overflow: hidden;
   cursor: pointer;
-  transition: border-color 0.15s, transform 0.1s;
+  transition:
+    border-color 0.15s,
+    transform 0.1s;
   position: relative;
 
   &:hover {
-    border-color: ${({ theme }) => theme.textMuted};
+    border-color: ${({ theme }) => {
+      return theme.textMuted;
+    }};
     transform: translateY(-2px);
   }
 `;
@@ -91,14 +113,20 @@ const NewCard = styled(Card)`
   justify-content: center;
   min-height: 200px;
   border-style: dashed;
-  color: ${({ theme }) => theme.textMuted};
+  color: ${({ theme }) => {
+    return theme.textMuted;
+  }};
   font-size: 2rem;
   flex-direction: column;
   gap: 8px;
 
   &:hover {
-    color: ${({ theme }) => theme.text};
-    border-color: ${({ theme }) => theme.text};
+    color: ${({ theme }) => {
+      return theme.text;
+    }};
+    border-color: ${({ theme }) => {
+      return theme.text;
+    }};
   }
 `;
 
@@ -115,7 +143,9 @@ const CardMeta = styled.div`
 const CardName = styled.div`
   font-size: 0.9rem;
   font-weight: 600;
-  color: ${({ theme }) => theme.text};
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -123,7 +153,9 @@ const CardName = styled.div`
 
 const CardDate = styled.div`
   font-size: 0.75rem;
-  color: ${({ theme }) => theme.textMuted};
+  color: ${({ theme }) => {
+    return theme.textMuted;
+  }};
   margin-top: 3px;
 `;
 
@@ -131,22 +163,28 @@ const DeleteBtn = styled.button`
   position: absolute;
   top: 8px;
   right: 8px;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   border: none;
   border-radius: 4px;
-  color: ${({ theme }) => theme.textMuted};
+  color: ${({ theme }) => {
+    return theme.textMuted;
+  }};
   font-size: 0.8rem;
   padding: 3px 6px;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
 
   ${Card}:hover & {
     opacity: 1;
   }
 
   &:hover {
-    color: ${({ theme }) => theme.accent};
+    color: ${({ theme }) => {
+      return theme.accent;
+    }};
   }
 
   @media (hover: none) {
@@ -158,10 +196,15 @@ const ExampleBadge = styled.div`
   position: absolute;
   top: 8px;
   left: 8px;
-  background: rgba(0,0,0,0.6);
-  border: 1px solid ${({ theme }) => theme.panelBorder};
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid
+    ${({ theme }) => {
+      return theme.panelBorder;
+    }};
   border-radius: 4px;
-  color: ${({ theme }) => theme.textMuted};
+  color: ${({ theme }) => {
+    return theme.textMuted;
+  }};
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -192,15 +235,17 @@ const HomeScreen = () => {
     // Load tiles data for thumbnails
     const cache = {};
     all.forEach(({ id }) => {
-      cache[id] = loadMapTiles(id) ?? {};
+      cache[id] = loadMapData(id)?.tiles ?? {};
     });
     setTilesCache(cache);
   }, []);
 
-  useEffect(() => { refreshMaps(); }, [refreshMaps]);
+  useEffect(() => {
+    refreshMaps();
+  }, [refreshMaps]);
 
   const handleOpen = (map) => {
-    const tiles = loadMapTiles(map.id) ?? {};
+    const tiles = loadMapData(map.id)?.tiles ?? {};
     dispatch(importTiles(tiles));
     dispatch(loadMap({ id: map.id, name: map.name }));
     dispatch(resetViewport());
@@ -219,6 +264,8 @@ const HomeScreen = () => {
     // Load example tiles into Redux but don't create a localStorage entry yet.
     // useLocalStorageSync will lazily create a copy on the first real tile change.
     dispatch(importTiles(example.tiles));
+    dispatch(importArmies(example.armies));
+    dispatch(importFactions(example.factions));
     dispatch(loadMap({ id: null, name: `Copy of ${example.name}` }));
     dispatch(resetViewport());
     dispatch(setScreen('editor'));
@@ -232,50 +279,70 @@ const HomeScreen = () => {
   };
 
   return (
-    <Shell theme={theme}>
+    <Shell>
       <Header>
-        <Title theme={theme}>⬡ Hex Map Tool</Title>
-        <Subtitle theme={theme}>Select a map to edit, or create a new one.</Subtitle>
-        <Description theme={theme}>
+        <Title>⬡ Hex Map Tool</Title>
+        <Subtitle>Select a map to edit, or create a new one.</Subtitle>
+        <Description>
           Design worlds and command armies. Build hex maps for wargames, campaigns, and strategic
-          planning — place terrain, found towns, deploy forces, and trace the lines of battle.
-          All rendered live as SVG, saved automatically in your browser.
+          planning — place terrain, found towns, deploy forces, and trace the lines of battle. All
+          rendered live as SVG, saved automatically in your browser.
         </Description>
-        <Notice theme={theme}>
+        <Notice>
           <span>⚠️</span>
           <span>
             <strong>Maps are stored in your browser's local storage.</strong> They will be lost if
-            you clear your browser data, switch browsers, or use a different device.
-            Use <strong>Export JSON</strong> inside the editor to save a backup, and{' '}
+            you clear your browser data, switch browsers, or use a different device. Use{' '}
+            <strong>Export JSON</strong> inside the editor to save a backup, and{' '}
             <strong>Import JSON</strong> to restore it.
           </span>
         </Notice>
       </Header>
       <Grid>
-        <NewCard theme={theme} onClick={handleNew}>
+        <NewCard onClick={handleNew}>
           <span>＋</span>
           <NewLabel>New Map</NewLabel>
         </NewCard>
-        {exampleMaps.map((example) => (
-          <Card key={example.id} theme={theme} onClick={() => handleOpenExample(example)}>
-            <MapThumbnail tilesData={example.tiles} />
-            <ExampleBadge theme={theme}>Example</ExampleBadge>
-            <CardMeta>
-              <CardName theme={theme}>{example.name}</CardName>
-              <CardDate theme={theme}>Built-in — opens as a copy</CardDate>
-            </CardMeta>
-          </Card>
-        ))}
-        {[...maps].reverse().map((map) => (
-          <Card key={map.id} theme={theme} onClick={() => handleOpen(map)}>
-            <MapThumbnail tilesData={tilesCache[map.id] ?? {}} />
-            <DeleteBtn theme={theme} onClick={(e) => handleDelete(e, map.id)}>✕</DeleteBtn>
-            <CardMeta>
-              <CardName theme={theme}>{map.name}</CardName>
-              <CardDate theme={theme}>Edited {formatDate(map.updatedAt)}</CardDate>
-            </CardMeta>
-          </Card>
-        ))}
+        {exampleMaps.map((example) => {
+          return (
+            <Card
+              key={example.id}
+              onClick={() => {
+                return handleOpenExample(example);
+              }}
+            >
+              <MapThumbnail tilesData={example.tiles} />
+              <ExampleBadge>Example</ExampleBadge>
+              <CardMeta>
+                <CardName>{example.name}</CardName>
+                <CardDate>Built-in — opens as a copy</CardDate>
+              </CardMeta>
+            </Card>
+          );
+        })}
+        {[...maps].reverse().map((map) => {
+          return (
+            <Card
+              key={map.id}
+              onClick={() => {
+                return handleOpen(map);
+              }}
+            >
+              <MapThumbnail tilesData={tilesCache[map.id] ?? {}} />
+              <DeleteBtn
+                onClick={(e) => {
+                  return handleDelete(e, map.id);
+                }}
+              >
+                ✕
+              </DeleteBtn>
+              <CardMeta>
+                <CardName>{map.name}</CardName>
+                <CardDate>Edited {formatDate(map.updatedAt)}</CardDate>
+              </CardMeta>
+            </Card>
+          );
+        })}
       </Grid>
     </Shell>
   );

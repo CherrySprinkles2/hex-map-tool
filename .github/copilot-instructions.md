@@ -24,10 +24,12 @@ There is no test suite. Validate changes with `npm run build`.
 A React + Redux hex grid map editor rendered entirely in SVG. The map is infinite — tiles live in a flat Redux object keyed by axial coordinate strings. Multiple named maps are supported; each is stored separately in localStorage.
 
 **State shape:**
+
 ```js
 {
-  tiles:      { "q,r": { q, r, terrain, hasRiver, hasRoad, riverBlocked, roadBlocked, hasTown, townName, portBlocked } },
-  armies:     { "army-id": { id, q, r, name, composition } },
+  tiles:      { "q,r": { q, r, terrain, hasRiver, hasRoad, riverBlocked, roadBlocked, hasTown, townName, portBlocked, factionId, notes } },
+  armies:     { "army-id": { id, q, r, name, composition, factionId } },
+  factions:   [ { id, name, color, description } ],
   viewport:   { x, y, scale },                        // pan offset + zoom (0.2–4)
   ui:         {
     selectedTile:    "q,r" | null,
@@ -35,33 +37,41 @@ A React + Redux hex grid map editor rendered entirely in SVG. The map is infinit
     placingArmy:     boolean,           // unused entry point; army placement is via TileEditPanel
     movingArmyId:    string | null,     // army currently in move-mode
     screen:          'home' | 'editor',
+    mapMode:         'terrain' | 'faction',
+    factionsOpen:    boolean,
+    activeFactionId: string | null,
+    showShortcuts:   boolean,             // controls KeyboardShortcutsPanel visibility
   },
   currentMap: { id: string | null, name: string },
 }
 ```
 
 **Data flow:**
+
 - `index.js` → Redux `<Provider>` → `App.js` → styled-components `<ThemeProvider>`
-- `App.js` renders `<HomeScreen>` or `<EditorInner>` based on `ui.screen`
-- `EditorInner` renders `<Toolbar>`, `<ArmyPanel>`, `<HexGrid>`, `<TileEditPanel>`
-- `useLocalStorageSync()` auto-saves `tiles` and `armies` to localStorage on every store change and loads on mount; re-runs when `currentMap.id` changes
+- `App.js` renders `<HomeScreen>` or `<Editor>` based on `ui.screen`
+- `Editor` renders `<Toolbar>`, `<ArmyPanel>`, `<HexGrid>`, `<MapModeToggle>`, `<TileEditPanel>`, `<FactionPaintPanel>`, `<FactionsPanel>`, `<KeyboardShortcutsPanel>`
+- `useLocalStorageSync()` auto-saves `tiles`, `armies`, and `factions` to localStorage on every store change and loads on mount; re-runs when `currentMap.id` changes
 - `migrateFromLegacy()` is called once on mount to convert old single-map `hex-map-tool-tiles` data
 - `HexGrid` is the SVG canvas. It computes ghost tile positions at render time by iterating all tile neighbours that don't exist in state
 - `WaterOverlay` renders on top of tiles inside the same SVG `<g>` transform group
 - `ArmyToken` components are rendered last (top layer) inside the `<g>` transform group, except on town tiles where a garrison visual is used instead
+- `KeyboardShortcutsPanel` — slide-in right panel (desktop) / bottom sheet (mobile) listing all keyboard shortcuts. Controlled by `ui.showShortcuts`. Opened via toolbar `⌨` button (desktop only) or settings dropdown (mobile). Suppresses `TileEditPanel` while open without deselecting the tile.
 
 **Rendering order inside HexGrid's transform group:**
+
 1. `GhostTile` components (behind)
 2. `HexTile` components
 3. `WaterOverlay` — rivers, roads, towns/garrisons, ports, water fills
 4. `ArmyToken` components — only on non-town tiles
 
 **Inside WaterOverlay rendering order:**
-1. `renderFlagPaths` for rivers (below water caps)
-2. `renderFlagPaths` for roads (below water caps)
-3. `renderTowns(tiles, armiesByTile)` — house or castle+garrison-ring depending on armies present
-4. Water caps (fill lake/ocean on top of above)
-5. Water edge merging
+
+1. Water edge merging (lake, then ocean) — drawn first so they sit beneath everything
+2. `renderFlagPaths` for rivers
+3. `renderFlagPaths` for roads
+4. `renderTowns(tiles, armiesByTile)` — house or castle+garrison-ring depending on armies present
+5. Water caps (fill lake/ocean on top of rivers/roads)
 6. `renderPorts` (on top of water fill)
 
 ---
@@ -69,24 +79,23 @@ A React + Redux hex grid map editor rendered entirely in SVG. The map is infinit
 ## Multi-Map Storage
 
 - **Index key**: `hex-map-tool-index` — JSON array of `{ id, name, updatedAt }`
-- **Per-map tiles key**: `hex-map-tool-map-{id}` — JSON object of tile data
-- **Per-map armies key**: `hex-map-tool-armies-{id}` — JSON object of army data
-- All CRUD lives in `src/utils/mapsStorage.js`: `getAllMaps`, `createMap`, `deleteMap`, `loadMapTiles`, `saveMapTiles`, `loadMapArmies`, `saveMapArmies`, `touchMap`, `migrateFromLegacy`
-- `deleteMap` removes both the tiles key and the armies key
-- `migrateFromLegacy` checks for the old `hex-map-tool-tiles` key on first launch and converts it
-- **Lazy example save**: opening a built-in example dispatches `loadMap({ id: null })` — no localStorage entry is created until the first tile or army change
+- **Per-map data key**: `hex-map-tool-data-{id}` — JSON object `{ version: 1, tiles, armies, factions }`
+- All CRUD lives in `src/utils/mapsStorage.js`: `getAllMaps`, `createMap`, `renameMap`, `deleteMap`, `loadMapData`, `saveMapData`, `touchMap`, `migrateFromLegacy`
+- `deleteMap` removes the consolidated data key (and cleans up any un-migrated legacy keys)
+- `migrateFromLegacy` checks for the old `hex-map-tool-tiles` key (and old per-map `hex-map-tool-map-{id}` / `hex-map-tool-armies-{id}` / `hex-map-tool-factions-{id}` keys) on first launch and converts them to the consolidated format
+- **Lazy example save**: opening a built-in example dispatches `importTiles`, `importArmies`, `importFactions`, and `loadMap({ id: null })` — no localStorage entry is created until the first tile, army, or faction change
 
 ---
 
 ## Hex Coordinate System
 
-All spatial logic uses **pointy-top axial coordinates (q, r)** — see `src/components/HexGrid/HexUtils.js`.
+All spatial logic uses **pointy-top axial coordinates (q, r)** — see `src/utils/hexUtils.js`.
 
 - Tile positions are stored and referenced as `"q,r"` string keys via `toKey(q, r)` / `fromKey(key)`
 - `HEX_SIZE = 50` (center-to-corner radius in pixels)
 - Axial → pixel: `x = size*(√3·q + √3/2·r)`, `y = size*(3/2·r)`
 - The SVG `<g>` transform centers the grid: `translate(width/2 + x, height/2 + y) scale(scale)`
-- When adding new hex math, import from `HexUtils.js` — don't inline formulas
+- When adding new hex math, import from `hexUtils.js` — don't inline formulas
 
 ---
 
@@ -103,12 +112,15 @@ All spatial logic uses **pointy-top axial coordinates (q, r)** — see `src/comp
 ## Key Conventions
 
 ### styled-components
+
 - Custom (non-HTML) props are prefixed with `$` to avoid DOM forwarding warnings — e.g. `$open`, `$active`, `$color`
 - Theme values accessed via `${({ theme }) => theme.property}` — never hardcode colours
 - All theme colours and visual properties live in `src/styles/theme.js`; `GlobalStyles.js` applies resets and body styles
 
 ### Theme structure
+
 `src/styles/theme.js` is the single source of truth for all visual properties. Key sections:
+
 - `theme.terrain` — tile fill colours, labels, icons
 - `theme.river` / `theme.road` — path colour, width, linecap, bezier tension, pool radius
 - `theme.waterEdge` — border width for lake/ocean edges
@@ -118,30 +130,64 @@ All spatial logic uses **pointy-top axial coordinates (q, r)** — see `src/comp
 - `theme.army` — token fill, idle/selected/moving colours, label, ring size, stack spacing
 
 ### Redux
+
 - No custom selector functions — selectors are inline `useSelector` calls
 - Reducers use Immer-style direct mutations (Redux Toolkit handles immutability)
 - `importTiles(payload)` / `importArmies(payload)` replace entire slices — used for JSON import and localStorage restore
 - Selecting an army deselects any selected tile (and vice versa) — enforced in `uiSlice` reducers
 
+### Code quality
+
+- **Prettier** — `.prettierrc` at project root: `singleQuote: true`, `trailingComma: "es5"`, `printWidth: 100`
+- **husky + lint-staged** — pre-commit hook runs `prettier --write` on all staged `*.{js,jsx,json,css,md}` files automatically
+- **ESLint** — `.eslintrc.js` extends `react-app` and adds `arrow-body-style: ["error", "always"]`; all arrow functions must use explicit `{ return }` bodies. The `eslintConfig` block has been removed from `package.json`.
+- **Memoized selectors** — use `createSelector` from `@reduxjs/toolkit` for any `useSelector` call that returns a new array or object reference; inline selectors returning primitives are fine without memoization
+
 ### Army feature
+
 - Armies are placed via **TileEditPanel** "⚔ Add Army to Tile" button (no canvas placing mode)
-- `ArmyPanel` (left side on desktop, bottom sheet on mobile) shows when `selectedArmyId !== null`
+- Army shape includes `factionId: string | null`; `setArmyFaction({ id, factionId })` reducer in `armiesSlice` updates `army.factionId`
+- `ArmyPanel` (left side on desktop, bottom sheet on mobile) shows when `selectedArmyId !== null`; includes a faction `<select>` dropdown (hidden when no factions exist) that dispatches `setArmyFaction`
+- `ArmyToken` accepts `factionId` and renders a faction-coloured ring around the token when a faction is assigned
 - **Move mode** (Option B): tap army → "↪ Move Army" in panel → army pulses orange → tap any tile/ghost tile to move; Cancel or Escape exits without moving. `HexTile` and `GhostTile` check `store.getState().ui.movingArmyId` on click — no new subscriptions
 - **Garrison visual**: when a town tile has armies, `renderTowns` renders a castle + gold dashed ring instead of a house. Single army → army name shown above. Multiple armies → ring only. Army tokens are suppressed on town tiles (HexGrid checks `tiles[key]?.hasTown`)
 - Armies on town tiles appear listed in TileEditPanel under "Armies on this tile" with a Select button
 
+### Toolbar
+
+- Adds `padding-right: 296px` on desktop when `rightPanelOpen` is true (i.e. `mapMode === 'terrain'`, `mapMode === 'faction'`, or `showShortcuts === true`) to prevent the right panel from obscuring the Settings button
+- Has a desktop-only `⌨` button that toggles `showShortcuts`; dispatches `openShortcuts` / `closeShortcuts` from `uiSlice`
+
 ### Adding terrain types
+
 All terrain metadata lives in one place: `theme.terrain` in `src/styles/theme.js`.
 `TileEditPanel` derives its terrain picker from this object automatically. Adding a new terrain type requires:
+
 1. An entry in `theme.terrain` in `src/styles/theme.js`
 2. A matching `<pattern id="pattern-NAME">` SVG element in `src/components/HexGrid/TerrainPatterns.jsx`
-3. For water-like types (merge edges, suppress river visuals, enable ports, show ⛵ for armies): add the terrain name to `DEEP_WATER` in `src/components/HexGrid/WaterOverlay.jsx`
+3. For water-like types (merge edges, suppress river visuals, enable ports, show ⛵ for armies): add the terrain name to `DEEP_WATER` in `src/utils/hexUtils.js`
 
 ### Tile properties
+
 Each tile has the shape:
+
 ```js
-{ q, r, terrain, hasRiver, hasRoad, riverBlocked, roadBlocked, hasTown, townName, portBlocked }
+{
+  (q,
+    r,
+    terrain,
+    hasRiver,
+    hasRoad,
+    riverBlocked,
+    roadBlocked,
+    hasTown,
+    townName,
+    portBlocked,
+    factionId,
+    notes);
+}
 ```
+
 - `hasRiver` / `hasRoad` — auto-connect via bezier curves to adjacent tiles with the same flag
 - `riverBlocked` / `roadBlocked` — arrays of neighbour keys where the connection is manually suppressed (stored symmetrically on both tiles)
 - `hasTown` — renders a house/castle icon + town name label on the canvas; suppressed on water tiles
@@ -151,11 +197,12 @@ Each tile has the shape:
 - River and road visuals are suppressed on lake/ocean tiles (covered by water caps)
 
 ### Connection blocking system
+
 `tilesSlice` exports `blockConnection(q, r, flag, neighborKey)` and `unblockConnection(q, r, flag, neighborKey)`:
 
 ```js
 const BLOCKED_KEY = { hasRiver: 'riverBlocked', hasRoad: 'roadBlocked', hasTown: 'portBlocked' };
-const ONE_SIDED   = new Set(['hasTown']);
+const ONE_SIDED = new Set(['hasTown']);
 ```
 
 - **Symmetric flags** (`hasRiver`, `hasRoad`): block stored on **both** tiles
@@ -163,6 +210,7 @@ const ONE_SIDED   = new Set(['hasTown']);
 - When `toggleTileFlag` turns a flag OFF, it clears that tile's blocked array and (for symmetric flags) removes this tile's key from all neighbours' blocked arrays
 
 ### Tile interactions
+
 - **Left-click ghost tile**: creates a tile using the most common neighbour terrain (tie-broken by most recently placed), then auto-selects it — unless `movingArmyId` is set, in which case it creates the tile and moves the army there
 - **Left-click existing tile**: selects it and opens the edit panel — unless `movingArmyId` is set, in which case the army moves there
 - **Right-click existing tile**: immediately deletes it (and deselects if it was selected)
@@ -172,18 +220,24 @@ const ONE_SIDED   = new Set(['hasTown']);
 - **Scroll wheel**: zoom centred on cursor position (scale range 0.2–4)
 
 ### Terrain textures
+
 Tiles render two polygons: a solid base colour and an SVG `<pattern>` texture overlay. Icons are shown only in `TileEditPanel`, never on the canvas. `<TerrainPatterns />` must be rendered **outside** the `<g transform=...>` group in `HexGrid` — placing it inside causes patterns to scale with pan/zoom and break.
 
 ### Ports (docks)
+
 `renderPorts()` in `WaterOverlay` automatically places a dock on every `DEEP_WATER` tile edge that borders a `hasTown` tile, unless the town tile's `portBlocked` array contains the water tile's key. Port control is exposed in `TileEditPanel` under the Town toggle — it lists adjacent water tiles with **Remove Port / Add Port** buttons.
 
 ### Example maps
+
 - Small map data: `src/data/example-map.json`
 - Large map (3 000 tiles, performance testing): `src/data/large-map.json`
-- `src/data/exampleMaps.js` imports both, applies field defaults via `normalizeTile`, and exports `exampleMaps`
-- Opening an example from the home screen loads tiles into Redux with `id: null` — no localStorage entry until the first real change
+- Both example maps include factions and armies
+- `src/data/exampleMaps.js` imports both, applies field defaults via `normalizeTile` and `normalizeArmy` (ensures all army fields have safe defaults including `factionId: null`), and exports `exampleMaps`
+- Opening an example from HomeScreen dispatches `importTiles`, `importArmies`, AND `importFactions`; `id: null` — no localStorage entry until the first real change
 
-### Unused files
-`src/features/counter/` and `src/App.css` are CRA template leftovers and can be deleted.
+### Page title
 
+`App.js` sets `document.title` via `useEffect`:
 
+- Home screen or unsaved example (`currentMap.id === null`): `"Hex Map Tool"`
+- Saved map open: `"<map name> — Hex Map Tool"`

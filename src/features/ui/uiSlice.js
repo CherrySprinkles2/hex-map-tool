@@ -9,6 +9,9 @@ const uiSlice = createSlice({
     placingArmy: false,
     movingArmyId: null,
     factionsOpen: false,
+    mapMode: 'terrain',
+    activeFactionId: null,
+    showShortcuts: false,
   },
   reducers: {
     selectTile: (state, action) => {
@@ -55,13 +58,38 @@ const uiSlice = createSlice({
     closeFactionsPanel: (state) => {
       state.factionsOpen = false;
     },
+    setMapMode: (state, action) => {
+      state.mapMode = action.payload;
+      if (action.payload === 'faction') {
+        state.factionsOpen = false;
+      }
+    },
+    setActiveFaction: (state, action) => {
+      state.activeFactionId = action.payload;
+    },
+    openShortcuts: (state) => {
+      state.showShortcuts = true;
+    },
+    closeShortcuts: (state) => {
+      state.showShortcuts = false;
+    },
   },
 });
 
 export const {
-  selectTile, deselectTile, setScreen,
-  selectArmy, deselectArmy, setPlacingArmy,
-  startMovingArmy, stopMovingArmy,
-  toggleFactionsPanel, closeFactionsPanel,
+  selectTile,
+  deselectTile,
+  setScreen,
+  selectArmy,
+  deselectArmy,
+  setPlacingArmy,
+  startMovingArmy,
+  stopMovingArmy,
+  toggleFactionsPanel,
+  closeFactionsPanel,
+  setMapMode,
+  setActiveFaction,
+  openShortcuts,
+  closeShortcuts,
 } = uiSlice.actions;
 export default uiSlice.reducer;

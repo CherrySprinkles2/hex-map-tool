@@ -2,8 +2,13 @@ import React, { useRef, useCallback, useMemo, useLayoutEffect } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import styled from 'styled-components';
 import { setViewport, MIN_SCALE, MAX_SCALE } from '../../features/viewport/viewportSlice';
-import { deselectTile, deselectArmy, setPlacingArmy, stopMovingArmy } from '../../features/ui/uiSlice';
-import { getNeighbors, toKey } from './HexUtils';
+import {
+  deselectTile,
+  deselectArmy,
+  setPlacingArmy,
+  stopMovingArmy,
+} from '../../features/ui/uiSlice';
+import { getNeighbors, toKey } from '../../utils/hexUtils';
 import HexTile from './HexTile';
 import GhostTile from './GhostTile';
 import WaterOverlay from './WaterOverlay';
@@ -21,11 +26,17 @@ const SvgCanvas = styled.svg`
 const HexGrid = () => {
   const dispatch = useDispatch();
   const store = useStore();
-  const tiles = useSelector((state) => state.tiles);
+  const tiles = useSelector((state) => {
+    return state.tiles;
+  });
 
   // Armies — only subscribed for rendering tokens; count is typically small
-  const armies      = useSelector((state) => state.armies);
-  const placingArmy = useSelector((state) => state.ui.placingArmy);
+  const armies = useSelector((state) => {
+    return state.armies;
+  });
+  const placingArmy = useSelector((state) => {
+    return state.ui.placingArmy;
+  });
 
   // Group armies by tile key for stacking offset calculations
   const armiesByTile = useMemo(() => {
@@ -43,14 +54,16 @@ const HexGrid = () => {
   // Redux viewport is only updated at the end of a drag or after each zoom tick
   // (for persistence), so HexGrid never re-renders due to viewport changes.
   const viewportRef = useRef({ x: 0, y: 0, scale: 1 });
-  const groupRef    = useRef(null);
+  const groupRef = useRef(null);
+  const svgRef = useRef(null);
 
   const applyTransform = useCallback(() => {
-    if (!groupRef.current) return;
+    if (!groupRef.current || !svgRef.current) return;
     const { x, y, scale } = viewportRef.current;
+    const { width, height } = svgRef.current.getBoundingClientRect();
     groupRef.current.setAttribute(
       'transform',
-      `translate(${window.innerWidth / 2 + x}, ${window.innerHeight / 2 + y}) scale(${scale})`,
+      `translate(${width / 2 + x}, ${height / 2 + y}) scale(${scale})`
     );
   }, []);
 
@@ -65,12 +78,25 @@ const HexGrid = () => {
       viewportRef.current = { ...store.getState().viewport };
       applyTransform();
     });
-    return unsubscribe;
+
+    // Re-centre when the SVG container is resized (toolbar height changes, etc.)
+    let ro;
+    if (svgRef.current && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => {
+        return applyTransform();
+      });
+      ro.observe(svgRef.current);
+    }
+
+    return () => {
+      unsubscribe();
+      ro?.disconnect();
+    };
   }, [store, applyTransform]);
 
   // ─── Interaction refs ────────────────────────────────────────────────────────
-  const dragging      = useRef(false);
-  const lastPos       = useRef({ x: 0, y: 0 });
+  const dragging = useRef(false);
+  const lastPos = useRef({ x: 0, y: 0 });
   const lastPinchDist = useRef(null);
 
   // Commit current viewport ref to Redux (called at end of drag / after zoom).
@@ -79,30 +105,33 @@ const HexGrid = () => {
   }, [dispatch]);
 
   // ─── Mouse / touch handlers ──────────────────────────────────────────────────
-  const handleWheel = useCallback((e) => {
-    e.preventDefault();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const focalX   = e.clientX - rect.left;
-    const focalY   = e.clientY - rect.top;
-    const svgWidth  = rect.width;
-    const svgHeight = rect.height;
+  const handleWheel = useCallback(
+    (e) => {
+      e.preventDefault();
+      const rect = e.currentTarget.getBoundingClientRect();
+      const focalX = e.clientX - rect.left;
+      const focalY = e.clientY - rect.top;
+      const svgWidth = rect.width;
+      const svgHeight = rect.height;
 
-    const { x, y, scale } = viewportRef.current;
-    const factor   = e.deltaY < 0 ? 1.1 : 0.9;
-    const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * factor));
-    const tx = svgWidth  / 2 + x;
-    const ty = svgHeight / 2 + y;
-    const wx = (focalX - tx) / scale;
-    const wy = (focalY - ty) / scale;
+      const { x, y, scale } = viewportRef.current;
+      const factor = e.deltaY < 0 ? 1.1 : 0.9;
+      const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * factor));
+      const tx = svgWidth / 2 + x;
+      const ty = svgHeight / 2 + y;
+      const wx = (focalX - tx) / scale;
+      const wy = (focalY - ty) / scale;
 
-    viewportRef.current = {
-      x: focalX - svgWidth  / 2 - wx * newScale,
-      y: focalY - svgHeight / 2 - wy * newScale,
-      scale: newScale,
-    };
-    applyTransform();
-    commitViewport();
-  }, [applyTransform, commitViewport]);
+      viewportRef.current = {
+        x: focalX - svgWidth / 2 - wx * newScale,
+        y: focalY - svgHeight / 2 - wy * newScale,
+        scale: newScale,
+      };
+      applyTransform();
+      commitViewport();
+    },
+    [applyTransform, commitViewport]
+  );
 
   const handleMouseDown = useCallback((e) => {
     if (e.button !== 0) return;
@@ -110,13 +139,16 @@ const HexGrid = () => {
     lastPos.current = { x: e.clientX, y: e.clientY };
   }, []);
 
-  const handleMouseMove = useCallback((e) => {
-    if (!dragging.current) return;
-    viewportRef.current.x += e.clientX - lastPos.current.x;
-    viewportRef.current.y += e.clientY - lastPos.current.y;
-    lastPos.current = { x: e.clientX, y: e.clientY };
-    applyTransform();
-  }, [applyTransform]);
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (!dragging.current) return;
+      viewportRef.current.x += e.clientX - lastPos.current.x;
+      viewportRef.current.y += e.clientY - lastPos.current.y;
+      lastPos.current = { x: e.clientX, y: e.clientY };
+      applyTransform();
+    },
+    [applyTransform]
+  );
 
   const handleMouseUp = useCallback(() => {
     if (dragging.current) {
@@ -146,56 +178,62 @@ const HexGrid = () => {
     }
   }, []);
 
-  const handleTouchMove = useCallback((e) => {
-    e.preventDefault();
-    if (e.touches.length === 1 && dragging.current) {
-      viewportRef.current.x += e.touches[0].clientX - lastPos.current.x;
-      viewportRef.current.y += e.touches[0].clientY - lastPos.current.y;
-      lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      applyTransform();
-    } else if (e.touches.length === 2 && lastPinchDist.current !== null) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      const dist  = Math.hypot(dx, dy);
-      const midX  = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-      const midY  = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-      const rect  = e.currentTarget.getBoundingClientRect();
-      const focalX    = midX - rect.left;
-      const focalY    = midY - rect.top;
-      const svgWidth  = rect.width;
-      const svgHeight = rect.height;
-      const ratio = dist / lastPinchDist.current;
+  const handleTouchMove = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (e.touches.length === 1 && dragging.current) {
+        viewportRef.current.x += e.touches[0].clientX - lastPos.current.x;
+        viewportRef.current.y += e.touches[0].clientY - lastPos.current.y;
+        lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        applyTransform();
+      } else if (e.touches.length === 2 && lastPinchDist.current !== null) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const focalX = midX - rect.left;
+        const focalY = midY - rect.top;
+        const svgWidth = rect.width;
+        const svgHeight = rect.height;
+        const ratio = dist / lastPinchDist.current;
 
-      const { x, y, scale } = viewportRef.current;
-      const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * ratio));
-      const tx = svgWidth  / 2 + x;
-      const ty = svgHeight / 2 + y;
-      const wx = (focalX - tx) / scale;
-      const wy = (focalY - ty) / scale;
+        const { x, y, scale } = viewportRef.current;
+        const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * ratio));
+        const tx = svgWidth / 2 + x;
+        const ty = svgHeight / 2 + y;
+        const wx = (focalX - tx) / scale;
+        const wy = (focalY - ty) / scale;
 
-      viewportRef.current = {
-        x: focalX - svgWidth  / 2 - wx * newScale,
-        y: focalY - svgHeight / 2 - wy * newScale,
-        scale: newScale,
-      };
-      applyTransform();
-      lastPinchDist.current = dist;
-    }
-  }, [applyTransform]);
+        viewportRef.current = {
+          x: focalX - svgWidth / 2 - wx * newScale,
+          y: focalY - svgHeight / 2 - wy * newScale,
+          scale: newScale,
+        };
+        applyTransform();
+        lastPinchDist.current = dist;
+      }
+    },
+    [applyTransform]
+  );
 
-  const handleTouchEnd = useCallback((e) => {
-    if (e.touches.length === 0) {
-      dragging.current = false;
-      lastPinchDist.current = null;
-      commitViewport();
-    } else if (e.touches.length === 1) {
-      // Lifted one finger mid-pinch — resume single-finger pan
-      lastPinchDist.current = null;
-      dragging.current = true;
-      lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      commitViewport();
-    }
-  }, [commitViewport]);
+  const handleTouchEnd = useCallback(
+    (e) => {
+      if (e.touches.length === 0) {
+        dragging.current = false;
+        lastPinchDist.current = null;
+        commitViewport();
+      } else if (e.touches.length === 1) {
+        // Lifted one finger mid-pinch — resume single-finger pan
+        lastPinchDist.current = null;
+        dragging.current = true;
+        lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        commitViewport();
+      }
+    },
+    [commitViewport]
+  );
 
   // ─── Ghost tile keys ─────────────────────────────────────────────────────────
   const ghostKeys = useMemo(() => {
@@ -216,6 +254,7 @@ const HexGrid = () => {
 
   return (
     <SvgCanvas
+      ref={svgRef}
       style={{ cursor: placingArmy ? 'crosshair' : undefined }}
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
@@ -239,9 +278,9 @@ const HexGrid = () => {
         })}
 
         {/* Real tiles */}
-        {Object.values(tiles).map(({ q, r }) => (
-          <HexTile key={toKey(q, r)} q={q} r={r} />
-        ))}
+        {Object.values(tiles).map(({ q, r }) => {
+          return <HexTile key={toKey(q, r)} q={q} r={r} />;
+        })}
 
         {/* Water connectivity overlay */}
         <WaterOverlay tiles={tiles} armiesByTile={armiesByTile} />
@@ -249,14 +288,11 @@ const HexGrid = () => {
         {/* Army tokens — only on non-town tiles; towns show garrison visual instead */}
         {Object.entries(armiesByTile).map(([tileKey, tileArmies]) => {
           if (tiles[tileKey]?.hasTown) return null;
-          return tileArmies.map((army, idx) => (
-            <ArmyToken
-              key={army.id}
-              army={army}
-              tileIndex={idx}
-              total={tileArmies.length}
-            />
-          ));
+          return tileArmies.map((army, idx) => {
+            return (
+              <ArmyToken key={army.id} army={army} tileIndex={idx} total={tileArmies.length} />
+            );
+          });
         })}
       </g>
     </SvgCanvas>

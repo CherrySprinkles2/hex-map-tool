@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
-
-const generateId = () => `army-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+import { generateId } from '../../utils/generateId';
+import { restoreSnapshot } from '../history/historyActions';
 
 const armiesSlice = createSlice({
   name: 'armies',
@@ -8,8 +8,8 @@ const armiesSlice = createSlice({
   reducers: {
     addArmy: (state, action) => {
       const { q, r } = action.payload;
-      const id = generateId();
-      state[id] = { id, q, r, name: 'New Army', composition: '' };
+      const id = generateId('army');
+      state[id] = { id, q, r, name: 'New Army', composition: '', factionId: null };
     },
     deleteArmy: (state, action) => {
       delete state[action.payload];
@@ -22,15 +22,28 @@ const armiesSlice = createSlice({
       }
     },
     updateArmy: (state, action) => {
-      const { id, name, composition } = action.payload;
+      const { id, name, composition, factionId } = action.payload;
       if (state[id]) {
         if (name !== undefined) state[id].name = name;
         if (composition !== undefined) state[id].composition = composition;
+        if (factionId !== undefined) state[id].factionId = factionId;
       }
     },
-    importArmies: (_state, action) => action.payload ?? {},
+    setArmyFaction: (state, action) => {
+      const { id, factionId } = action.payload;
+      if (state[id]) state[id].factionId = factionId;
+    },
+    importArmies: (_state, action) => {
+      return action.payload ?? {};
+    },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(restoreSnapshot, (_state, action) => {
+      return action.payload.armies;
+    });
   },
 });
 
-export const { addArmy, deleteArmy, moveArmy, updateArmy, importArmies } = armiesSlice.actions;
+export const { addArmy, deleteArmy, moveArmy, updateArmy, setArmyFaction, importArmies } =
+  armiesSlice.actions;
 export default armiesSlice.reducer;
