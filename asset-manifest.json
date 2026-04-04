@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/hex-map-tool/static/css/main.e6c13ad2.css",
-    "main.js": "/hex-map-tool/static/js/main.ed174ec8.js",
+    "main.js": "/hex-map-tool/static/js/main.adc8596f.js",
     "index.html": "/hex-map-tool/index.html",
     "main.e6c13ad2.css.map": "/hex-map-tool/static/css/main.e6c13ad2.css.map",
-    "main.ed174ec8.js.map": "/hex-map-tool/static/js/main.ed174ec8.js.map"
+    "main.adc8596f.js.map": "/hex-map-tool/static/js/main.adc8596f.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.ed174ec8.js"
+    "static/js/main.adc8596f.js"
   ]
 }
