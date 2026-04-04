@@ -109,119 +109,89 @@ const smallArmies = {
 // ── Large map — factions ──────────────────────────────────────────────────
 const largeFactions = [
   {
-    id: 'faction-example-2-a',
-    name: 'Forest Accord',
-    color: '#3aaa55',
+    id: 'faction-lg-uusimaa',
+    name: 'Uudenmaan Ruhtinaskunta',
+    color: '#2255cc',
     description:
-      'A confederation of forest settlements controlling the central woodlands. Holds Ferndale and Mosswick.',
+      'A powerful coastal lordship commanding the Gulf of Finland shore. Masters of maritime trade and sea warfare, ruling from the fortress of Helsinki.',
   },
   {
-    id: 'faction-example-2-b',
-    name: 'Iron Dominion',
-    color: '#e05c2a',
+    id: 'faction-lg-hame',
+    name: 'Hämeen Käräjäkunta',
+    color: '#cc3322',
     description:
-      'A militaristic empire based in the north, controlling Ironspire and Stonepeak from mountain fortresses.',
-  },
-  {
-    id: 'faction-example-2-c',
-    name: 'Silver Coast League',
-    color: '#4488cc',
-    description:
-      'A merchant alliance controlling coastal towns and trade routes. Governs Ashford, Clearwater, and Millhaven.',
-  },
-  {
-    id: 'faction-example-2-d',
-    name: 'Eastern Reaches',
-    color: '#9b59b6',
-    description:
-      'A coalition of eastern settlements commanding dense forests and mountain passes. Controls Greenwood, Highcrest, and Timbergate.',
+      'The ancient assembly-lands of the Häme people, controlling the great forest heartlands and the lake country around Tampere. Renowned for their infantry.',
   },
 ];
 
 // ── Large map — armies ────────────────────────────────────────────────────
-// Town coords: Ferndale(-12,8), Mosswick(-8,4), Ironspire(-10,-15),
-//              Stonepeak(-5,-8), Ashford(0,0), Clearwater(5,8),
-//              Millhaven(8,12), Greenwood(10,-5), Highcrest(15,-10), Timbergate(18,-15)
+// Coordinates from scripts/generate-finland.mjs output (LON_MIN=16.0, LAT_MIN=57.5, SCALE_LON=0.13):
+//   Helsinki(-19,47), Espoo(-20,46), Kotka(-8,43), Lahti(-11,37)
+//   Tampere(-16,30), Turku(-29,43)
 const largeArmies = {
-  'army-lg-1': {
-    id: 'army-lg-1',
-    q: -10,
-    r: -15,
-    name: 'Iron Legion',
-    composition: '3000 Heavy Infantry, 500 War Machines',
-    factionId: 'faction-example-2-b',
+  'army-lg-helslinki-garrison': {
+    id: 'army-lg-helslinki-garrison',
+    q: -19,
+    r: 47,
+    name: 'Helsingin Linnanvartiosto',
+    composition: '1200 miekkasotilas, 400 jousimies',
+    factionId: 'faction-lg-uusimaa',
   },
-  'army-lg-2': {
-    id: 'army-lg-2',
-    q: -5,
-    r: -8,
-    name: 'Stonepeak Watch',
-    composition: '1200 Infantry, 800 Archers',
-    factionId: 'faction-example-2-b',
+  'army-lg-uusimaa-cavalry': {
+    id: 'army-lg-uusimaa-cavalry',
+    q: -19,
+    r: 46,
+    name: 'Uusmaan Ratsuväki',
+    composition: '600 ratsuväki, 200 kevyt ratsuväki',
+    factionId: 'faction-lg-uusimaa',
   },
-  'army-lg-3': {
-    id: 'army-lg-3',
-    q: -11,
-    r: -14,
-    name: 'Dominion Vanguard',
-    composition: '2000 Cavalry, 400 Scouts',
-    factionId: 'faction-example-2-b',
-  },
-  'army-lg-4': {
-    id: 'army-lg-4',
-    q: -12,
-    r: 8,
-    name: 'Ferndale Rangers',
-    composition: '900 Archers, 300 Druids',
-    factionId: 'faction-example-2-a',
-  },
-  'army-lg-5': {
-    id: 'army-lg-5',
+  'army-lg-kotka-fleet': {
+    id: 'army-lg-kotka-fleet',
     q: -8,
-    r: 4,
-    name: 'Mosswick Wardens',
-    composition: '700 Spearmen, 500 Forest Scouts',
-    factionId: 'faction-example-2-a',
+    r: 43,
+    name: 'Rannikkovartio',
+    composition: '800 jalkaväki, 8 pitkälaivaa',
+    factionId: 'faction-lg-uusimaa',
   },
-  'army-lg-6': {
-    id: 'army-lg-6',
+  'army-lg-lahti-garrison': {
+    id: 'army-lg-lahti-garrison',
     q: -11,
-    r: 7,
-    name: 'Accord Skirmishers',
-    composition: '1100 Light Infantry, 200 Cavalry',
-    factionId: 'faction-example-2-a',
+    r: 37,
+    name: 'Lahden Linnaväki',
+    composition: '700 keihässotilas, 300 jousimies',
+    factionId: 'faction-lg-uusimaa',
   },
-  'army-lg-7': {
-    id: 'army-lg-7',
-    q: 0,
-    r: 0,
-    name: 'Ashford Guard',
-    composition: '600 City Watch, 4 Warships',
-    factionId: 'faction-example-2-c',
+  'army-lg-tampere-garrison': {
+    id: 'army-lg-tampere-garrison',
+    q: -16,
+    r: 30,
+    name: 'Tampereen Linnaleiri',
+    composition: '1500 jalkaväki, 400 jousimies',
+    factionId: 'faction-lg-hame',
   },
-  'army-lg-8': {
-    id: 'army-lg-8',
-    q: 5,
-    r: 8,
-    name: 'Clearwater Fleet',
-    composition: '400 Marines, 12 Warships',
-    factionId: 'faction-example-2-c',
+  'army-lg-hame-field': {
+    id: 'army-lg-hame-field',
+    q: -19,
+    r: 33,
+    name: 'Hämäläinen Miekkasotajoukko',
+    composition: '900 miekkasotilas, 300 ratsuväki',
+    factionId: 'faction-lg-hame',
   },
-  'army-lg-9': {
-    id: 'army-lg-9',
-    q: 10,
-    r: -5,
-    name: 'Greenwood Wardens',
-    composition: '800 Forest Infantry, 300 Rangers',
-    factionId: 'faction-example-2-d',
+  'army-lg-turku-garrison': {
+    id: 'army-lg-turku-garrison',
+    q: -29,
+    r: 43,
+    name: 'Turun Kaupunkivartiosto',
+    composition: '800 jalkaväki, 6 hansakauppalaiva',
+    factionId: 'faction-lg-hame',
   },
-  'army-lg-10': {
-    id: 'army-lg-10',
-    q: 18,
-    r: -15,
-    name: 'Timbergate Garrison',
-    composition: '1000 Infantry, 400 Cavalry',
-    factionId: 'faction-example-2-d',
+  'army-lg-hame-scouts': {
+    id: 'army-lg-hame-scouts',
+    q: -2,
+    r: 21,
+    name: 'Hämeen Tiedustelujoukko',
+    composition: '350 kevyt ratsuväki, 150 tiedustelija',
+    factionId: 'faction-lg-hame',
   },
 };
 
@@ -235,7 +205,7 @@ export const exampleMaps = [
   },
   {
     id: 'builtin-example-large',
-    name: 'Large Map (3000 tiles)',
+    name: 'Finland',
     tiles: normalizeTiles(rawLargeTiles),
     factions: largeFactions,
     armies: normalizeArmies(largeArmies),
