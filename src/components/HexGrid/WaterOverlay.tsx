@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { DEEP_WATER, toKey } from '../../utils/hexUtils';
 import { theme } from '../../styles/theme';
 import {
   renderFlagPaths,
@@ -7,7 +6,6 @@ import {
   renderTowns,
   renderPorts,
 } from '../../utils/overlayHelpers';
-import WaterCap from './WaterCap';
 import type { Army } from '../../types/domain';
 import type { TilesState } from '../../types/state';
 
@@ -36,11 +34,6 @@ const WaterOverlay = React.memo(
     const ports = useMemo(() => {
       return renderPorts(tiles);
     }, [tiles]);
-    const waterTiles = useMemo(() => {
-      return Object.values(tiles).filter(({ terrain }) => {
-        return DEEP_WATER.has(terrain);
-      });
-    }, [tiles]);
 
     return (
       <g>
@@ -49,9 +42,6 @@ const WaterOverlay = React.memo(
         {riverPaths}
         {roadPaths}
         {towns}
-        {waterTiles.map(({ q, r, terrain }) => {
-          return <WaterCap key={`water-cap-${toKey(q, r)}`} q={q} r={r} terrain={terrain} />;
-        })}
         {ports}
       </g>
     );

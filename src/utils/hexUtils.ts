@@ -54,6 +54,21 @@ export const getNeighbors = (q: number, r: number): HexCoord[] => {
   });
 };
 
+// Returns all hex tiles on the straight line between two axial coords (inclusive).
+// Uses linear interpolation across cube coordinates, rounding each step.
+export const hexLine = (q1: number, r1: number, q2: number, r2: number): HexCoord[] => {
+  const s1 = -q1 - r1;
+  const s2 = -q2 - r2;
+  const N = Math.max(Math.abs(q2 - q1), Math.abs(r2 - r1), Math.abs(s2 - s1));
+  if (N === 0) return [{ q: q1, r: r1 }];
+  const results: HexCoord[] = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    results.push(hexRound(q1 + (q2 - q1) * t, r1 + (r2 - r1) * t));
+  }
+  return results;
+};
+
 // Axial → pixel (pointy-top), returns { x, y } for the hex center
 export const axialToPixel = (q: number, r: number, size = HEX_SIZE): PixelCoord => {
   return {

@@ -1,4 +1,11 @@
-import React, { useRef, useCallback, useMemo, useLayoutEffect, useEffect } from 'react';
+import React, {
+  useRef,
+  useCallback,
+  useMemo,
+  useLayoutEffect,
+  useEffect,
+  useDeferredValue,
+} from 'react';
 import styled from 'styled-components';
 import { setViewport, MIN_SCALE, MAX_SCALE } from '../../features/viewport/viewportSlice';
 import {
@@ -8,7 +15,9 @@ import {
   stopMovingArmy,
   exitTerrainPaint,
 } from '../../features/ui/uiSlice';
-import { getNeighbors, toKey } from '../../utils/hexUtils';
+import { updateTile, setTileFeature, setTileFaction } from '../../features/tiles/tilesSlice';
+import { getNeighbors, toKey, pixelToAxial, hexLine } from '../../utils/hexUtils';
+import { theme } from '../../styles/theme';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../app/hooks';
 import HexTile from './HexTile';
 import GhostTile from './GhostTile';
@@ -16,6 +25,8 @@ import WaterOverlay from './WaterOverlay';
 import ArmyToken from './ArmyToken';
 import TerrainPatterns from './TerrainPatterns';
 import { PaintContext } from './PaintContext';
+import type { TileFlag } from '../../types/domain';
+import type { HexCoord } from '../../utils/hexUtils';
 import type { Army } from '../../types/domain';
 import type { ViewportState } from '../../types/state';
 
@@ -53,6 +64,11 @@ const HexGrid = (): React.ReactElement => {
     });
     return grouped;
   }, [armies]);
+
+  // Deferred tiles reference — WaterOverlay and ghostKeys use this so they don't
+  // recompute on every paint tick. HexTile components subscribe to their own slice
+  // of state and still update immediately.
+  const deferredTiles = useDeferredValue(tiles);
 
   const viewportRef = useRef<ViewportState>({ x: 0, y: 0, scale: 1 });
   const groupRef = useRef<SVGGElement | null>(null);
@@ -95,10 +111,59 @@ const HexGrid = (): React.ReactElement => {
   const lastPos = useRef({ x: 0, y: 0 });
   const lastPinchDist = useRef<number | null>(null);
   const isPaintingRef = useRef(false);
+  const lastPaintedPosRef = useRef<HexCoord | null>(null);
 
   const commitViewport = useCallback(() => {
     dispatch(setViewport({ ...viewportRef.current }));
   }, [dispatch]);
+
+  // Converts a screen-space position to hex coords and paints that tile (and all
+  // tiles on the straight hex line from the last painted position to here, so fast
+  // drags don't leave gaps).
+  const applyBrushAtScreenPos = useCallback(
+    (clientX: number, clientY: number) => {
+      if (!svgRef.current) return;
+      const ui = store.getState().ui;
+      if (ui.mapMode !== 'terrain-paint' && ui.mapMode !== 'faction') return;
+
+      const rect = svgRef.current.getBoundingClientRect();
+      const { x, y, scale } = viewportRef.current;
+      const gridX = (clientX - rect.left - (rect.width / 2 + x)) / scale;
+      const gridY = (clientY - rect.top - (rect.height / 2 + y)) / scale;
+      const current = pixelToAxial(gridX, gridY);
+
+      // Interpolate from last painted position so no tiles are skipped
+      const prev = lastPaintedPosRef.current;
+      const coords = prev ? hexLine(prev.q, prev.r, current.q, current.r) : [current];
+
+      lastPaintedPosRef.current = current;
+
+      const tilesState = store.getState().tiles;
+
+      coords.forEach(({ q, r }) => {
+        if (!tilesState[toKey(q, r)]) return;
+
+        if (ui.mapMode === 'terrain-paint') {
+          const brush = ui.activePaintBrush;
+          if (!brush) return;
+          if (theme.terrain[brush as keyof typeof theme.terrain]) {
+            dispatch(updateTile({ q, r, terrain: brush }));
+          } else if (brush === 'river-on') {
+            dispatch(setTileFeature({ q, r, flag: 'hasRiver' as TileFlag, value: true }));
+          } else if (brush === 'river-off') {
+            dispatch(setTileFeature({ q, r, flag: 'hasRiver' as TileFlag, value: false }));
+          } else if (brush === 'road-on') {
+            dispatch(setTileFeature({ q, r, flag: 'hasRoad' as TileFlag, value: true }));
+          } else if (brush === 'road-off') {
+            dispatch(setTileFeature({ q, r, flag: 'hasRoad' as TileFlag, value: false }));
+          }
+        } else {
+          dispatch(setTileFaction({ q, r, factionId: ui.activeFactionId }));
+        }
+      });
+    },
+    [dispatch, store]
+  );
 
   const handleWheel = useCallback(
     (e: React.WheelEvent<SVGSVGElement>) => {
@@ -136,18 +201,22 @@ const HexGrid = (): React.ReactElement => {
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
-      if (isPaintingRef.current) return;
+      if (isPaintingRef.current) {
+        applyBrushAtScreenPos(e.clientX, e.clientY);
+        return;
+      }
       if (!dragging.current) return;
       viewportRef.current.x += e.clientX - lastPos.current.x;
       viewportRef.current.y += e.clientY - lastPos.current.y;
       lastPos.current = { x: e.clientX, y: e.clientY };
       applyTransform();
     },
-    [applyTransform]
+    [applyTransform, applyBrushAtScreenPos]
   );
 
   const handleMouseUp = useCallback(() => {
     isPaintingRef.current = false;
+    lastPaintedPosRef.current = null;
     if (dragging.current) {
       dragging.current = false;
       commitViewport();
@@ -247,18 +316,18 @@ const HexGrid = (): React.ReactElement => {
 
   const ghostKeys = useMemo(() => {
     const set = new Set<string>();
-    if (Object.keys(tiles).length === 0) {
+    if (Object.keys(deferredTiles).length === 0) {
       set.add(toKey(0, 0));
       return set;
     }
-    Object.values(tiles).forEach(({ q, r }) => {
+    Object.values(deferredTiles).forEach(({ q, r }) => {
       getNeighbors(q, r).forEach((n) => {
         const k = toKey(n.q, n.r);
-        if (!tiles[k]) set.add(k);
+        if (!deferredTiles[k]) set.add(k);
       });
     });
     return set;
-  }, [tiles]);
+  }, [deferredTiles]);
 
   return (
     <PaintContext.Provider value={isPaintingRef}>
@@ -292,7 +361,7 @@ const HexGrid = (): React.ReactElement => {
             return <HexTile key={toKey(q, r)} q={q} r={r} />;
           })}
 
-          <WaterOverlay tiles={tiles} armiesByTile={armiesByTile} />
+          <WaterOverlay tiles={deferredTiles} armiesByTile={armiesByTile} />
 
           {Object.entries(armiesByTile).map(([tileKey, tileArmies]) => {
             if (tiles[tileKey]?.hasTown) return null;

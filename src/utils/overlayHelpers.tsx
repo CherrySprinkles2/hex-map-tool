@@ -15,8 +15,6 @@ import { theme } from '../styles/theme';
 import type { TilesState } from '../types/state';
 import type { Army } from '../types/domain';
 
-const WATER_STUB_RATIO = 0.38;
-
 interface PathStyle {
   color: string;
   width: number;
@@ -86,8 +84,9 @@ export const renderFlagPaths = (
       return i !== null;
     });
 
+    if (isDeepWater) return [];
+
     if (connectedEdges.length === 0) {
-      if (isDeepWater) return [];
       return [
         <circle
           key={`${flag}-pool-${toKey(q, r)}`}
@@ -111,14 +110,12 @@ export const renderFlagPaths = (
 
     const paths: string[] = [];
 
-    if (connectedEdges.length === 2 && !isDeepWater) {
+    if (connectedEdges.length === 2) {
       const [a, b] = midpoints;
       paths.push(smoothPath(a.x, a.y, b.x, b.y, cx, cy, style.tension));
     } else {
       midpoints.forEach((em) => {
-        const targetX = isDeepWater ? em.x + (cx - em.x) * WATER_STUB_RATIO : cx;
-        const targetY = isDeepWater ? em.y + (cy - em.y) * WATER_STUB_RATIO : cy;
-        paths.push(curvedStub(em.x, em.y, targetX, targetY, style.tension));
+        paths.push(curvedStub(em.x, em.y, cx, cy, style.tension));
       });
     }
 

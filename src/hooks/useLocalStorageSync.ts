@@ -10,6 +10,9 @@ import { loadMap } from '../features/currentMap/currentMapSlice';
 import { saveMapData, loadMapData, createMap } from '../utils/mapsStorage';
 import * as historyManager from '../utils/historyManager';
 import type { TilesState, ArmiesState, FactionsState } from '../types/state';
+import type { HistorySnapshot } from '../types/history';
+
+const PAINT_SAVE_DEBOUNCE_MS = 500;
 
 const useLocalStorageSync = (): void => {
   const dispatch = useAppDispatch();
@@ -21,6 +24,9 @@ const useLocalStorageSync = (): void => {
   const lastTilesRef = useRef<TilesState | null>(null);
   const lastArmiesRef = useRef<ArmiesState | null>(null);
   const lastFactionsRef = useRef<FactionsState | null>(null);
+  // Captured before-stroke snapshot; flushed as a single history entry after debounce
+  const paintSnapshotRef = useRef<HistorySnapshot | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     historyManager.clearHistory();
@@ -57,7 +63,7 @@ const useLocalStorageSync = (): void => {
       const currentId = store.getState().currentMap.id;
       if (!currentId) return;
 
-      const { tiles, armies, factions } = store.getState();
+      const { tiles, armies, factions, ui } = store.getState();
 
       const tilesChanged = tiles !== lastTilesRef.current;
       const armiesChanged = armies !== lastArmiesRef.current;
@@ -65,20 +71,68 @@ const useLocalStorageSync = (): void => {
 
       if (!tilesChanged && !armiesChanged && !factionsChanged) return;
 
-      historyManager.push({
-        tiles: lastTilesRef.current!,
-        armies: lastArmiesRef.current!,
-        factions: lastFactionsRef.current!,
-      });
+      const isPaintMode = ui.mapMode === 'terrain-paint' || ui.mapMode === 'faction';
 
-      lastTilesRef.current = tiles;
-      lastArmiesRef.current = armies;
-      lastFactionsRef.current = factions;
+      if (isPaintMode) {
+        // Capture the pre-stroke state once; subsequent paints in the same stroke are suppressed
+        if (!paintSnapshotRef.current) {
+          paintSnapshotRef.current = {
+            tiles: lastTilesRef.current!,
+            armies: lastArmiesRef.current!,
+            factions: lastFactionsRef.current!,
+          };
+        }
 
-      saveMapData(currentId, { tiles, armies, factions });
+        lastTilesRef.current = tiles;
+        lastArmiesRef.current = armies;
+        lastFactionsRef.current = factions;
+
+        // Debounce the actual save + history push so they fire once per stroke
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = setTimeout(() => {
+          saveTimerRef.current = null;
+          historyManager.push(paintSnapshotRef.current!);
+          paintSnapshotRef.current = null;
+          saveMapData(currentId, {
+            tiles: lastTilesRef.current!,
+            armies: lastArmiesRef.current!,
+            factions: lastFactionsRef.current!,
+          });
+        }, PAINT_SAVE_DEBOUNCE_MS);
+      } else {
+        // Flush any pending paint stroke before recording this non-paint change
+        if (saveTimerRef.current) {
+          clearTimeout(saveTimerRef.current);
+          saveTimerRef.current = null;
+          if (paintSnapshotRef.current) {
+            historyManager.push(paintSnapshotRef.current);
+            paintSnapshotRef.current = null;
+          }
+        }
+
+        historyManager.push({
+          tiles: lastTilesRef.current!,
+          armies: lastArmiesRef.current!,
+          factions: lastFactionsRef.current!,
+        });
+
+        lastTilesRef.current = tiles;
+        lastArmiesRef.current = armies;
+        lastFactionsRef.current = factions;
+
+        saveMapData(currentId, { tiles, armies, factions });
+      }
     });
 
-    return unsubscribe;
+    return () => {
+      // Clear pending debounced paint save on unmount / map change
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      paintSnapshotRef.current = null;
+      unsubscribe();
+    };
   }, [dispatch, mapId]);
 
   useEffect(() => {
