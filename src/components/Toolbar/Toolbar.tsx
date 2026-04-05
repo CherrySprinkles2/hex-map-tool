@@ -461,7 +461,11 @@ const Toolbar = (): React.ReactElement => {
   const [langModalOpen, setLangModalOpen] = useState(false);
 
   const rightPanelOpen =
-    mapMode === 'terrain' || mapMode === 'faction' || showShortcuts || selectedArmyId !== null;
+    mapMode === 'terrain' ||
+    mapMode === 'terrain-paint' ||
+    mapMode === 'faction' ||
+    showShortcuts ||
+    selectedArmyId !== null;
 
   const displayName = editing ? localName : mapName;
 

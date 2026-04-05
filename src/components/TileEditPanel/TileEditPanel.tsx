@@ -94,6 +94,7 @@ const Panel = styled.div<{ $open: boolean; $desktopTerrain: boolean }>`
 `;
 
 const PanelTitle = styled.h2`
+  margin: 0;
   font-size: 1rem;
   font-weight: 600;
   color: ${({ theme }) => {
@@ -467,12 +468,14 @@ const ConnectionBtn = styled.button<{ $blocked: boolean; $color: string }>`
 `;
 
 const PaintModeHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  position: relative;
 `;
 
 const ExitPaintBtn = styled.button`
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
   padding: 6px 12px;
   border-radius: 6px;
   border: 1.5px solid rgba(255, 255, 255, 0.2);
