@@ -96,7 +96,7 @@ export const RIVER_CANONICAL_PATHS: Record<number, SegmentPaths> = {
   },
   5: {
     // E–NW (120°) — gentle asymmetric sweep
-    paths: ['M 43.3,0 C 30,-3 6,-22 -21.7,-37.5'],
+    paths: ['M 43.3,0 C 30,8 2,-22 -21.7,-37.5'],
   },
   9: {
     // E–W (180°) — organic S-curve meander

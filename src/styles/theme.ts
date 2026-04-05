@@ -118,6 +118,12 @@ export const theme: AppTheme = {
   },
 
   // ── Z-index scale ─────────────────────────────────────────────────────────────
+  terrainButtonMix: {
+    hoverPercent: 65,
+    activePercent: 45,
+    focusPercent: 45,
+  },
+
   zIndex: {
     toggle: 40,
     toolbar: 50,

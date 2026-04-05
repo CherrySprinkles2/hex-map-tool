@@ -191,8 +191,10 @@ const TerrainBtn = styled.button<{ $active: boolean; $color: string }>`
   padding: 12px 8px;
   border-radius: 8px;
   border: 2px solid
-    ${({ $active, $color }) => {
-      return $active ? $color : 'transparent';
+    ${({ $active, $color, theme }) => {
+      return $active
+        ? `color-mix(in srgb, ${$color} ${theme.terrainButtonMix.activePercent}%, white)`
+        : 'transparent';
     }};
   background: ${({ $color }) => {
     return $color;
@@ -201,14 +203,26 @@ const TerrainBtn = styled.button<{ $active: boolean; $color: string }>`
     return theme.text;
   }};
   cursor: pointer;
+  outline: none;
   transition:
     border-color 0.15s,
     background 0.15s;
 
   &:hover {
-    border-color: ${({ $color }) => {
+    border-color: ${({ $color, theme }) => {
+      return `color-mix(in srgb, ${$color} ${theme.terrainButtonMix.hoverPercent}%, white)`;
+    }};
+    background: ${({ $color }) => {
       return $color;
-    }}99;
+    }}55;
+  }
+
+  &:focus-visible {
+    outline: 3px solid
+      ${({ $color, theme }) => {
+        return `color-mix(in srgb, ${$color} ${theme.terrainButtonMix.focusPercent}%, white)`;
+      }};
+    outline-offset: 2px;
   }
 
   span.icon {
@@ -536,6 +550,7 @@ const FeatureBrushBtn = styled.button<{ $active: boolean; $color: string }>`
   cursor: pointer;
   font-size: 0.78rem;
   letter-spacing: 0.04em;
+  outline: none;
   transition:
     border-color 0.15s,
     background 0.15s;
@@ -543,6 +558,13 @@ const FeatureBrushBtn = styled.button<{ $active: boolean; $color: string }>`
     border-color: ${({ $color }) => {
       return $color;
     }}77;
+  }
+  &:focus-visible {
+    outline: 2px solid
+      ${({ $color }) => {
+        return $color;
+      }};
+    outline-offset: 2px;
   }
 `;
 
@@ -734,7 +756,7 @@ const TileEditPanel = (): React.ReactElement => {
                   </FeatureBrushBtn>
                   <FeatureBrushBtn
                     $active={activePaintBrush === 'river-off'}
-                    $color="rgba(255,255,255,0.4)"
+                    $color="#888888"
                     onClick={() => {
                       return dispatch(setActivePaintBrush('river-off'));
                     }}
@@ -757,7 +779,7 @@ const TileEditPanel = (): React.ReactElement => {
                   </FeatureBrushBtn>
                   <FeatureBrushBtn
                     $active={activePaintBrush === 'road-off'}
-                    $color="rgba(255,255,255,0.4)"
+                    $color="#888888"
                     onClick={() => {
                       return dispatch(setActivePaintBrush('road-off'));
                     }}

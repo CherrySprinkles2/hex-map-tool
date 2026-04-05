@@ -97,5 +97,14 @@ export interface AppTheme {
     stackSpacing: number;
   };
 
+  terrainButtonMix: {
+    /** % of the terrain colour kept when mixed with white on hover (lower = more white) */
+    hoverPercent: number;
+    /** % of the terrain colour kept when mixed with white in the active/selected state */
+    activePercent: number;
+    /** % of the terrain colour kept when mixed with white on focus-visible */
+    focusPercent: number;
+  };
+
   zIndex: ZIndexScale;
 }
