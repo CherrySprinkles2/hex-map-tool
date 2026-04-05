@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useContext } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { hexPointsString, axialToPixel, HEX_SIZE, toKey } from '../../utils/hexUtils';
 import {
@@ -7,15 +7,26 @@ import {
   setPlacingArmy,
   stopMovingArmy,
 } from '../../features/ui/uiSlice';
-import { deleteTile, setTileFaction } from '../../features/tiles/tilesSlice';
+import {
+  deleteTile,
+  setTileFaction,
+  updateTile,
+  setTileFeature,
+} from '../../features/tiles/tilesSlice';
 import { addArmy, moveArmy } from '../../features/armies/armiesSlice';
 import { useTheme } from 'styled-components';
+import { PaintContext } from './PaintContext';
+
+// Detected once at module load — pointer: coarse = touch device (phone/tablet).
+// Drag-to-paint is disabled on touch devices since drag = pan.
+const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
 
 const HexTile = React.memo(({ q, r }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
   const store = useStore();
   const [hovered, setHovered] = useState(false);
+  const isPaintingRef = useContext(PaintContext);
 
   // Stable key for this tile — q and r never change for a given instance
   const key = useMemo(() => {
@@ -55,10 +66,35 @@ const HexTile = React.memo(({ q, r }) => {
     return hexPointsString(x, y, HEX_SIZE - 5);
   }, [x, y]);
 
+  // Applies the currently active paint brush to this tile.
+  // Terrain brushes change the terrain type; feature brushes toggle river/road flags.
+  const applyBrush = useCallback(
+    (brushValue) => {
+      if (!brushValue) return;
+      if (theme.terrain[brushValue]) {
+        dispatch(updateTile({ q, r, terrain: brushValue }));
+      } else if (brushValue === 'river-on') {
+        dispatch(setTileFeature({ q, r, flag: 'hasRiver', value: true }));
+      } else if (brushValue === 'river-off') {
+        dispatch(setTileFeature({ q, r, flag: 'hasRiver', value: false }));
+      } else if (brushValue === 'road-on') {
+        dispatch(setTileFeature({ q, r, flag: 'hasRoad', value: true }));
+      } else if (brushValue === 'road-off') {
+        dispatch(setTileFeature({ q, r, flag: 'hasRoad', value: false }));
+      }
+    },
+    [dispatch, q, r, theme.terrain]
+  );
+
   const handleClick = useCallback(
     (e) => {
       e.stopPropagation();
       const ui = store.getState().ui;
+
+      if (ui.mapMode === 'terrain-paint') {
+        applyBrush(ui.activePaintBrush);
+        return;
+      }
 
       if (ui.mapMode === 'faction') {
         dispatch(setTileFaction({ q, r, factionId: ui.activeFactionId }));
@@ -80,7 +116,7 @@ const HexTile = React.memo(({ q, r }) => {
       if (isSelected) dispatch(deselectTile());
       else dispatch(selectTile(key));
     },
-    [isSelected, dispatch, key, q, r, store]
+    [isSelected, dispatch, key, q, r, store, applyBrush]
   );
 
   const handleContextMenu = useCallback(
@@ -93,10 +129,44 @@ const HexTile = React.memo(({ q, r }) => {
     [isSelected, dispatch, q, r]
   );
 
+  // Start a paint stroke on pointer down (desktop only — touch = pan).
+  // isPaintingRef suppresses panning in HexGrid.handleMouseMove during the stroke.
+  const handlePointerDown = useCallback(
+    (e) => {
+      if (isTouchDevice) return;
+      const ui = store.getState().ui;
+      if (ui.mapMode !== 'terrain-paint' && ui.mapMode !== 'faction') return;
+      isPaintingRef.current = true;
+      if (ui.mapMode === 'terrain-paint') {
+        applyBrush(ui.activePaintBrush);
+      } else {
+        dispatch(setTileFaction({ q, r, factionId: ui.activeFactionId }));
+      }
+    },
+    [store, isPaintingRef, applyBrush, dispatch, q, r]
+  );
+
+  // Continue painting as the pointer enters this tile during an active stroke.
+  const handlePointerEnter = useCallback(
+    (e) => {
+      if (isTouchDevice) return;
+      if (!isPaintingRef.current) return;
+      const ui = store.getState().ui;
+      if (ui.mapMode === 'terrain-paint') {
+        applyBrush(ui.activePaintBrush);
+      } else if (ui.mapMode === 'faction') {
+        dispatch(setTileFaction({ q, r, factionId: ui.activeFactionId }));
+      }
+    },
+    [store, isPaintingRef, applyBrush, dispatch, q, r]
+  );
+
   return (
     <g
       onClick={handleClick}
       onContextMenu={handleContextMenu}
+      onPointerDown={handlePointerDown}
+      onPointerEnter={handlePointerEnter}
       onMouseEnter={() => {
         return setHovered(true);
       }}

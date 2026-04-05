@@ -3,6 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { setActiveFaction, setMapMode } from '../../features/ui/uiSlice';
 
+// Detected once at module load — pointer: coarse = touch device.
+const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+
 const Panel = styled.div`
   position: fixed;
   top: 0;
@@ -201,7 +204,10 @@ const FactionPaintPanel = () => {
           ✕
         </CloseBtn>
       </Header>
-      <Hint>Select a faction below, then click any tile to assign it.</Hint>
+      <Hint>
+        Select a faction below, then {isTouchDevice ? 'tap tiles' : 'click or drag tiles'} to assign
+        it.
+      </Hint>
 
       <FactionBtn
         $active={activeFactionId === null}

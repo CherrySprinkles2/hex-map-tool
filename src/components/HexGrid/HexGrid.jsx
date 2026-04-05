@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useMemo, useLayoutEffect } from 'react';
+import React, { useRef, useCallback, useMemo, useLayoutEffect, useEffect } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import styled from 'styled-components';
 import { setViewport, MIN_SCALE, MAX_SCALE } from '../../features/viewport/viewportSlice';
@@ -7,6 +7,7 @@ import {
   deselectArmy,
   setPlacingArmy,
   stopMovingArmy,
+  exitTerrainPaint,
 } from '../../features/ui/uiSlice';
 import { getNeighbors, toKey } from '../../utils/hexUtils';
 import HexTile from './HexTile';
@@ -14,6 +15,7 @@ import GhostTile from './GhostTile';
 import WaterOverlay from './WaterOverlay';
 import ArmyToken from './ArmyToken';
 import TerrainPatterns from './TerrainPatterns';
+import { PaintContext } from './PaintContext';
 
 const SvgCanvas = styled.svg`
   flex: 1;
@@ -36,6 +38,9 @@ const HexGrid = () => {
   });
   const placingArmy = useSelector((state) => {
     return state.ui.placingArmy;
+  });
+  const mapMode = useSelector((state) => {
+    return state.ui.mapMode;
   });
 
   // Group armies by tile key for stacking offset calculations
@@ -98,6 +103,9 @@ const HexGrid = () => {
   const dragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
   const lastPinchDist = useRef(null);
+  // Tracks an active paint stroke — true while pointer is held down over tiles in a paint mode.
+  // Never stored in Redux to avoid re-renders on every pointer move.
+  const isPaintingRef = useRef(false);
 
   // Commit current viewport ref to Redux (called at end of drag / after zoom).
   const commitViewport = useCallback(() => {
@@ -141,6 +149,8 @@ const HexGrid = () => {
 
   const handleMouseMove = useCallback(
     (e) => {
+      // Suppress panning during an active paint stroke
+      if (isPaintingRef.current) return;
       if (!dragging.current) return;
       viewportRef.current.x += e.clientX - lastPos.current.x;
       viewportRef.current.y += e.clientY - lastPos.current.y;
@@ -151,6 +161,7 @@ const HexGrid = () => {
   );
 
   const handleMouseUp = useCallback(() => {
+    isPaintingRef.current = false;
     if (dragging.current) {
       dragging.current = false;
       commitViewport();
@@ -159,6 +170,8 @@ const HexGrid = () => {
 
   const handleSvgClick = useCallback(() => {
     const ui = store.getState().ui;
+    // Don't deselect while in paint mode — the panel stays open for brush changes
+    if (ui.mapMode === 'terrain-paint') return;
     dispatch(deselectTile());
     if (ui.selectedArmyId) dispatch(deselectArmy());
     if (ui.placingArmy) dispatch(setPlacingArmy(false));
@@ -235,6 +248,20 @@ const HexGrid = () => {
     [commitViewport]
   );
 
+  // ─── Escape key: exit terrain-paint mode ─────────────────────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key !== 'Escape') return;
+      if (store.getState().ui.mapMode === 'terrain-paint') {
+        dispatch(exitTerrainPaint());
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      return window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [dispatch, store]);
+
   // ─── Ghost tile keys ─────────────────────────────────────────────────────────
   const ghostKeys = useMemo(() => {
     const set = new Set();
@@ -253,49 +280,56 @@ const HexGrid = () => {
   }, [tiles]);
 
   return (
-    <SvgCanvas
-      ref={svgRef}
-      style={{ cursor: placingArmy ? 'crosshair' : undefined }}
-      onWheel={handleWheel}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onClick={handleSvgClick}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* Pattern definitions — referenced by HexTile via fill="url(#pattern-TERRAIN)" */}
-      <TerrainPatterns />
+    <PaintContext.Provider value={isPaintingRef}>
+      <SvgCanvas
+        ref={svgRef}
+        style={{
+          cursor:
+            placingArmy || mapMode === 'terrain-paint' || mapMode === 'faction'
+              ? 'crosshair'
+              : undefined,
+        }}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onClick={handleSvgClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Pattern definitions — referenced by HexTile via fill="url(#pattern-TERRAIN)" */}
+        <TerrainPatterns />
 
-      {/* Transform is set imperatively via groupRef — no React re-render on pan/zoom */}
-      <g ref={groupRef}>
-        {/* Ghost tiles (behind real tiles) */}
-        {[...ghostKeys].map((key) => {
-          const [q, r] = key.split(',').map(Number);
-          return <GhostTile key={`ghost-${key}`} q={q} r={r} />;
-        })}
+        {/* Transform is set imperatively via groupRef — no React re-render on pan/zoom */}
+        <g ref={groupRef}>
+          {/* Ghost tiles (behind real tiles) */}
+          {[...ghostKeys].map((key) => {
+            const [q, r] = key.split(',').map(Number);
+            return <GhostTile key={`ghost-${key}`} q={q} r={r} />;
+          })}
 
-        {/* Real tiles */}
-        {Object.values(tiles).map(({ q, r }) => {
-          return <HexTile key={toKey(q, r)} q={q} r={r} />;
-        })}
+          {/* Real tiles */}
+          {Object.values(tiles).map(({ q, r }) => {
+            return <HexTile key={toKey(q, r)} q={q} r={r} />;
+          })}
 
-        {/* Water connectivity overlay */}
-        <WaterOverlay tiles={tiles} armiesByTile={armiesByTile} />
+          {/* Water connectivity overlay */}
+          <WaterOverlay tiles={tiles} armiesByTile={armiesByTile} />
 
-        {/* Army tokens — only on non-town tiles; towns show garrison visual instead */}
-        {Object.entries(armiesByTile).map(([tileKey, tileArmies]) => {
-          if (tiles[tileKey]?.hasTown) return null;
-          return tileArmies.map((army, idx) => {
-            return (
-              <ArmyToken key={army.id} army={army} tileIndex={idx} total={tileArmies.length} />
-            );
-          });
-        })}
-      </g>
-    </SvgCanvas>
+          {/* Army tokens — only on non-town tiles; towns show garrison visual instead */}
+          {Object.entries(armiesByTile).map(([tileKey, tileArmies]) => {
+            if (tiles[tileKey]?.hasTown) return null;
+            return tileArmies.map((army, idx) => {
+              return (
+                <ArmyToken key={army.id} army={army} tileIndex={idx} total={tileArmies.length} />
+              );
+            });
+          })}
+        </g>
+      </SvgCanvas>
+    </PaintContext.Provider>
   );
 };
 

@@ -144,6 +144,24 @@ const tilesSlice = createSlice({
       const { q, r } = action.payload;
       delete state[toKey(q, r)];
     },
+    setTileFeature: (state, action) => {
+      const { q, r, flag, value } = action.payload;
+      const key = toKey(q, r);
+      if (!state[key]) return;
+      state[key][flag] = value;
+      // When turning off, clear blocked connections so they auto-connect if re-enabled
+      if (!value && BLOCKED_KEY[flag]) {
+        const blockedKey = BLOCKED_KEY[flag];
+        (state[key][blockedKey] || []).forEach((nk) => {
+          if (state[nk]?.[blockedKey]) {
+            state[nk][blockedKey] = state[nk][blockedKey].filter((k) => {
+              return k !== key;
+            });
+          }
+        });
+        state[key][blockedKey] = [];
+      }
+    },
     importTiles: (_state, action) => {
       return action.payload;
     },
@@ -173,6 +191,7 @@ export const {
   setTownName,
   setTileNotes,
   setTileFaction,
+  setTileFeature,
   deleteTile,
   importTiles,
 } = tilesSlice.actions;

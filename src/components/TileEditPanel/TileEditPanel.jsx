@@ -12,7 +12,13 @@ import {
   unblockConnection,
 } from '../../features/tiles/tilesSlice';
 import { addArmy } from '../../features/armies/armiesSlice';
-import { deselectTile, selectArmy } from '../../features/ui/uiSlice';
+import {
+  deselectTile,
+  selectArmy,
+  enterTerrainPaint,
+  exitTerrainPaint,
+  setActivePaintBrush,
+} from '../../features/ui/uiSlice';
 import { theme } from '../../styles/theme';
 import { NEIGHBOR_DIRS, toKey, DEEP_WATER } from '../../utils/hexUtils';
 
@@ -456,6 +462,118 @@ const ConnectionBtn = styled.button`
   }
 `;
 
+const PaintModeHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const ExitPaintBtn = styled.button`
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: ${({ theme }) => {
+    return theme.textMuted;
+  }};
+  cursor: pointer;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: ${({ theme }) => {
+      return theme.text;
+    }};
+  }
+`;
+
+const FeatureBrushRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const FeatureBrushLabel = styled.span`
+  flex: 0 0 72px;
+  font-size: 0.85rem;
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
+`;
+
+const FeatureBrushBtnGroup = styled.div`
+  display: flex;
+  gap: 6px;
+  flex: 1;
+`;
+
+const FeatureBrushBtn = styled.button`
+  flex: 1;
+  padding: 8px 6px;
+  border-radius: 7px;
+  border: 2px solid
+    ${({ $active, $color }) => {
+      return $active ? $color : 'rgba(255,255,255,0.1)';
+    }};
+  background: ${({ $active, $color }) => {
+    return $active ? `${$color}22` : 'rgba(255,255,255,0.02)';
+  }};
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
+  cursor: pointer;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+  &:hover {
+    border-color: ${({ $color }) => {
+      return $color;
+    }}77;
+  }
+`;
+
+const PaintModeBtn = styled.button`
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px solid rgba(147, 112, 219, 0.4);
+  background: rgba(147, 112, 219, 0.06);
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
+  cursor: pointer;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+  &:hover {
+    background: rgba(147, 112, 219, 0.15);
+    border-color: rgba(147, 112, 219, 0.7);
+  }
+`;
+
+const PaintHint = styled.p`
+  font-size: 0.75rem;
+  color: ${({ theme }) => {
+    return theme.textMuted;
+  }};
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
+
+  @media (max-width: 600px) {
+    display: none;
+  }
+`;
+
 const DIR_LABELS = ['E', 'NE', 'NW', 'W', 'SW', 'SE'];
 const FLAG_BLOCKED_KEY = {
   hasRiver: 'riverBlocked',
@@ -479,6 +597,9 @@ const TileEditPanel = () => {
   });
   const showShortcuts = useSelector((state) => {
     return state.ui.showShortcuts;
+  });
+  const activePaintBrush = useSelector((state) => {
+    return state.ui.activePaintBrush;
   });
   const tile = useSelector((state) => {
     return selectedKey ? state.tiles[selectedKey] : null;
@@ -531,20 +652,24 @@ const TileEditPanel = () => {
 
   return (
     <Panel
-      $open={!!selectedKey && !showShortcuts}
-      $desktopTerrain={mapMode === 'terrain' && !showShortcuts}
+      $open={(!!selectedKey || mapMode === 'terrain-paint') && !showShortcuts}
+      $desktopTerrain={(mapMode === 'terrain' || mapMode === 'terrain-paint') && !showShortcuts}
     >
       <DragHandle />
-      <PanelTitle>Edit Tile</PanelTitle>
-      <CloseBtn onClick={handleClose}>✕</CloseBtn>
 
-      {!selectedKey ? (
-        <EmptyState>
-          <EmptyHexIcon>⬡</EmptyHexIcon>
-          <EmptyText>Select a tile to edit it</EmptyText>
-        </EmptyState>
-      ) : (
+      {mapMode === 'terrain-paint' ? (
         <>
+          <PaintModeHeader>
+            <PanelTitle>🖌 Paint Mode</PanelTitle>
+            <ExitPaintBtn
+              onClick={() => {
+                return dispatch(exitTerrainPaint());
+              }}
+            >
+              ✕ Exit
+            </ExitPaintBtn>
+          </PaintModeHeader>
+
           <div>
             <SectionLabel>Terrain</SectionLabel>
             <TerrainGrid>
@@ -552,10 +677,10 @@ const TileEditPanel = () => {
                 return (
                   <TerrainBtn
                     key={type}
-                    $active={tile?.terrain === type}
+                    $active={activePaintBrush === type}
                     $color={color}
                     onClick={() => {
-                      return handleTerrainChange(type);
+                      return dispatch(setActivePaintBrush(type));
                     }}
                   >
                     <span className="icon">{icon}</span>
@@ -571,142 +696,241 @@ const TileEditPanel = () => {
           <div>
             <SectionLabel>Features</SectionLabel>
             <FlagList>
-              {FLAGS.map(({ key, label, icon, color }) => {
-                const active = !!tile?.[key];
-                const blockedKey = FLAG_BLOCKED_KEY[key];
-                const isPort = key === 'hasTown';
-                const flagNeighbors =
-                  active && blockedKey
-                    ? NEIGHBOR_DIRS.map((dir, i) => {
-                        const nk = toKey((tile?.q ?? 0) + dir.q, (tile?.r ?? 0) + dir.r);
-                        const neighbor = allTiles[nk];
-                        if (isPort) {
-                          // Port: show adjacent water tiles regardless of their flags
-                          if (!DEEP_WATER.has(neighbor?.terrain)) return null;
-                          const isBlocked = (tile?.[blockedKey] || []).includes(nk);
-                          return {
-                            nk,
-                            dirLabel: DIR_LABELS[i],
-                            terrain: neighbor.terrain,
-                            isBlocked,
-                          };
-                        } else {
-                          // River/road: show adjacent tiles that share the same flag
-                          if (!neighbor?.[key]) return null;
-                          const isBlocked =
-                            (tile?.[blockedKey] || []).includes(nk) ||
-                            (neighbor[blockedKey] || []).includes(selectedKey);
-                          return {
-                            nk,
-                            dirLabel: DIR_LABELS[i],
-                            terrain: neighbor.terrain,
-                            isBlocked,
-                          };
-                        }
-                      }).filter(Boolean)
-                    : [];
-                return (
-                  <div key={key}>
-                    <FlagToggle
-                      $active={active}
-                      $color={color}
-                      onClick={() => {
-                        return handleFlagToggle(key);
-                      }}
-                    >
-                      <span className="flag-icon">{icon}</span>
-                      <span className="flag-label">{label}</span>
-                      <span className="flag-state">{active ? 'on' : 'off'}</span>
-                    </FlagToggle>
-                    {flagNeighbors.length > 0 && (
-                      <ConnectionList>
-                        {flagNeighbors.map(({ nk, dirLabel, terrain, isBlocked }) => {
-                          return (
-                            <ConnectionRow key={nk}>
-                              <span>{theme.terrain[terrain]?.icon ?? terrain}</span>
-                              <span>{dirLabel}</span>
-                              {isBlocked && (
-                                <span style={{ opacity: 0.45 }}>
-                                  {isPort ? 'no port' : 'blocked'}
-                                </span>
-                              )}
-                              <ConnectionBtn
-                                $blocked={isBlocked}
-                                $color={color}
-                                onClick={() => {
-                                  return handleConnectionToggle(key, nk, isBlocked);
-                                }}
-                              >
-                                {isPort
-                                  ? isBlocked
-                                    ? 'Add Port'
-                                    : 'Remove Port'
-                                  : isBlocked
-                                    ? 'Restore'
-                                    : 'Disconnect'}
-                              </ConnectionBtn>
-                            </ConnectionRow>
-                          );
-                        })}
-                      </ConnectionList>
-                    )}
-                  </div>
-                );
-              })}
+              <FeatureBrushRow>
+                <FeatureBrushLabel>🌊 River</FeatureBrushLabel>
+                <FeatureBrushBtnGroup>
+                  <FeatureBrushBtn
+                    $active={activePaintBrush === 'river-on'}
+                    $color={theme.river.color}
+                    onClick={() => {
+                      return dispatch(setActivePaintBrush('river-on'));
+                    }}
+                  >
+                    + Add
+                  </FeatureBrushBtn>
+                  <FeatureBrushBtn
+                    $active={activePaintBrush === 'river-off'}
+                    $color="rgba(255,255,255,0.4)"
+                    onClick={() => {
+                      return dispatch(setActivePaintBrush('river-off'));
+                    }}
+                  >
+                    − Remove
+                  </FeatureBrushBtn>
+                </FeatureBrushBtnGroup>
+              </FeatureBrushRow>
+              <FeatureBrushRow>
+                <FeatureBrushLabel>🛤️ Road</FeatureBrushLabel>
+                <FeatureBrushBtnGroup>
+                  <FeatureBrushBtn
+                    $active={activePaintBrush === 'road-on'}
+                    $color={theme.road.color}
+                    onClick={() => {
+                      return dispatch(setActivePaintBrush('road-on'));
+                    }}
+                  >
+                    + Add
+                  </FeatureBrushBtn>
+                  <FeatureBrushBtn
+                    $active={activePaintBrush === 'road-off'}
+                    $color="rgba(255,255,255,0.4)"
+                    onClick={() => {
+                      return dispatch(setActivePaintBrush('road-off'));
+                    }}
+                  >
+                    − Remove
+                  </FeatureBrushBtn>
+                </FeatureBrushBtnGroup>
+              </FeatureBrushRow>
             </FlagList>
-            {tile?.hasTown && (
-              <TownNameInput
-                value={tile.townName ?? ''}
-                onChange={handleNameChange}
-                placeholder="Town name…"
-                maxLength={32}
-                style={{ marginTop: '8px' }}
-              />
-            )}
           </div>
 
-          <Divider />
+          <PaintHint>Click or drag tiles to paint with the selected brush.</PaintHint>
+        </>
+      ) : (
+        <>
+          <PanelTitle>Edit Tile</PanelTitle>
+          <CloseBtn onClick={handleClose}>✕</CloseBtn>
 
-          <div>
-            <SectionLabel>Notes</SectionLabel>
-            <NotesTextarea
-              value={tile?.notes ?? ''}
-              onChange={handleNotesChange}
-              placeholder="Add notes about this tile…"
-            />
-          </div>
+          {!selectedKey ? (
+            <EmptyState>
+              <EmptyHexIcon>⬡</EmptyHexIcon>
+              <EmptyText>Select a tile to edit it</EmptyText>
+            </EmptyState>
+          ) : (
+            <>
+              <div>
+                <SectionLabel>Terrain</SectionLabel>
+                <TerrainGrid>
+                  {Object.entries(theme.terrain).map(([type, { color, label, icon }]) => {
+                    return (
+                      <TerrainBtn
+                        key={type}
+                        $active={tile?.terrain === type}
+                        $color={color}
+                        onClick={() => {
+                          return handleTerrainChange(type);
+                        }}
+                      >
+                        <span className="icon">{icon}</span>
+                        <span className="label">{label}</span>
+                      </TerrainBtn>
+                    );
+                  })}
+                </TerrainGrid>
+                <PaintModeBtn
+                  style={{ marginTop: '10px' }}
+                  onClick={() => {
+                    return dispatch(enterTerrainPaint(tile?.terrain ?? null));
+                  }}
+                >
+                  🖌 Paint Terrain
+                </PaintModeBtn>
+              </div>
 
-          {tileArmies.length > 0 && (
-            <div>
-              <SectionLabel>Armies on this tile</SectionLabel>
-              <ArmyList>
-                {tileArmies.map((army) => {
-                  return (
-                    <ArmyRow
-                      key={army.id}
-                      onClick={() => {
-                        return dispatch(selectArmy(army.id));
-                      }}
-                    >
-                      <span>⚔️</span>
-                      <ArmyRowName>{army.name || 'Unnamed Army'}</ArmyRowName>
-                      <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>Select →</span>
-                    </ArmyRow>
-                  );
-                })}
-              </ArmyList>
-            </div>
+              <Divider />
+
+              <div>
+                <SectionLabel>Features</SectionLabel>
+                <FlagList>
+                  {FLAGS.map(({ key, label, icon, color }) => {
+                    const active = !!tile?.[key];
+                    const blockedKey = FLAG_BLOCKED_KEY[key];
+                    const isPort = key === 'hasTown';
+                    const flagNeighbors =
+                      active && blockedKey
+                        ? NEIGHBOR_DIRS.map((dir, i) => {
+                            const nk = toKey((tile?.q ?? 0) + dir.q, (tile?.r ?? 0) + dir.r);
+                            const neighbor = allTiles[nk];
+                            if (isPort) {
+                              // Port: show adjacent water tiles regardless of their flags
+                              if (!DEEP_WATER.has(neighbor?.terrain)) return null;
+                              const isBlocked = (tile?.[blockedKey] || []).includes(nk);
+                              return {
+                                nk,
+                                dirLabel: DIR_LABELS[i],
+                                terrain: neighbor.terrain,
+                                isBlocked,
+                              };
+                            } else {
+                              // River/road: show adjacent tiles that share the same flag
+                              if (!neighbor?.[key]) return null;
+                              const isBlocked =
+                                (tile?.[blockedKey] || []).includes(nk) ||
+                                (neighbor[blockedKey] || []).includes(selectedKey);
+                              return {
+                                nk,
+                                dirLabel: DIR_LABELS[i],
+                                terrain: neighbor.terrain,
+                                isBlocked,
+                              };
+                            }
+                          }).filter(Boolean)
+                        : [];
+                    return (
+                      <div key={key}>
+                        <FlagToggle
+                          $active={active}
+                          $color={color}
+                          onClick={() => {
+                            return handleFlagToggle(key);
+                          }}
+                        >
+                          <span className="flag-icon">{icon}</span>
+                          <span className="flag-label">{label}</span>
+                          <span className="flag-state">{active ? 'on' : 'off'}</span>
+                        </FlagToggle>
+                        {flagNeighbors.length > 0 && (
+                          <ConnectionList>
+                            {flagNeighbors.map(({ nk, dirLabel, terrain, isBlocked }) => {
+                              return (
+                                <ConnectionRow key={nk}>
+                                  <span>{theme.terrain[terrain]?.icon ?? terrain}</span>
+                                  <span>{dirLabel}</span>
+                                  {isBlocked && (
+                                    <span style={{ opacity: 0.45 }}>
+                                      {isPort ? 'no port' : 'blocked'}
+                                    </span>
+                                  )}
+                                  <ConnectionBtn
+                                    $blocked={isBlocked}
+                                    $color={color}
+                                    onClick={() => {
+                                      return handleConnectionToggle(key, nk, isBlocked);
+                                    }}
+                                  >
+                                    {isPort
+                                      ? isBlocked
+                                        ? 'Add Port'
+                                        : 'Remove Port'
+                                      : isBlocked
+                                        ? 'Restore'
+                                        : 'Disconnect'}
+                                  </ConnectionBtn>
+                                </ConnectionRow>
+                              );
+                            })}
+                          </ConnectionList>
+                        )}
+                      </div>
+                    );
+                  })}
+                </FlagList>
+                {tile?.hasTown && (
+                  <TownNameInput
+                    value={tile.townName ?? ''}
+                    onChange={handleNameChange}
+                    placeholder="Town name…"
+                    maxLength={32}
+                    style={{ marginTop: '8px' }}
+                  />
+                )}
+              </div>
+
+              <Divider />
+
+              <div>
+                <SectionLabel>Notes</SectionLabel>
+                <NotesTextarea
+                  value={tile?.notes ?? ''}
+                  onChange={handleNotesChange}
+                  placeholder="Add notes about this tile…"
+                />
+              </div>
+
+              {tileArmies.length > 0 && (
+                <div>
+                  <SectionLabel>Armies on this tile</SectionLabel>
+                  <ArmyList>
+                    {tileArmies.map((army) => {
+                      return (
+                        <ArmyRow
+                          key={army.id}
+                          onClick={() => {
+                            return dispatch(selectArmy(army.id));
+                          }}
+                        >
+                          <span>⚔️</span>
+                          <ArmyRowName>{army.name || 'Unnamed Army'}</ArmyRowName>
+                          <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>Select →</span>
+                        </ArmyRow>
+                      );
+                    })}
+                  </ArmyList>
+                </div>
+              )}
+
+              <AddArmyBtn
+                onClick={() => {
+                  return tile && dispatch(addArmy({ q: tile.q, r: tile.r }));
+                }}
+              >
+                ⚔ Add Army to Tile
+              </AddArmyBtn>
+
+              <DeleteBtn onClick={handleDelete}>🗑 Delete Tile</DeleteBtn>
+            </>
           )}
-
-          <AddArmyBtn
-            onClick={() => {
-              return tile && dispatch(addArmy({ q: tile.q, r: tile.r }));
-            }}
-          >
-            ⚔ Add Army to Tile
-          </AddArmyBtn>
-
-          <DeleteBtn onClick={handleDelete}>🗑 Delete Tile</DeleteBtn>
         </>
       )}
     </Panel>

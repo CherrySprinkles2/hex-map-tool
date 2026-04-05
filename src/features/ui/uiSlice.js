@@ -12,6 +12,7 @@ const uiSlice = createSlice({
     mapMode: 'terrain',
     activeFactionId: null,
     showShortcuts: false,
+    activePaintBrush: null,
   },
   reducers: {
     selectTile: (state, action) => {
@@ -67,6 +68,17 @@ const uiSlice = createSlice({
     setActiveFaction: (state, action) => {
       state.activeFactionId = action.payload;
     },
+    enterTerrainPaint: (state, action) => {
+      state.mapMode = 'terrain-paint';
+      state.activePaintBrush = action.payload ?? null;
+    },
+    exitTerrainPaint: (state) => {
+      state.mapMode = 'terrain';
+      state.activePaintBrush = null;
+    },
+    setActivePaintBrush: (state, action) => {
+      state.activePaintBrush = action.payload;
+    },
     openShortcuts: (state) => {
       state.showShortcuts = true;
     },
@@ -89,6 +101,9 @@ export const {
   closeFactionsPanel,
   setMapMode,
   setActiveFaction,
+  enterTerrainPaint,
+  exitTerrainPaint,
+  setActivePaintBrush,
   openShortcuts,
   closeShortcuts,
 } = uiSlice.actions;

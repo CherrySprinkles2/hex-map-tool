@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { importTiles } from '../../features/tiles/tilesSlice';
 import { importArmies } from '../../features/armies/armiesSlice';
+import { importFactions } from '../../features/factions/factionsSlice';
 import {
   deselectTile,
   deselectArmy,
@@ -12,7 +13,7 @@ import {
   closeShortcuts,
 } from '../../features/ui/uiSlice';
 import { renameCurrentMap, unloadMap } from '../../features/currentMap/currentMapSlice';
-import { renameMap } from '../../utils/mapsStorage';
+import { renameMap, getAllMaps } from '../../utils/mapsStorage';
 
 const Bar = styled.div`
   display: flex;
@@ -308,6 +309,12 @@ const Toolbar = () => {
   const tiles = useSelector((state) => {
     return state.tiles;
   });
+  const armies = useSelector((state) => {
+    return state.armies;
+  });
+  const factions = useSelector((state) => {
+    return state.factions;
+  });
   const mapName = useSelector((state) => {
     return state.currentMap.name;
   });
@@ -362,7 +369,8 @@ const Toolbar = () => {
 
   const handleExport = () => {
     setSettingsOpen(false);
-    const json = JSON.stringify(tiles, null, 2);
+    const payload = { name: mapName || 'hex-map', tiles, armies, factions };
+    const json = JSON.stringify(payload, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -379,7 +387,37 @@ const Toolbar = () => {
     reader.onload = (ev) => {
       try {
         const data = JSON.parse(ev.target.result);
-        dispatch(importTiles(data));
+        // Support both the new envelope format { name, tiles, armies, factions }
+        // and the legacy format (a plain tiles object).
+        if (data && typeof data === 'object' && data.tiles) {
+          dispatch(importTiles(data.tiles));
+          dispatch(importArmies(data.armies ?? {}));
+          dispatch(importFactions(data.factions ?? []));
+          // Apply the name from the file, deduplicating against saved map names.
+          const desired = (data.name || '').trim() || 'Untitled Map';
+          const takenNames = new Set(
+            getAllMaps()
+              .filter((m) => {
+                return m.id !== mapId;
+              })
+              .map((m) => {
+                return m.name;
+              })
+          );
+          let finalName = desired;
+          if (takenNames.has(finalName)) {
+            let n = 2;
+            while (takenNames.has(`${desired} (${n})`)) n++;
+            finalName = `${desired} (${n})`;
+          }
+          dispatch(renameCurrentMap(finalName));
+          if (mapId) renameMap(mapId, finalName);
+        } else {
+          // Legacy: file is a raw tiles object
+          dispatch(importTiles(data));
+          dispatch(importArmies({}));
+          dispatch(importFactions([]));
+        }
       } catch {
         alert('Invalid JSON file.');
       }
