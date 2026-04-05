@@ -49,10 +49,10 @@ A React + Redux hex grid map editor rendered entirely in SVG. The map is infinit
 
 **Data flow:**
 
-- `index.js` → Redux `<Provider>` → `App.js` → styled-components `<ThemeProvider>`
-- `App.js` renders `<HomeScreen>` or `<Editor>` based on `ui.screen`
+- `index.tsx` → Redux `<Provider>` → `App.tsx` → styled-components `<ThemeProvider>`
+- `App.tsx` renders `<HomeScreen>` or `<Editor>` based on `ui.screen`
 - `Editor` renders `<Toolbar>`, `<ArmyPanel>`, `<HexGrid>`, `<MapModeToggle>`, `<TileEditPanel>`, `<FactionPaintPanel>`, `<FactionsPanel>`, `<KeyboardShortcutsPanel>`
-- `index.js` imports `./i18n` before `App` renders — initialises i18next synchronously so `t()` is ready on first render
+- `index.tsx` imports `./i18n` before `App` renders — initialises i18next synchronously so `t()` is ready on first render
 - `useLocalStorageSync()` auto-saves `tiles`, `armies`, and `factions` to localStorage on every store change and loads on mount; re-runs when `currentMap.id` changes
 - `migrateFromLegacy()` is called once on mount to convert old single-map `hex-map-tool-tiles` data
 - `HexGrid` is the SVG canvas. It computes ghost tile positions at render time by iterating all tile neighbours that don't exist in state
@@ -83,7 +83,7 @@ A React + Redux hex grid map editor rendered entirely in SVG. The map is infinit
 
 - **Index key**: `hex-map-tool-index` — JSON array of `{ id, name, updatedAt }`
 - **Per-map data key**: `hex-map-tool-data-{id}` — JSON object `{ version: 1, tiles, armies, factions }`
-- All CRUD lives in `src/utils/mapsStorage.js`: `getAllMaps`, `createMap`, `renameMap`, `deleteMap`, `loadMapData`, `saveMapData`, `touchMap`, `migrateFromLegacy`
+- All CRUD lives in `src/utils/mapsStorage.ts`: `getAllMaps`, `createMap`, `renameMap`, `deleteMap`, `loadMapData`, `saveMapData`, `touchMap`, `migrateFromLegacy`
 - `deleteMap` removes the consolidated data key (and cleans up any un-migrated legacy keys)
 - `migrateFromLegacy` checks for the old `hex-map-tool-tiles` key (and old per-map `hex-map-tool-map-{id}` / `hex-map-tool-armies-{id}` / `hex-map-tool-factions-{id}` keys) on first launch and converts them to the consolidated format
 - **Lazy example save**: opening a built-in example dispatches `importTiles`, `importArmies`, `importFactions`, and `loadMap({ id: null })` — no localStorage entry is created until the first tile, army, or faction change
@@ -92,13 +92,13 @@ A React + Redux hex grid map editor rendered entirely in SVG. The map is infinit
 
 ## Hex Coordinate System
 
-All spatial logic uses **pointy-top axial coordinates (q, r)** — see `src/utils/hexUtils.js`.
+All spatial logic uses **pointy-top axial coordinates (q, r)** — see `src/utils/hexUtils.ts`.
 
 - Tile positions are stored and referenced as `"q,r"` string keys via `toKey(q, r)` / `fromKey(key)`
 - `HEX_SIZE = 50` (center-to-corner radius in pixels)
 - Axial → pixel: `x = size*(√3·q + √3/2·r)`, `y = size*(3/2·r)`
 - The SVG `<g>` transform centers the grid: `translate(width/2 + x, height/2 + y) scale(scale)`
-- When adding new hex math, import from `hexUtils.js` — don't inline formulas
+- When adding new hex math, import from `hexUtils.ts` — don't inline formulas
 
 ---
 
@@ -118,11 +118,11 @@ All spatial logic uses **pointy-top axial coordinates (q, r)** — see `src/util
 
 - Custom (non-HTML) props are prefixed with `$` to avoid DOM forwarding warnings — e.g. `$open`, `$active`, `$color`
 - Theme values accessed via `${({ theme }) => theme.property}` — never hardcode colours
-- All theme colours and visual properties live in `src/styles/theme.js`; `GlobalStyles.js` applies resets and body styles
+- All theme colours and visual properties live in `src/styles/theme.ts`; `GlobalStyles.ts` applies resets and body styles
 
 ### Theme structure
 
-`src/styles/theme.js` is the single source of truth for all visual properties. Key sections:
+`src/styles/theme.ts` is the single source of truth for all visual properties. Key sections:
 
 - `theme.terrain` — tile fill colours, labels, icons
 - `theme.river` / `theme.road` — path colour, width, linecap, bezier tension, pool radius
@@ -143,8 +143,9 @@ All spatial logic uses **pointy-top axial coordinates (q, r)** — see `src/util
 ### Code quality
 
 - **Prettier** — `.prettierrc` at project root: `singleQuote: true`, `trailingComma: "es5"`, `printWidth: 100`
-- **husky + lint-staged** — pre-commit hook runs `prettier --write` on all staged `*.{js,jsx,json,css,md}` files automatically
+- **husky + lint-staged** — pre-commit hook runs `prettier --write` on all staged `*.{ts,tsx,json,css,md}` files automatically
 - **ESLint** — `.eslintrc.js` extends `react-app` and adds `arrow-body-style: ["error", "always"]`; all arrow functions must use explicit `{ return }` bodies. The `eslintConfig` block has been removed from `package.json`.
+- **TypeScript** — `strict: true`, `allowJs: false`, `isolatedModules: true`, `resolveJsonModule: true`. Use typed Redux hooks `useAppDispatch`/`useAppSelector` from `src/app/hooks.ts` instead of raw react-redux hooks. Minimise `any` — prefer explicit interfaces from `src/types/`.
 - **Memoized selectors** — use `createSelector` from `@reduxjs/toolkit` for any `useSelector` call that returns a new array or object reference; inline selectors returning primitives are fine without memoization
 
 ### Army feature
@@ -167,7 +168,7 @@ All spatial logic uses **pointy-top axial coordinates (q, r)** — see `src/util
 ### Internationalisation (i18n)
 
 - **Library**: `react-i18next` + `i18next` + `i18next-browser-languagedetector`
-- **Initialisation**: `src/i18n/index.js` — imported once in `src/index.js` before the React tree renders
+- **Initialisation**: `src/i18n/index.ts` — imported once in `src/index.tsx` before the React tree renders
 - **Locale files**: `src/i18n/locales/en.json` (default fallback) and `src/i18n/locales/fi.json`
 - **Single namespace**: all keys live in one flat-ish JSON per language (no namespaces — app is small enough)
 - **In functional components**: `const { t } = useTranslation();` then `t('section.key')`
@@ -176,16 +177,16 @@ All spatial logic uses **pointy-top axial coordinates (q, r)** — see `src/util
 - **Direction labels**: compass abbreviations are translated (`dir.E/NE/NW/W/SW/SE`); Finnish equivalents are `I/KO/LU/L/LO/KA`
 - **Language persistence**: `i18next-browser-languagedetector` reads from `localStorage` (key `i18nextLng`) then `navigator.language`; changing language writes back to localStorage automatically
 - **Adding a string**: add the key to both `en.json` and `fi.json`, use `t('your.key')` in the component
-- **Adding a language**: add `src/i18n/locales/{code}.json`, register it in `src/i18n/index.js` under `resources`, and add a `LangOption` button in `Toolbar.jsx`
+- **Adding a language**: add `src/i18n/locales/{code}.json`, register it in `src/i18n/index.ts` under `resources`, and add a `LangOption` button in `Toolbar.tsx`
 
 ### Adding terrain types
 
-All terrain metadata lives in one place: `theme.terrain` in `src/styles/theme.js`.
+All terrain metadata lives in one place: `theme.terrain` in `src/styles/theme.ts`.
 `TileEditPanel` derives its terrain picker from this object automatically. Adding a new terrain type requires:
 
-1. An entry in `theme.terrain` in `src/styles/theme.js`
-2. A matching `<pattern id="pattern-NAME">` SVG element in `src/components/HexGrid/TerrainPatterns.jsx`
-3. For water-like types (merge edges, suppress river visuals, enable ports, show ⛵ for armies): add the terrain name to `DEEP_WATER` in `src/utils/hexUtils.js`
+1. An entry in `theme.terrain` in `src/styles/theme.ts`
+2. A matching `<pattern id="pattern-NAME">` SVG element in `src/components/HexGrid/TerrainPatterns.tsx`
+3. For water-like types (merge edges, suppress river visuals, enable ports, show ⛵ for armies): add the terrain name to `DEEP_WATER` in `src/utils/hexUtils.ts`
 
 ### Tile properties
 
@@ -252,12 +253,12 @@ Tiles render two polygons: a solid base colour and an SVG `<pattern>` texture ov
 - Small map data: `src/data/example-map.json`
 - Large map (3 000 tiles, performance testing): `src/data/large-map.json`
 - Both example maps include factions and armies
-- `src/data/exampleMaps.js` imports both, applies field defaults via `normalizeTile` and `normalizeArmy` (ensures all army fields have safe defaults including `factionId: null`), and exports `exampleMaps`; reads `name`, `tiles`, `armies`, `factions` directly from each JSON via `fromEnvelope()`
+- `src/data/exampleMaps.ts` imports both, applies field defaults via `normalizeTile` and `normalizeArmy` (ensures all army fields have safe defaults including `factionId: null`), and exports `exampleMaps`; reads `name`, `tiles`, `armies`, `factions` directly from each JSON via `fromEnvelope()`
 - Opening an example from HomeScreen dispatches `importTiles`, `importArmies`, AND `importFactions`; `id: null` — no localStorage entry until the first real change
 
 ### Page title
 
-`App.js` sets `document.title` via `useEffect`:
+`App.tsx` sets `document.title` via `useEffect`:
 
 - Home screen or unsaved example (`currentMap.id === null`): `"Hex Map Tool"`
 - Saved map open: `"<map name> — Hex Map Tool"`

@@ -148,7 +148,7 @@ src/
   data/
     example-map.json      Small bundled example (Finnish-themed, 208 tiles, 2 factions, 5 armies)
     large-map.json        3 000-tile performance test map (4 factions, 10 armies)
-    exampleMaps.js        Loads, normalises, and exports both example maps
+    exampleMaps.ts        Loads, normalises, and exports both example maps
   features/
     armies/               armiesSlice — addArmy, deleteArmy, moveArmy, updateArmy, setArmyFaction, importArmies
     currentMap/           currentMapSlice — id + name of the open map
@@ -162,14 +162,14 @@ src/
     useKeyboardShortcuts  Ctrl+Z/Y undo/redo, Escape deselect, Delete tile, R reset viewport
     useLocalStorageSync   Auto-saves tiles, armies, factions on every change; lazy for examples
   i18n/
-    index.js              i18next init — LanguageDetector, EN + FI resources, localStorage cache
+    index.ts              i18next init — LanguageDetector, EN + FI resources, localStorage cache
     locales/en.json       English translation strings
     locales/fi.json       Finnish translation strings
-  styles/                 theme.js, GlobalStyles.js
+  styles/                 theme.ts, GlobalStyles.ts
   utils/
-    hexUtils.js           Axial coordinate math, toKey/fromKey, NEIGHBOR_DIRS, DEEP_WATER
-    historyManager.js     Snapshot-based undo/redo (past/future stacks)
-    mapsStorage.js        localStorage CRUD for maps, tiles, armies, factions + legacy migration
+    hexUtils.ts           Axial coordinate math, toKey/fromKey, NEIGHBOR_DIRS, DEEP_WATER
+    historyManager.ts     Snapshot-based undo/redo (past/future stacks)
+    mapsStorage.ts        localStorage CRUD for maps, tiles, armies, factions + legacy migration
 ```
 
 ---
@@ -201,6 +201,7 @@ src/
 
 ## Key conventions
 
+- **TypeScript** — `strict: true`, `allowJs: false`. Use `useAppDispatch`/`useAppSelector` from `src/app/hooks.ts` instead of raw react-redux hooks. Shared types live in `src/types/`. Minimise `any`.
 - **styled-components props** — custom (non-HTML) props are prefixed with `$` to avoid DOM forwarding warnings (e.g. `$open`, `$active`, `$rightPanelOpen`).
 - **Theming** — always access theme values via `${({ theme }) => theme.property}`; never hardcode colours.
 - **Redux selectors** — inline `useSelector` calls throughout; no custom selector files. Where a selector returns a new array or object, use `createSelector` from `@reduxjs/toolkit` to avoid spurious re-renders.
@@ -234,7 +235,7 @@ Inside HexGrid's SVG `<g transform>` group, components render in this order:
 
 ## Theming
 
-All visual properties are centralised in `src/styles/theme.js`. `GlobalStyles.js` applies resets and body styles.
+All visual properties are centralised in `src/styles/theme.ts`. `GlobalStyles.ts` applies resets and body styles.
 
 | Key                          | Controls                                                          |
 | ---------------------------- | ----------------------------------------------------------------- |
@@ -251,9 +252,9 @@ All visual properties are centralised in `src/styles/theme.js`. `GlobalStyles.js
 
 ## Extending — adding a terrain type
 
-1. Add an entry to `theme.terrain` in `src/styles/theme.js`.
-2. Add a `<pattern id="pattern-NAME">` SVG element in `src/components/HexGrid/TerrainPatterns.jsx`.
-3. For water types (edge merging, river/road suppression, port eligibility, ⛵ army icon): add the terrain name to `DEEP_WATER` in `src/utils/hexUtils.js`.
+1. Add an entry to `theme.terrain` in `src/styles/theme.ts`.
+2. Add a `<pattern id="pattern-NAME">` SVG element in `src/components/HexGrid/TerrainPatterns.tsx`.
+3. For water types (edge merging, river/road suppression, port eligibility, ⛵ army icon): add the terrain name to `DEEP_WATER` in `src/utils/hexUtils.ts`.
 
 The terrain picker in `TileEditPanel` is derived automatically from `theme.terrain` — no component changes needed.
 
@@ -268,13 +269,13 @@ The terrain picker in `TileEditPanel` is derived automatically from `theme.terra
 
 Legacy keys (`hex-map-tool-map-{id}`, `hex-map-tool-armies-{id}`, `hex-map-tool-factions-{id}`) from the old three-key format are migrated automatically to the consolidated key on first read.
 
-The legacy key `hex-map-tool-tiles` (single-map format) is migrated automatically on first load via `migrateFromLegacy()` in `src/utils/mapsStorage.js`.
+The legacy key `hex-map-tool-tiles` (single-map format) is migrated automatically on first load via `migrateFromLegacy()` in `src/utils/mapsStorage.ts`.
 
 ---
 
 ## Keyboard shortcuts
 
-Defined in `src/hooks/useKeyboardShortcuts.js`.
+Defined in `src/hooks/useKeyboardShortcuts.ts`.
 
 | Key                   | Action                               |
 | --------------------- | ------------------------------------ |
@@ -296,13 +297,13 @@ The app uses **react-i18next** with bundled JSON locale files. Language is auto-
 
 | File                       | Purpose                                                                                   |
 | -------------------------- | ----------------------------------------------------------------------------------------- |
-| `src/i18n/index.js`        | i18next init — attaches `LanguageDetector` and `initReactI18next`, registers both locales |
+| `src/i18n/index.ts`        | i18next init — attaches `LanguageDetector` and `initReactI18next`, registers both locales |
 | `src/i18n/locales/en.json` | English strings                                                                           |
 | `src/i18n/locales/fi.json` | Finnish strings                                                                           |
 
 **Using translations in components:**
 
-```js
+```tsx
 // Functional component
 import { useTranslation } from 'react-i18next';
 const { t } = useTranslation();
@@ -323,7 +324,7 @@ export default withTranslation()(MyClass);
 
 **Adding a new string:** Add the key to both `en.json` and `fi.json`, then use `t('your.key')` in the component.
 
-**Adding a new language:** Add a new locale JSON file in `src/i18n/locales/`, register it in `src/i18n/index.js` under `resources`, and add a button to the `LangOption` list in `Toolbar.jsx`.
+**Adding a new language:** Add a new locale JSON file in `src/i18n/locales/`, register it in `src/i18n/index.ts` under `resources`, and add a button to the `LangOption` list in `Toolbar.tsx`.
 
 ---
 
