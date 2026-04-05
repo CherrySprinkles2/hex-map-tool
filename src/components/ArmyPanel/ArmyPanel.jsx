@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { updateArmy, deleteArmy, setArmyFaction } from '../../features/armies/armiesSlice';
 import { deselectArmy, startMovingArmy, stopMovingArmy } from '../../features/ui/uiSlice';
 
@@ -272,6 +273,8 @@ const ArmyPanel = () => {
   const isOpen = selectedArmyId !== null && army !== null;
   const isMoving = movingArmyId === selectedArmyId;
 
+  const { t } = useTranslation();
+
   const [localName, setLocalName] = useState('');
   const [localComposition, setLocalComposition] = useState('');
 
@@ -343,7 +346,7 @@ const ArmyPanel = () => {
     <Panel $open={isOpen}>
       <DragHandle />
       <PanelHeader>
-        <PanelTitle>⚔ Army</PanelTitle>
+        <PanelTitle>{t('armyPanel.title')}</PanelTitle>
         <CloseBtn onClick={handleClose} title="Close (Esc)">
           ×
         </CloseBtn>
@@ -352,7 +355,7 @@ const ArmyPanel = () => {
       {army && (
         <>
           <div>
-            <SectionLabel>Name</SectionLabel>
+            <SectionLabel>{t('armyPanel.name')}</SectionLabel>
             <NameInput
               value={localName}
               onChange={(e) => {
@@ -360,28 +363,28 @@ const ArmyPanel = () => {
               }}
               onBlur={handleNameBlur}
               onKeyDown={handleNameKeyDown}
-              placeholder="Army name"
+              placeholder={t('armyPanel.namePlaceholder')}
               maxLength={40}
             />
           </div>
 
           <div>
-            <SectionLabel>Composition</SectionLabel>
+            <SectionLabel>{t('armyPanel.composition')}</SectionLabel>
             <CompositionTextarea
               value={localComposition}
               onChange={(e) => {
                 return setLocalComposition(e.target.value);
               }}
               onBlur={handleCompositionBlur}
-              placeholder={`e.g.\n500 Infantry\n120 Cavalry\n20 Cannon`}
+              placeholder={t('armyPanel.compositionPlaceholder')}
             />
           </div>
 
           {factions.length > 0 && (
             <div>
-              <SectionLabel>Faction</SectionLabel>
+              <SectionLabel>{t('armyPanel.faction')}</SectionLabel>
               <FactionSelect value={army.factionId ?? ''} onChange={handleFactionChange}>
-                <option value="">None</option>
+                <option value="">{t('armyPanel.factionNone')}</option>
                 {factions.map((f) => {
                   return (
                     <option key={f.id} value={f.id}>
@@ -394,16 +397,12 @@ const ArmyPanel = () => {
           )}
 
           <MoveBtn $active={isMoving} onClick={handleMoveToggle}>
-            {isMoving ? '✕ Cancel Move' : '↪ Move Army'}
+            {isMoving ? t('armyPanel.cancelMove') : t('armyPanel.moveArmy')}
           </MoveBtn>
 
-          {isMoving && (
-            <Hint>
-              Tap any tile on the map to move this army there. Pan and zoom work normally.
-            </Hint>
-          )}
+          {isMoving && <Hint>{t('armyPanel.moveHint')}</Hint>}
 
-          <DeleteBtn onClick={handleDelete}>✕ Delete Army</DeleteBtn>
+          <DeleteBtn onClick={handleDelete}>{t('armyPanel.deleteArmy')}</DeleteBtn>
         </>
       )}
     </Panel>

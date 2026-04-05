@@ -37,9 +37,10 @@ A React + Redux hex grid map editor rendered entirely in SVG. The map is infinit
     placingArmy:     boolean,           // unused entry point; army placement is via TileEditPanel
     movingArmyId:    string | null,     // army currently in move-mode
     screen:          'home' | 'editor',
-    mapMode:         'terrain' | 'faction',
+    mapMode:         'terrain' | 'faction' | 'terrain-paint',
     factionsOpen:    boolean,
     activeFactionId: string | null,
+    activePaintBrush: string | null,    // terrain type key, or 'river-on/off', 'road-on/off'
     showShortcuts:   boolean,             // controls KeyboardShortcutsPanel visibility
   },
   currentMap: { id: string | null, name: string },
@@ -51,12 +52,14 @@ A React + Redux hex grid map editor rendered entirely in SVG. The map is infinit
 - `index.js` → Redux `<Provider>` → `App.js` → styled-components `<ThemeProvider>`
 - `App.js` renders `<HomeScreen>` or `<Editor>` based on `ui.screen`
 - `Editor` renders `<Toolbar>`, `<ArmyPanel>`, `<HexGrid>`, `<MapModeToggle>`, `<TileEditPanel>`, `<FactionPaintPanel>`, `<FactionsPanel>`, `<KeyboardShortcutsPanel>`
+- `index.js` imports `./i18n` before `App` renders — initialises i18next synchronously so `t()` is ready on first render
 - `useLocalStorageSync()` auto-saves `tiles`, `armies`, and `factions` to localStorage on every store change and loads on mount; re-runs when `currentMap.id` changes
 - `migrateFromLegacy()` is called once on mount to convert old single-map `hex-map-tool-tiles` data
 - `HexGrid` is the SVG canvas. It computes ghost tile positions at render time by iterating all tile neighbours that don't exist in state
 - `WaterOverlay` renders on top of tiles inside the same SVG `<g>` transform group
 - `ArmyToken` components are rendered last (top layer) inside the `<g>` transform group, except on town tiles where a garrison visual is used instead
 - `KeyboardShortcutsPanel` — slide-in right panel (desktop) / bottom sheet (mobile) listing all keyboard shortcuts. Controlled by `ui.showShortcuts`. Opened via toolbar `⌨` button (desktop only) or settings dropdown (mobile). Suppresses `TileEditPanel` while open without deselecting the tile.
+- **Terrain paint mode** — `mapMode === 'terrain-paint'`; entered via "🖌 Paint Terrain" in `TileEditPanel`. `isPaintingRef` (from `PaintContext`) gates pan suppression and drag-painting. `activePaintBrush` in `uiSlice` holds the selected terrain type key or `'river-on'` / `'river-off'` / `'road-on'` / `'road-off'`. Exited via Escape or the "✕ Exit" button. `TileEditPanel` stays open during paint mode. `HexTile` uses `onPointerDown`/`onPointerEnter` for drag-to-paint (desktop only — guarded by `isTouchDevice`); click-to-paint works on both platforms.
 
 **Rendering order inside HexGrid's transform group:**
 
@@ -135,6 +138,7 @@ All spatial logic uses **pointy-top axial coordinates (q, r)** — see `src/util
 - Reducers use Immer-style direct mutations (Redux Toolkit handles immutability)
 - `importTiles(payload)` / `importArmies(payload)` replace entire slices — used for JSON import and localStorage restore
 - Selecting an army deselects any selected tile (and vice versa) — enforced in `uiSlice` reducers
+- **JSON export envelope**: `{ name, tiles, armies, factions }` — all data in one file. Import detects new envelope vs legacy (raw tiles object) for backwards compatibility. Map name is applied on import with `(2)`, `(3)` deduplication against saved map names.
 
 ### Code quality
 
@@ -157,6 +161,22 @@ All spatial logic uses **pointy-top axial coordinates (q, r)** — see `src/util
 
 - Adds `padding-right: 296px` on desktop when `rightPanelOpen` is true (i.e. `mapMode === 'terrain'`, `mapMode === 'faction'`, or `showShortcuts === true`) to prevent the right panel from obscuring the Settings button
 - Has a desktop-only `⌨` button that toggles `showShortcuts`; dispatches `openShortcuts` / `closeShortcuts` from `uiSlice`
+- Has a desktop-only **EN / FI** segmented language toggle (`LangToggle`) that calls `i18n.changeLanguage(lang)` directly — no Redux involvement
+- On mobile, the Settings sheet contains a 🌐 "Language / Kieli" item (`$desktopHide`) that opens a centred `ModalBackdrop` + `ModalCard` with `LangOption` buttons for each language
+
+### Internationalisation (i18n)
+
+- **Library**: `react-i18next` + `i18next` + `i18next-browser-languagedetector`
+- **Initialisation**: `src/i18n/index.js` — imported once in `src/index.js` before the React tree renders
+- **Locale files**: `src/i18n/locales/en.json` (default fallback) and `src/i18n/locales/fi.json`
+- **Single namespace**: all keys live in one flat-ish JSON per language (no namespaces — app is small enough)
+- **In functional components**: `const { t } = useTranslation();` then `t('section.key')`
+- **In class components** (ErrorBoundary only): `withTranslation()` HOC; access via `this.props.t('key')`
+- **Terrain labels**: rendered as `t('terrain.{type}')` — the `theme.terrain[type].label` English string is no longer used in the UI (kept in theme only for any future non-i18n tooling)
+- **Direction labels**: compass abbreviations are translated (`dir.E/NE/NW/W/SW/SE`); Finnish equivalents are `I/KO/LU/L/LO/KA`
+- **Language persistence**: `i18next-browser-languagedetector` reads from `localStorage` (key `i18nextLng`) then `navigator.language`; changing language writes back to localStorage automatically
+- **Adding a string**: add the key to both `en.json` and `fi.json`, use `t('your.key')` in the component
+- **Adding a language**: add `src/i18n/locales/{code}.json`, register it in `src/i18n/index.js` under `resources`, and add a `LangOption` button in `Toolbar.jsx`
 
 ### Adding terrain types
 
@@ -232,7 +252,7 @@ Tiles render two polygons: a solid base colour and an SVG `<pattern>` texture ov
 - Small map data: `src/data/example-map.json`
 - Large map (3 000 tiles, performance testing): `src/data/large-map.json`
 - Both example maps include factions and armies
-- `src/data/exampleMaps.js` imports both, applies field defaults via `normalizeTile` and `normalizeArmy` (ensures all army fields have safe defaults including `factionId: null`), and exports `exampleMaps`
+- `src/data/exampleMaps.js` imports both, applies field defaults via `normalizeTile` and `normalizeArmy` (ensures all army fields have safe defaults including `factionId: null`), and exports `exampleMaps`; reads `name`, `tiles`, `armies`, `factions` directly from each JSON via `fromEnvelope()`
 - Opening an example from HomeScreen dispatches `importTiles`, `importArmies`, AND `importFactions`; `id: null` — no localStorage entry until the first real change
 
 ### Page title

@@ -5,8 +5,11 @@
   "homepage": "https://CherrySprinkles2.github.io/hex-map-tool",
   "dependencies": {
     "@reduxjs/toolkit": "^2.0.0",
+    "i18next": "^26.0.3",
+    "i18next-browser-languagedetector": "^8.2.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-i18next": "^17.0.2",
     "react-redux": "^9.0.0",
     "react-scripts": "5.0.1",
     "styled-components": "^6.0.0"

@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 import { importTiles } from '../../features/tiles/tilesSlice';
 import { importArmies } from '../../features/armies/armiesSlice';
 import { importFactions } from '../../features/factions/factionsSlice';
@@ -188,7 +190,130 @@ const ShortcutsBtn = styled.button`
   }
 `;
 
-// ── Bottom sheet ──────────────────────────────────────────────────────────────
+// ── Language toggle (desktop only) ────────────────────────────────────────────
+
+const LangToggle = styled.div`
+  display: none;
+
+  @media (min-width: 601px) {
+    display: flex;
+    border-radius: 6px;
+    border: 1.5px solid
+      ${({ theme }) => {
+        return theme.panelBorder;
+      }};
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+`;
+
+const LangBtn = styled.button`
+  padding: 5px 10px;
+  border: none;
+  background: ${({ $active, theme }) => {
+    return $active ? theme.panelBorder : 'transparent';
+  }};
+  color: ${({ $active, theme }) => {
+    return $active ? theme.text : theme.textMuted;
+  }};
+  font-size: 0.75rem;
+  font-weight: ${({ $active }) => {
+    return $active ? '700' : '400';
+  }};
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+
+  &:hover {
+    color: ${({ theme }) => {
+      return theme.text;
+    }};
+    background: ${({ $active, theme }) => {
+      return $active ? theme.panelBorder : 'rgba(255,255,255,0.06)';
+    }};
+  }
+`;
+
+// ── Language modal (mobile) ────────────────────────────────────────────────────
+
+const ModalBackdrop = styled.div`
+  display: ${({ $open }) => {
+    return $open ? 'flex' : 'none';
+  }};
+  position: fixed;
+  inset: 0;
+  z-index: ${({ theme }) => {
+    return theme.zIndex.sheet + 1;
+  }};
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+
+  @media (min-width: 601px) {
+    display: none;
+  }
+`;
+
+const ModalCard = styled.div`
+  background: ${({ theme }) => {
+    return theme.panelBackground;
+  }};
+  border: 2px solid
+    ${({ theme }) => {
+      return theme.panelBorder;
+    }};
+  border-radius: 12px;
+  padding: 20px 16px;
+  width: min(320px, 90vw);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 4px;
+`;
+
+const LangOption = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 2px solid
+    ${({ $active, theme }) => {
+      return $active ? theme.textMuted : 'transparent';
+    }};
+  background: ${({ $active }) => {
+    return $active ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)';
+  }};
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
+  font-size: 0.9rem;
+  font-weight: ${({ $active }) => {
+    return $active ? '600' : '400';
+  }};
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+`;
 
 const Backdrop = styled.div`
   display: ${({ $open }) => {
@@ -306,6 +431,7 @@ const SheetIcon = styled.span`
 
 const Toolbar = () => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const tiles = useSelector((state) => {
     return state.tiles;
   });
@@ -334,6 +460,7 @@ const Toolbar = () => {
   const [localName, setLocalName] = useState('');
   const [editing, setEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [langModalOpen, setLangModalOpen] = useState(false);
 
   const rightPanelOpen = mapMode === 'terrain' || mapMode === 'faction' || showShortcuts;
 
@@ -346,7 +473,7 @@ const Toolbar = () => {
 
   const handleNameBlur = () => {
     setEditing(false);
-    const trimmed = localName.trim() || 'Untitled Map';
+    const trimmed = localName.trim() || t('home.untitledMap');
     dispatch(renameCurrentMap(trimmed));
     if (mapId) renameMap(mapId, trimmed);
   };
@@ -444,10 +571,18 @@ const Toolbar = () => {
     dispatch(openShortcuts());
   };
 
+  const handleLanguageSelect = (lang) => {
+    i18n.changeLanguage(lang);
+    setLangModalOpen(false);
+    setSettingsOpen(false);
+  };
+
+  const currentLang = i18n.language.startsWith('fi') ? 'fi' : 'en';
+
   return (
     <>
       <Bar $rightPanelOpen={rightPanelOpen}>
-        <BackBtn onClick={handleBack}>← Maps</BackBtn>
+        <BackBtn onClick={handleBack}>{t('toolbar.back')}</BackBtn>
         <MapNameInput
           value={displayName}
           onChange={(e) => {
@@ -459,15 +594,33 @@ const Toolbar = () => {
           maxLength={48}
         />
         <DesktopFactionsBtn $active={factionsOpen} onClick={handleFactionsClick}>
-          ⚑ Factions
+          {t('toolbar.factions')}
         </DesktopFactionsBtn>
         <ShortcutsBtn
           $active={showShortcuts}
           onClick={handleShortcutsToggle}
-          aria-label="Keyboard Shortcuts"
+          aria-label={t('toolbar.keyboardShortcuts')}
         >
           ⌨
         </ShortcutsBtn>
+        <LangToggle aria-label="Language">
+          <LangBtn
+            $active={currentLang === 'en'}
+            onClick={() => {
+              return handleLanguageSelect('en');
+            }}
+          >
+            EN
+          </LangBtn>
+          <LangBtn
+            $active={currentLang === 'fi'}
+            onClick={() => {
+              return handleLanguageSelect('fi');
+            }}
+          >
+            FI
+          </LangBtn>
+        </LangToggle>
         <SettingsBtn
           $active={settingsOpen}
           onClick={() => {
@@ -491,13 +644,16 @@ const Toolbar = () => {
       <Sheet $open={settingsOpen}>
         <SheetHandle />
         <SheetItem $active={factionsOpen} $desktopHide onClick={handleFactionsClick}>
-          <SheetIcon>⚑</SheetIcon>Factions
+          <SheetIcon>⚑</SheetIcon>
+          {t('toolbar.factions')}
         </SheetItem>
         <SheetItem $desktopHide onClick={handleShortcutsMobile}>
-          <SheetIcon>⌨</SheetIcon>Keyboard Shortcuts
+          <SheetIcon>⌨</SheetIcon>
+          {t('toolbar.keyboardShortcuts')}
         </SheetItem>
         <SheetItem onClick={handleExport}>
-          <SheetIcon>⬇</SheetIcon>Export JSON
+          <SheetIcon>⬇</SheetIcon>
+          {t('toolbar.exportJSON')}
         </SheetItem>
         <SheetItem
           onClick={() => {
@@ -505,9 +661,51 @@ const Toolbar = () => {
             fileInput.current?.click();
           }}
         >
-          <SheetIcon>⬆</SheetIcon>Import JSON
+          <SheetIcon>⬆</SheetIcon>
+          {t('toolbar.importJSON')}
+        </SheetItem>
+        <SheetItem
+          $desktopHide
+          onClick={() => {
+            setSettingsOpen(false);
+            setLangModalOpen(true);
+          }}
+        >
+          <SheetIcon>🌐</SheetIcon>
+          {t('toolbar.languageLabel')}
         </SheetItem>
       </Sheet>
+
+      <ModalBackdrop
+        $open={langModalOpen}
+        onClick={() => {
+          return setLangModalOpen(false);
+        }}
+      >
+        <ModalCard
+          onClick={(e) => {
+            return e.stopPropagation();
+          }}
+        >
+          <ModalTitle>{t('toolbar.languageLabel')}</ModalTitle>
+          <LangOption
+            $active={currentLang === 'en'}
+            onClick={() => {
+              return handleLanguageSelect('en');
+            }}
+          >
+            🇬🇧 English
+          </LangOption>
+          <LangOption
+            $active={currentLang === 'fi'}
+            onClick={() => {
+              return handleLanguageSelect('fi');
+            }}
+          >
+            🇫🇮 Suomi
+          </LangOption>
+        </ModalCard>
+      </ModalBackdrop>
 
       <input
         ref={fileInput}

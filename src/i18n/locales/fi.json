@@ -1,0 +1,124 @@
+{
+  "terrain": {
+    "grass": "Niitty",
+    "farm": "Pelto",
+    "forest": "Metsä",
+    "mountain": "Vuori",
+    "lake": "Järvi",
+    "ocean": "Meri"
+  },
+  "features": {
+    "river": "Joki",
+    "road": "Tie",
+    "town": "Kaupunki"
+  },
+  "dir": {
+    "E": "I",
+    "NE": "KO",
+    "NW": "LU",
+    "W": "L",
+    "SW": "LO",
+    "SE": "KA"
+  },
+  "connection": {
+    "blocked": "suljettu",
+    "noPort": "ei satamaa",
+    "restore": "Palauta",
+    "disconnect": "Katkaise",
+    "addPort": "Lisää satama",
+    "removePort": "Poista satama"
+  },
+  "tilePanel": {
+    "title": "Muokkaa ruutua",
+    "terrain": "Maasto",
+    "features": "Ominaisuudet",
+    "notes": "Muistiinpanot",
+    "armies": "Armeijat tällä ruudulla",
+    "addArmy": "⚔ Lisää armeija ruudulle",
+    "deleteTile": "🗑 Poista ruutu",
+    "paintTerrain": "🖌 Maalaa maasto",
+    "paintMode": "🖌 Maalausmoodi",
+    "exitPaint": "✕ Poistu",
+    "paintHint": "Klikkaa tai vedä ruutuja maalataksesi valitulla siveltimellä.",
+    "noTileSelected": "Valitse muokattava ruutu",
+    "townNamePlaceholder": "Kaupungin nimi…",
+    "notesPlaceholder": "Lisää muistiinpanoja tästä ruudusta…",
+    "riverAdd": "+ Lisää",
+    "riverRemove": "− Poista",
+    "roadAdd": "+ Lisää",
+    "roadRemove": "− Poista"
+  },
+  "factionPaintPanel": {
+    "title": "⚑ Maalaa ryhmittymä",
+    "hint": "Valitse alla oleva ryhmittymä ja klikkaa tai vedä ruutuja sen nimeämiseksi.",
+    "hintTouch": "Valitse alla oleva ryhmittymä ja napauta ruutuja sen nimeämiseksi.",
+    "unassigned": "Ei ryhmittymää",
+    "noFactions": "Ei ryhmittymiä.\nLisää niitä ⚑ Ryhmittymät -valikosta."
+  },
+  "factionsPanel": {
+    "title": "⚑ Ryhmittymät",
+    "colour": "Väri",
+    "description": "Kuvaus",
+    "descriptionPlaceholder": "Muistiinpanoja tästä ryhmittymästä…",
+    "addFaction": "＋ Lisää ryhmittymä",
+    "noFactions": "Ei ryhmittymiä. Lisää yksi alta."
+  },
+  "armyPanel": {
+    "title": "⚔ Armeija",
+    "name": "Nimi",
+    "namePlaceholder": "Armeijan nimi",
+    "composition": "Kokoonpano",
+    "compositionPlaceholder": "esim.\n500 jalkaväkeä\n120 ratsuväkeä\n20 tykkiä",
+    "faction": "Ryhmittymä",
+    "factionNone": "Ei mitään",
+    "moveArmy": "↪ Siirrä armeija",
+    "cancelMove": "✕ Peruuta siirto",
+    "deleteArmy": "✕ Poista armeija",
+    "moveHint": "Napauta kartan mitä tahansa ruutua siirtääksesi armeijan sinne. Panorointi ja zoomaus toimivat normaalisti."
+  },
+  "toolbar": {
+    "back": "← Kartat",
+    "factions": "⚑ Ryhmittymät",
+    "keyboardShortcuts": "Näppäinoikotiet",
+    "exportJSON": "Vie JSON",
+    "importJSON": "Tuo JSON",
+    "languageLabel": "Kieli"
+  },
+  "mapModeToggle": {
+    "terrain": "🗺 Maasto",
+    "faction": "⚑ Ryhmittymä"
+  },
+  "home": {
+    "title": "⬡ Hex Map Tool",
+    "subtitle": "Valitse muokattava kartta tai luo uusi.",
+    "description": "Suunnittele maailmoja ja komenna armeijoita. Rakenna hex-karttoja sotapeleille, kampanjoille ja strategiseen suunnitteluun — aseta maasto, perusta kaupunkeja, sijoita joukot ja piirrä taistelulinjat. Kaikki renderöidään reaaliaikaisesti SVG:nä ja tallennetaan automaattisesti selaimeesi.",
+    "noticeStorageTitle": "Kartat tallennetaan selaimen paikalliseen tallennustilaan.",
+    "noticeStorageBody": "Ne menetetään, jos tyhjennät selaintiedot, vaihdat selainta tai käytät eri laitetta. Käytä <bold>Vie JSON</bold> editorissa varmuuskopiointiin ja <bold>Tuo JSON</bold> palauttamiseen.",
+    "noticeExport": "Vie JSON",
+    "noticeImport": "Tuo JSON",
+    "newMap": "Uusi kartta",
+    "untitledMap": "Nimetön kartta",
+    "example": "Esimerkki",
+    "builtIn": "Sisäänrakennettu — avautuu kopiona",
+    "edited": "Muokattu {{time}}",
+    "copyOf": "Kopio: {{name}}",
+    "deleteConfirm": "Poistetaanko tämä kartta? Toimintoa ei voi kumota.",
+    "justNow": "Juuri nyt",
+    "minutesAgo": "{{n}} min sitten",
+    "hoursAgo": "{{n}} h sitten",
+    "daysAgo": "{{n}} pv sitten"
+  },
+  "shortcuts": {
+    "title": "Näppäinoikotiet",
+    "undo": "Kumoa viimeisin toiminto",
+    "redo": "Tee uudelleen",
+    "escape": "Poista valinnat tai peruuta siirtotila",
+    "delete": "Poista valittu ruutu",
+    "resetViewport": "Nollaa näkymä keskelle"
+  },
+  "errorBoundary": {
+    "title": "⚠ Jokin meni pieleen",
+    "body": "Odottamaton virhe tapahtui. Kokeile ladata sivu uudelleen. Jos ongelma jatkuu, karttadatasi saattaa olla vioittunut.",
+    "tryAgain": "Yritä uudelleen"
+  }
+}

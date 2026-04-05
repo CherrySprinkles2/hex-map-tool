@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { setActiveFaction, setMapMode } from '../../features/ui/uiSlice';
 
 // Detected once at module load — pointer: coarse = touch device.
@@ -179,6 +180,7 @@ const Empty = styled.div`
 
 const FactionPaintPanel = () => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const factions = useSelector((state) => {
     return state.factions;
   });
@@ -195,7 +197,7 @@ const FactionPaintPanel = () => {
     <Panel $open={isOpen}>
       <DragHandle />
       <Header>
-        <Title>⚑ Paint Faction</Title>
+        <Title>{t('factionPaintPanel.title')}</Title>
         <CloseBtn
           onClick={() => {
             return dispatch(setMapMode('terrain'));
@@ -204,10 +206,7 @@ const FactionPaintPanel = () => {
           ✕
         </CloseBtn>
       </Header>
-      <Hint>
-        Select a faction below, then {isTouchDevice ? 'tap tiles' : 'click or drag tiles'} to assign
-        it.
-      </Hint>
+      <Hint>{isTouchDevice ? t('factionPaintPanel.hintTouch') : t('factionPaintPanel.hint')}</Hint>
 
       <FactionBtn
         $active={activeFactionId === null}
@@ -217,14 +216,21 @@ const FactionPaintPanel = () => {
         }}
       >
         <NoFactionDot />
-        Unassigned
+        {t('factionPaintPanel.unassigned')}
       </FactionBtn>
 
       {factions.length === 0 && (
         <Empty>
-          No factions yet.
-          <br />
-          Add some via ⚑ Factions in the settings menu.
+          {t('factionPaintPanel.noFactions')
+            .split('\n')
+            .map((line, i) => {
+              return (
+                <span key={i}>
+                  {line}
+                  {i === 0 && <br />}
+                </span>
+              );
+            })}
         </Empty>
       )}
 

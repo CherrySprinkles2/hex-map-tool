@@ -14,6 +14,8 @@ There is nothing to install and no account to create. Your maps save automatical
 
 ## What can you do with it?
 
+**Switch language.** The app supports English and Finnish. On desktop, use the **EN / FI** toggle in the toolbar. On mobile, open the Settings menu and tap **Language / Kieli** to choose your preferred language. The choice is remembered in your browser.
+
 **Paint terrain.** Every tile on the map can be set to one of six terrain types — Grass, Farm, Forest, Mountain, Lake, or Ocean — each rendered with its own distinct texture so your map looks like a map, not a spreadsheet.
 
 **Draw rivers and roads.** Toggle a river or road on any tile and it will automatically connect with neighbouring tiles that share the same flag, forming smooth curved paths across your landscape. You can even block individual connections if a river shouldn't flow between two specific tiles.
@@ -71,6 +73,7 @@ There is nothing to install and no account to create. Your maps save automatical
 | Undo                  | Ctrl+Z (Cmd+Z on Mac)                                                                 |
 | Redo                  | Ctrl+Y or Ctrl+Shift+Z                                                                |
 | Deselect / cancel     | Escape                                                                                |
+| Switch language       | **EN / FI** toggle in the toolbar (desktop) or Settings → Language (mobile)           |
 | See all shortcuts     | Click the ⌨ button in the toolbar (desktop) or Settings → Keyboard Shortcuts (mobile) |
 | Back to home          | ← Maps button in the toolbar                                                          |
 
@@ -119,6 +122,7 @@ There is no test suite. Validate changes with `npm run build`.
 - **Redux Toolkit** — tiles, armies, factions, viewport, UI, and currentMap slices
 - **styled-components v6** — theming and component styles
 - **SVG** — all map rendering (patterns, overlays, tokens)
+- **react-i18next + i18next** — internationalisation (EN + FI); `i18next-browser-languagedetector` auto-detects from browser and caches to localStorage
 - **Prettier** — `singleQuote`, `trailingComma: es5`, `printWidth: 100`; enforced via a husky pre-commit hook
 - **ESLint** — extends `react-app`; adds `arrow-body-style: ["error", "always"]`
 
@@ -139,7 +143,8 @@ src/
     KeyboardShortcutsPanel/ Slide-in reference panel listing all keyboard shortcuts
     MapModeToggle/        Terrain / Faction mode switcher
     TileEditPanel/        Right-side panel for editing the selected tile
-    Toolbar/              Map name (inline-editable), back, export/import, ⌨ shortcuts button
+    Toolbar/              Map name (inline-editable), back, export/import, ⌨ shortcuts button,
+                          EN/FI language toggle (desktop), language modal (mobile)
   data/
     example-map.json      Small bundled example (Finnish-themed, 208 tiles, 2 factions, 5 armies)
     large-map.json        3 000-tile performance test map (4 factions, 10 armies)
@@ -151,11 +156,15 @@ src/
     tiles/                tilesSlice — addTile, updateTile, toggleTileFlag, blockConnection, importTiles, …
     viewport/             viewportSlice — setViewport, resetViewport (scale range 0.2–4)
     ui/                   uiSlice — selectedTile, selectedArmyId, movingArmyId, screen, mapMode,
-                          factionsOpen, activeFactionId, showShortcuts
+                          factionsOpen, activeFactionId, showShortcuts, activePaintBrush
     history/              historyActions — restoreSnapshot (used by undo/redo)
   hooks/
     useKeyboardShortcuts  Ctrl+Z/Y undo/redo, Escape deselect, Delete tile, R reset viewport
     useLocalStorageSync   Auto-saves tiles, armies, factions on every change; lazy for examples
+  i18n/
+    index.js              i18next init — LanguageDetector, EN + FI resources, localStorage cache
+    locales/en.json       English translation strings
+    locales/fi.json       Finnish translation strings
   styles/                 theme.js, GlobalStyles.js
   utils/
     hexUtils.js           Axial coordinate math, toKey/fromKey, NEIGHBOR_DIRS, DEEP_WATER
@@ -274,6 +283,47 @@ Defined in `src/hooks/useKeyboardShortcuts.js`.
 | Escape                | Deselect tile/army; cancel move mode |
 | Delete / Backspace    | Delete selected tile                 |
 | R                     | Reset viewport to origin             |
+
+---
+
+## Internationalisation (i18n)
+
+The app uses **react-i18next** with bundled JSON locale files. Language is auto-detected from the browser and cached to localStorage under i18next's default key.
+
+**Supported languages:** English (`en`, default fallback) and Finnish (`fi`).
+
+**Key files:**
+
+| File                       | Purpose                                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------- |
+| `src/i18n/index.js`        | i18next init — attaches `LanguageDetector` and `initReactI18next`, registers both locales |
+| `src/i18n/locales/en.json` | English strings                                                                           |
+| `src/i18n/locales/fi.json` | Finnish strings                                                                           |
+
+**Using translations in components:**
+
+```js
+// Functional component
+import { useTranslation } from 'react-i18next';
+const { t } = useTranslation();
+// …
+<span>{t('tilePanel.title')}</span>;
+
+// Class component (e.g. ErrorBoundary)
+import { withTranslation } from 'react-i18next';
+// access via this.props.t(…)
+export default withTranslation()(MyClass);
+```
+
+**Language switcher:**
+
+- **Desktop** — EN / FI segmented toggle in the `Toolbar` bar (desktop-only via CSS).
+- **Mobile** — Settings menu item 🌐 "Language / Kieli" opens a centred modal with flag + language name buttons.
+- Changing language calls `i18n.changeLanguage(lang)` from `../../i18n`; the choice persists in localStorage.
+
+**Adding a new string:** Add the key to both `en.json` and `fi.json`, then use `t('your.key')` in the component.
+
+**Adding a new language:** Add a new locale JSON file in `src/i18n/locales/`, register it in `src/i18n/index.js` under `resources`, and add a button to the `LangOption` list in `Toolbar.jsx`.
 
 ---
 

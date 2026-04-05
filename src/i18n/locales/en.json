@@ -1,0 +1,124 @@
+{
+  "terrain": {
+    "grass": "Grass",
+    "farm": "Farm",
+    "forest": "Forest",
+    "mountain": "Mountain",
+    "lake": "Lake",
+    "ocean": "Ocean"
+  },
+  "features": {
+    "river": "River",
+    "road": "Road",
+    "town": "Town"
+  },
+  "dir": {
+    "E": "E",
+    "NE": "NE",
+    "NW": "NW",
+    "W": "W",
+    "SW": "SW",
+    "SE": "SE"
+  },
+  "connection": {
+    "blocked": "blocked",
+    "noPort": "no port",
+    "restore": "Restore",
+    "disconnect": "Disconnect",
+    "addPort": "Add Port",
+    "removePort": "Remove Port"
+  },
+  "tilePanel": {
+    "title": "Edit Tile",
+    "terrain": "Terrain",
+    "features": "Features",
+    "notes": "Notes",
+    "armies": "Armies on this tile",
+    "addArmy": "⚔ Add Army to Tile",
+    "deleteTile": "🗑 Delete Tile",
+    "paintTerrain": "🖌 Paint Terrain",
+    "paintMode": "🖌 Paint Mode",
+    "exitPaint": "✕ Exit",
+    "paintHint": "Click or drag tiles to paint with the selected brush.",
+    "noTileSelected": "Select a tile to edit it",
+    "townNamePlaceholder": "Town name…",
+    "notesPlaceholder": "Add notes about this tile…",
+    "riverAdd": "+ Add",
+    "riverRemove": "− Remove",
+    "roadAdd": "+ Add",
+    "roadRemove": "− Remove"
+  },
+  "factionPaintPanel": {
+    "title": "⚑ Paint Faction",
+    "hint": "Select a faction below, then click or drag tiles to assign it.",
+    "hintTouch": "Select a faction below, then tap tiles to assign it.",
+    "unassigned": "Unassigned",
+    "noFactions": "No factions yet.\nAdd some via ⚑ Factions in the settings menu."
+  },
+  "factionsPanel": {
+    "title": "⚑ Factions",
+    "colour": "Colour",
+    "description": "Description",
+    "descriptionPlaceholder": "Notes about this faction…",
+    "addFaction": "＋ Add Faction",
+    "noFactions": "No factions yet. Add one below."
+  },
+  "armyPanel": {
+    "title": "⚔ Army",
+    "name": "Name",
+    "namePlaceholder": "Army name",
+    "composition": "Composition",
+    "compositionPlaceholder": "e.g.\n500 Infantry\n120 Cavalry\n20 Cannon",
+    "faction": "Faction",
+    "factionNone": "None",
+    "moveArmy": "↪ Move Army",
+    "cancelMove": "✕ Cancel Move",
+    "deleteArmy": "✕ Delete Army",
+    "moveHint": "Tap any tile on the map to move this army there. Pan and zoom work normally."
+  },
+  "toolbar": {
+    "back": "← Maps",
+    "factions": "⚑ Factions",
+    "keyboardShortcuts": "Keyboard Shortcuts",
+    "exportJSON": "Export JSON",
+    "importJSON": "Import JSON",
+    "languageLabel": "Language"
+  },
+  "mapModeToggle": {
+    "terrain": "🗺 Terrain",
+    "faction": "⚑ Faction"
+  },
+  "home": {
+    "title": "⬡ Hex Map Tool",
+    "subtitle": "Select a map to edit, or create a new one.",
+    "description": "Design worlds and command armies. Build hex maps for wargames, campaigns, and strategic planning — place terrain, found towns, deploy forces, and trace the lines of battle. All rendered live as SVG, saved automatically in your browser.",
+    "noticeStorageTitle": "Maps are stored in your browser's local storage.",
+    "noticeStorageBody": "They will be lost if you clear your browser data, switch browsers, or use a different device. Use <bold>Export JSON</bold> inside the editor to save a backup, and <bold>Import JSON</bold> to restore it.",
+    "noticeExport": "Export JSON",
+    "noticeImport": "Import JSON",
+    "newMap": "New Map",
+    "untitledMap": "Untitled Map",
+    "example": "Example",
+    "builtIn": "Built-in — opens as a copy",
+    "edited": "Edited {{time}}",
+    "copyOf": "Copy of {{name}}",
+    "deleteConfirm": "Delete this map? This cannot be undone.",
+    "justNow": "Just now",
+    "minutesAgo": "{{n}}m ago",
+    "hoursAgo": "{{n}}h ago",
+    "daysAgo": "{{n}}d ago"
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "undo": "Undo last action",
+    "redo": "Redo",
+    "escape": "Deselect tile or army; cancel move mode",
+    "delete": "Delete the selected tile",
+    "resetViewport": "Reset viewport to centre"
+  },
+  "errorBoundary": {
+    "title": "⚠ Something went wrong",
+    "body": "An unexpected error occurred. Try reloading the page. If the problem persists, your map data may be corrupted.",
+    "tryAgain": "Try again"
+  }
+}

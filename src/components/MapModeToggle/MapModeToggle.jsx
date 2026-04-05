@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { setMapMode } from '../../features/ui/uiSlice';
 
 // On desktop, the terrain/faction panel is always visible — keep the toggle clear of it
@@ -59,6 +60,7 @@ const ModeBtn = styled.button`
 
 const MapModeToggle = () => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const mapMode = useSelector((state) => {
     return state.ui.mapMode;
   });
@@ -71,7 +73,7 @@ const MapModeToggle = () => {
           return dispatch(setMapMode('terrain'));
         }}
       >
-        🗺 Terrain
+        {t('mapModeToggle.terrain')}
       </ModeBtn>
       <ModeBtn
         $active={mapMode === 'faction'}
@@ -79,7 +81,7 @@ const MapModeToggle = () => {
           return dispatch(setMapMode('faction'));
         }}
       >
-        ⚑ Faction
+        {t('mapModeToggle.faction')}
       </ModeBtn>
     </Toggle>
   );

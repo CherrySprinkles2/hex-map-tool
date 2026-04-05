@@ -1,4 +1,5 @@
 import React from 'react';
+import { withTranslation } from 'react-i18next';
 
 const containerStyle = {
   padding: '2rem',
@@ -39,13 +40,13 @@ class ErrorBoundary extends React.Component {
   }
 
   render() {
+    const { t } = this.props;
     if (this.state.hasError) {
       return (
         <div style={containerStyle}>
-          <h2 style={{ margin: 0 }}>⚠ Something went wrong</h2>
+          <h2 style={{ margin: 0 }}>{t('errorBoundary.title')}</h2>
           <p style={{ margin: 0, color: '#888', textAlign: 'center', maxWidth: 420 }}>
-            An unexpected error occurred. Try reloading the page. If the problem persists, your map
-            data may be corrupted.
+            {t('errorBoundary.body')}
           </p>
           <button
             style={btnStyle}
@@ -53,7 +54,7 @@ class ErrorBoundary extends React.Component {
               return this.setState({ hasError: false });
             }}
           >
-            Try again
+            {t('errorBoundary.tryAgain')}
           </button>
         </div>
       );
@@ -62,4 +63,4 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-export default ErrorBoundary;
+export default withTranslation()(ErrorBoundary);

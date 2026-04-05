@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { closeShortcuts } from '../../features/ui/uiSlice';
 
 const Panel = styled.div`
@@ -153,19 +154,20 @@ const ShortcutDesc = styled.span`
   flex: 1;
 `;
 
-const SHORTCUTS = [
-  { keys: ['Ctrl+Z'], desc: 'Undo last action' },
-  { keys: ['Ctrl+Y', 'Ctrl+⇧+Z'], desc: 'Redo' },
-  { keys: ['Escape'], desc: 'Deselect tile or army; cancel move mode' },
-  { keys: ['Delete', 'Backspace'], desc: 'Delete the selected tile' },
-  { keys: ['R'], desc: 'Reset viewport to centre' },
-];
-
 const KeyboardShortcutsPanel = () => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const open = useSelector((state) => {
     return state.ui.showShortcuts;
   });
+
+  const SHORTCUTS = [
+    { keys: ['Ctrl+Z'], desc: t('shortcuts.undo') },
+    { keys: ['Ctrl+Y', 'Ctrl+⇧+Z'], desc: t('shortcuts.redo') },
+    { keys: ['Escape'], desc: t('shortcuts.escape') },
+    { keys: ['Delete', 'Backspace'], desc: t('shortcuts.delete') },
+    { keys: ['R'], desc: t('shortcuts.resetViewport') },
+  ];
 
   useEffect(() => {
     if (!open) return;
@@ -182,7 +184,7 @@ const KeyboardShortcutsPanel = () => {
     <Panel $open={open}>
       <DragHandle />
       <PanelHeader>
-        <PanelTitle>Keyboard Shortcuts</PanelTitle>
+        <PanelTitle>{t('shortcuts.title')}</PanelTitle>
         <CloseBtn
           onClick={() => {
             return dispatch(closeShortcuts());

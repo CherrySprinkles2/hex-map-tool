@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled, { useTheme } from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { addFaction, deleteFaction, updateFaction } from '../../features/factions/factionsSlice';
 import { closeFactionsPanel } from '../../features/ui/uiSlice';
 
@@ -268,6 +269,7 @@ const Empty = styled.div`
 const FactionItem = ({ faction }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const [localName, setLocalName] = useState(faction.name);
   const [localDesc, setLocalDesc] = useState(faction.description);
 
@@ -306,7 +308,7 @@ const FactionItem = ({ faction }) => {
       </CardRow>
 
       <div>
-        <SectionLabel>Colour</SectionLabel>
+        <SectionLabel>{t('factionsPanel.colour')}</SectionLabel>
         <SwatchRow>
           {theme.factionColors.map((c) => {
             return (
@@ -325,14 +327,14 @@ const FactionItem = ({ faction }) => {
       </div>
 
       <div>
-        <SectionLabel>Description</SectionLabel>
+        <SectionLabel>{t('factionsPanel.description')}</SectionLabel>
         <DescInput
           value={localDesc}
           onChange={(e) => {
             return setLocalDesc(e.target.value);
           }}
           onBlur={commitDesc}
-          placeholder="Notes about this faction…"
+          placeholder={t('factionsPanel.descriptionPlaceholder')}
           maxLength={500}
         />
       </div>
@@ -343,6 +345,7 @@ const FactionItem = ({ faction }) => {
 const FactionsPanel = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const factions = useSelector((state) => {
     return state.factions;
   });
@@ -367,7 +370,7 @@ const FactionsPanel = () => {
     <Panel $open={isOpen}>
       <DragHandle />
       <Header>
-        <Title>⚑ Factions</Title>
+        <Title>{t('factionsPanel.title')}</Title>
         <CloseBtn
           onClick={() => {
             return dispatch(closeFactionsPanel());
@@ -378,13 +381,13 @@ const FactionsPanel = () => {
       </Header>
 
       <FactionList>
-        {factions.length === 0 && <Empty>No factions yet. Add one below.</Empty>}
+        {factions.length === 0 && <Empty>{t('factionsPanel.noFactions')}</Empty>}
         {factions.map((faction) => {
           return <FactionItem key={faction.id} faction={faction} />;
         })}
       </FactionList>
 
-      <AddBtn onClick={handleAdd}>＋ Add Faction</AddBtn>
+      <AddBtn onClick={handleAdd}>{t('factionsPanel.addFaction')}</AddBtn>
     </Panel>
   );
 };

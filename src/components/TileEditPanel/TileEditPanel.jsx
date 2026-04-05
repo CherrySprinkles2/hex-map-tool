@@ -2,6 +2,7 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createSelector } from '@reduxjs/toolkit';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import {
   updateTile,
   deleteTile,
@@ -582,13 +583,14 @@ const FLAG_BLOCKED_KEY = {
 };
 
 const FLAGS = [
-  { key: 'hasRiver', label: 'River', icon: '🌊', color: theme.river.color },
-  { key: 'hasRoad', label: 'Road', icon: '🛤️', color: theme.road.color },
-  { key: 'hasTown', label: 'Town', icon: '🏘️', color: theme.town.color },
+  { key: 'hasRiver', labelKey: 'features.river', icon: '🌊', color: theme.river.color },
+  { key: 'hasRoad', labelKey: 'features.road', icon: '🛤️', color: theme.road.color },
+  { key: 'hasTown', labelKey: 'features.town', icon: '🏘️', color: theme.town.color },
 ];
 
 const TileEditPanel = () => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const selectedKey = useSelector((state) => {
     return state.ui.selectedTile;
   });
@@ -660,20 +662,20 @@ const TileEditPanel = () => {
       {mapMode === 'terrain-paint' ? (
         <>
           <PaintModeHeader>
-            <PanelTitle>🖌 Paint Mode</PanelTitle>
+            <PanelTitle>{t('tilePanel.paintMode')}</PanelTitle>
             <ExitPaintBtn
               onClick={() => {
                 return dispatch(exitTerrainPaint());
               }}
             >
-              ✕ Exit
+              {t('tilePanel.exitPaint')}
             </ExitPaintBtn>
           </PaintModeHeader>
 
           <div>
-            <SectionLabel>Terrain</SectionLabel>
+            <SectionLabel>{t('tilePanel.terrain')}</SectionLabel>
             <TerrainGrid>
-              {Object.entries(theme.terrain).map(([type, { color, label, icon }]) => {
+              {Object.entries(theme.terrain).map(([type, { color, icon }]) => {
                 return (
                   <TerrainBtn
                     key={type}
@@ -684,7 +686,7 @@ const TileEditPanel = () => {
                     }}
                   >
                     <span className="icon">{icon}</span>
-                    <span className="label">{label}</span>
+                    <span className="label">{t(`terrain.${type}`)}</span>
                   </TerrainBtn>
                 );
               })}
@@ -694,10 +696,10 @@ const TileEditPanel = () => {
           <Divider />
 
           <div>
-            <SectionLabel>Features</SectionLabel>
+            <SectionLabel>{t('tilePanel.features')}</SectionLabel>
             <FlagList>
               <FeatureBrushRow>
-                <FeatureBrushLabel>🌊 River</FeatureBrushLabel>
+                <FeatureBrushLabel>🌊 {t('features.river')}</FeatureBrushLabel>
                 <FeatureBrushBtnGroup>
                   <FeatureBrushBtn
                     $active={activePaintBrush === 'river-on'}
@@ -706,7 +708,7 @@ const TileEditPanel = () => {
                       return dispatch(setActivePaintBrush('river-on'));
                     }}
                   >
-                    + Add
+                    {t('tilePanel.riverAdd')}
                   </FeatureBrushBtn>
                   <FeatureBrushBtn
                     $active={activePaintBrush === 'river-off'}
@@ -715,12 +717,12 @@ const TileEditPanel = () => {
                       return dispatch(setActivePaintBrush('river-off'));
                     }}
                   >
-                    − Remove
+                    {t('tilePanel.riverRemove')}
                   </FeatureBrushBtn>
                 </FeatureBrushBtnGroup>
               </FeatureBrushRow>
               <FeatureBrushRow>
-                <FeatureBrushLabel>🛤️ Road</FeatureBrushLabel>
+                <FeatureBrushLabel>🛤️ {t('features.road')}</FeatureBrushLabel>
                 <FeatureBrushBtnGroup>
                   <FeatureBrushBtn
                     $active={activePaintBrush === 'road-on'}
@@ -729,7 +731,7 @@ const TileEditPanel = () => {
                       return dispatch(setActivePaintBrush('road-on'));
                     }}
                   >
-                    + Add
+                    {t('tilePanel.roadAdd')}
                   </FeatureBrushBtn>
                   <FeatureBrushBtn
                     $active={activePaintBrush === 'road-off'}
@@ -738,31 +740,31 @@ const TileEditPanel = () => {
                       return dispatch(setActivePaintBrush('road-off'));
                     }}
                   >
-                    − Remove
+                    {t('tilePanel.roadRemove')}
                   </FeatureBrushBtn>
                 </FeatureBrushBtnGroup>
               </FeatureBrushRow>
             </FlagList>
           </div>
 
-          <PaintHint>Click or drag tiles to paint with the selected brush.</PaintHint>
+          <PaintHint>{t('tilePanel.paintHint')}</PaintHint>
         </>
       ) : (
         <>
-          <PanelTitle>Edit Tile</PanelTitle>
+          <PanelTitle>{t('tilePanel.title')}</PanelTitle>
           <CloseBtn onClick={handleClose}>✕</CloseBtn>
 
           {!selectedKey ? (
             <EmptyState>
               <EmptyHexIcon>⬡</EmptyHexIcon>
-              <EmptyText>Select a tile to edit it</EmptyText>
+              <EmptyText>{t('tilePanel.noTileSelected')}</EmptyText>
             </EmptyState>
           ) : (
             <>
               <div>
-                <SectionLabel>Terrain</SectionLabel>
+                <SectionLabel>{t('tilePanel.terrain')}</SectionLabel>
                 <TerrainGrid>
-                  {Object.entries(theme.terrain).map(([type, { color, label, icon }]) => {
+                  {Object.entries(theme.terrain).map(([type, { color, icon }]) => {
                     return (
                       <TerrainBtn
                         key={type}
@@ -773,7 +775,7 @@ const TileEditPanel = () => {
                         }}
                       >
                         <span className="icon">{icon}</span>
-                        <span className="label">{label}</span>
+                        <span className="label">{t(`terrain.${type}`)}</span>
                       </TerrainBtn>
                     );
                   })}
@@ -784,16 +786,16 @@ const TileEditPanel = () => {
                     return dispatch(enterTerrainPaint(tile?.terrain ?? null));
                   }}
                 >
-                  🖌 Paint Terrain
+                  {t('tilePanel.paintTerrain')}
                 </PaintModeBtn>
               </div>
 
               <Divider />
 
               <div>
-                <SectionLabel>Features</SectionLabel>
+                <SectionLabel>{t('tilePanel.features')}</SectionLabel>
                 <FlagList>
-                  {FLAGS.map(({ key, label, icon, color }) => {
+                  {FLAGS.map(({ key, labelKey, icon, color }) => {
                     const active = !!tile?.[key];
                     const blockedKey = FLAG_BLOCKED_KEY[key];
                     const isPort = key === 'hasTown';
@@ -803,24 +805,22 @@ const TileEditPanel = () => {
                             const nk = toKey((tile?.q ?? 0) + dir.q, (tile?.r ?? 0) + dir.r);
                             const neighbor = allTiles[nk];
                             if (isPort) {
-                              // Port: show adjacent water tiles regardless of their flags
                               if (!DEEP_WATER.has(neighbor?.terrain)) return null;
                               const isBlocked = (tile?.[blockedKey] || []).includes(nk);
                               return {
                                 nk,
-                                dirLabel: DIR_LABELS[i],
+                                dirLabel: t(`dir.${DIR_LABELS[i]}`),
                                 terrain: neighbor.terrain,
                                 isBlocked,
                               };
                             } else {
-                              // River/road: show adjacent tiles that share the same flag
                               if (!neighbor?.[key]) return null;
                               const isBlocked =
                                 (tile?.[blockedKey] || []).includes(nk) ||
                                 (neighbor[blockedKey] || []).includes(selectedKey);
                               return {
                                 nk,
-                                dirLabel: DIR_LABELS[i],
+                                dirLabel: t(`dir.${DIR_LABELS[i]}`),
                                 terrain: neighbor.terrain,
                                 isBlocked,
                               };
@@ -837,7 +837,7 @@ const TileEditPanel = () => {
                           }}
                         >
                           <span className="flag-icon">{icon}</span>
-                          <span className="flag-label">{label}</span>
+                          <span className="flag-label">{t(labelKey)}</span>
                           <span className="flag-state">{active ? 'on' : 'off'}</span>
                         </FlagToggle>
                         {flagNeighbors.length > 0 && (
@@ -849,7 +849,7 @@ const TileEditPanel = () => {
                                   <span>{dirLabel}</span>
                                   {isBlocked && (
                                     <span style={{ opacity: 0.45 }}>
-                                      {isPort ? 'no port' : 'blocked'}
+                                      {isPort ? t('connection.noPort') : t('connection.blocked')}
                                     </span>
                                   )}
                                   <ConnectionBtn
@@ -861,11 +861,11 @@ const TileEditPanel = () => {
                                   >
                                     {isPort
                                       ? isBlocked
-                                        ? 'Add Port'
-                                        : 'Remove Port'
+                                        ? t('connection.addPort')
+                                        : t('connection.removePort')
                                       : isBlocked
-                                        ? 'Restore'
-                                        : 'Disconnect'}
+                                        ? t('connection.restore')
+                                        : t('connection.disconnect')}
                                   </ConnectionBtn>
                                 </ConnectionRow>
                               );
@@ -880,7 +880,7 @@ const TileEditPanel = () => {
                   <TownNameInput
                     value={tile.townName ?? ''}
                     onChange={handleNameChange}
-                    placeholder="Town name…"
+                    placeholder={t('tilePanel.townNamePlaceholder')}
                     maxLength={32}
                     style={{ marginTop: '8px' }}
                   />
@@ -890,17 +890,17 @@ const TileEditPanel = () => {
               <Divider />
 
               <div>
-                <SectionLabel>Notes</SectionLabel>
+                <SectionLabel>{t('tilePanel.notes')}</SectionLabel>
                 <NotesTextarea
                   value={tile?.notes ?? ''}
                   onChange={handleNotesChange}
-                  placeholder="Add notes about this tile…"
+                  placeholder={t('tilePanel.notesPlaceholder')}
                 />
               </div>
 
               {tileArmies.length > 0 && (
                 <div>
-                  <SectionLabel>Armies on this tile</SectionLabel>
+                  <SectionLabel>{t('tilePanel.armies')}</SectionLabel>
                   <ArmyList>
                     {tileArmies.map((army) => {
                       return (
@@ -925,10 +925,10 @@ const TileEditPanel = () => {
                   return tile && dispatch(addArmy({ q: tile.q, r: tile.r }));
                 }}
               >
-                ⚔ Add Army to Tile
+                {t('tilePanel.addArmy')}
               </AddArmyBtn>
 
-              <DeleteBtn onClick={handleDelete}>🗑 Delete Tile</DeleteBtn>
+              <DeleteBtn onClick={handleDelete}>{t('tilePanel.deleteTile')}</DeleteBtn>
             </>
           )}
         </>
