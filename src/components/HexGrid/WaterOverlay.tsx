@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { theme } from '../../styles/theme';
 import {
   renderFlagPaths,
+  renderCausewayPaths,
   renderWaterEdges,
   renderTowns,
   renderPorts,
@@ -28,6 +29,9 @@ const WaterOverlay = React.memo(
     const roadPaths = useMemo(() => {
       return renderFlagPaths(tiles, 'hasRoad', theme.road);
     }, [tiles]);
+    const causewayPaths = useMemo(() => {
+      return renderCausewayPaths(tiles, theme.causeway);
+    }, [tiles]);
     const towns = useMemo(() => {
       return renderTowns(tiles, armiesByTile ?? {});
     }, [tiles, armiesByTile]);
@@ -41,6 +45,7 @@ const WaterOverlay = React.memo(
         {waterEdgesOcean}
         {riverPaths}
         {roadPaths}
+        {causewayPaths}
         {towns}
         {ports}
       </g>

@@ -1,16 +1,12 @@
-// Pure helper functions that render SVG path/shape elements for the map overlay.
-// These reference theme values directly (no React hooks) since they are plain
-// functions, not components.
-
 import React from 'react';
+import { axialToPixel, hexCorners, NEIGHBOR_DIRS, toKey, DIR_TO_EDGE_CORNER } from './hexUtils';
 import {
-  axialToPixel,
-  hexCorners,
-  NEIGHBOR_DIRS,
-  toKey,
-  DIR_TO_EDGE_CORNER,
+  computeBitmask,
+  resolveSinglePaths,
+  resolveRoadRiverPaths,
+  resolveCausewayPaths,
   DEEP_WATER,
-} from './hexUtils';
+} from './routeLookup';
 import { theme } from '../styles/theme';
 import type { TilesState } from '../types/state';
 import type { Army } from '../types/domain';
@@ -19,45 +15,15 @@ interface PathStyle {
   color: string;
   width: number;
   linecap: string;
-  tension: number;
   poolRadius: number;
 }
 
-const smoothPath = (
-  ax: number,
-  ay: number,
-  bx: number,
-  by: number,
-  cx: number,
-  cy: number,
-  tension: number
-): string => {
-  const cp1x = ax + (cx - ax) * tension;
-  const cp1y = ay + (cy - ay) * tension;
-  const cp2x = bx + (cx - bx) * tension;
-  const cp2y = by + (cy - by) * tension;
-  return `M ${ax},${ay} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${bx},${by}`;
-};
-
-const curvedStub = (ax: number, ay: number, tx: number, ty: number, tension: number): string => {
-  const dx = tx - ax;
-  const dy = ty - ay;
-  const len = Math.sqrt(dx * dx + dy * dy) || 1;
-  const px = -dy / len;
-  const py = dx / len;
-  const bend = len * 0.18 * (1 - tension);
-  const cpx = (ax + tx) / 2 + px * bend;
-  const cpy = (ay + ty) / 2 + py * bend;
-  return `M ${ax},${ay} Q ${cpx},${cpy} ${tx},${ty}`;
-};
-
 type FlagKey = 'hasRiver' | 'hasRoad';
-type BlockedKey = 'riverBlocked' | 'roadBlocked';
-const FLAG_BLOCKED_KEY: Record<FlagKey, BlockedKey> = {
-  hasRiver: 'riverBlocked',
-  hasRoad: 'roadBlocked',
-};
 
+// Renders road and river paths for all tiles.
+// For tiles that have both features the combined lookup table is checked first
+// (enabling bridge and parallel-offset visuals); otherwise each feature is
+// resolved independently via the canonical path tables.
 export const renderFlagPaths = (
   tiles: TilesState,
   flag: FlagKey,
@@ -67,29 +33,18 @@ export const renderFlagPaths = (
     if (!tile[flag]) return [];
 
     const { q, r, terrain } = tile;
-    const myKey = toKey(q, r);
-    const isDeepWater = DEEP_WATER.has(terrain);
+    const key = toKey(q, r);
+
+    if (DEEP_WATER.has(terrain)) return [];
+
     const { x: cx, y: cy } = axialToPixel(q, r);
-    const blockedKey = FLAG_BLOCKED_KEY[flag];
-    const blocked = tile[blockedKey] || [];
+    const bitmask = computeBitmask(tiles, q, r, flag);
 
-    const connectedEdges = NEIGHBOR_DIRS.map((dir, i) => {
-      const nk = toKey(q + dir.q, r + dir.r);
-      const neighbor = tiles[nk];
-      if (!neighbor?.[flag]) return null;
-      if (blocked.includes(nk)) return null;
-      if ((neighbor[blockedKey] || []).includes(myKey)) return null;
-      return i;
-    }).filter((i): i is number => {
-      return i !== null;
-    });
-
-    if (isDeepWater) return [];
-
-    if (connectedEdges.length === 0) {
+    // Isolated tile — render a pool dot
+    if (bitmask === 0) {
       return [
         <circle
-          key={`${flag}-pool-${toKey(q, r)}`}
+          key={`${flag}-pool-${key}`}
           cx={cx}
           cy={cy}
           r={style.poolRadius}
@@ -100,39 +55,124 @@ export const renderFlagPaths = (
       ];
     }
 
-    const corners = hexCorners(cx, cy);
-    const midpoints = connectedEdges.map((i) => {
-      const ci = DIR_TO_EDGE_CORNER[i];
-      const a = corners[ci];
-      const b = corners[(ci + 1) % 6];
-      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-    });
+    const otherFlag: FlagKey = flag === 'hasRiver' ? 'hasRoad' : 'hasRiver';
+    const hasOther = !!tile[otherFlag];
 
-    const paths: string[] = [];
+    let segments: Array<{ d: string; transform: string }>;
 
-    if (connectedEdges.length === 2) {
-      const [a, b] = midpoints;
-      paths.push(smoothPath(a.x, a.y, b.x, b.y, cx, cy, style.tension));
+    if (hasOther) {
+      // Both road and river present — use combined lookup
+      const roadBitmask = computeBitmask(tiles, q, r, 'hasRoad');
+      const riverBitmask = computeBitmask(tiles, q, r, 'hasRiver');
+      const resolved = resolveRoadRiverPaths(roadBitmask, riverBitmask);
+      segments = flag === 'hasRoad' ? resolved.road : resolved.river;
     } else {
-      midpoints.forEach((em) => {
-        paths.push(curvedStub(em.x, em.y, cx, cy, style.tension));
-      });
+      segments = resolveSinglePaths(bitmask, flag);
     }
 
-    return paths.map((d, i) => {
+    return segments.map(({ d, transform }, i) => {
       return (
-        <path
-          key={`${flag}-${toKey(q, r)}-${i}`}
-          d={d}
-          fill="none"
-          stroke={style.color}
-          strokeWidth={style.width}
-          strokeLinecap={style.linecap as React.SVGAttributes<SVGPathElement>['strokeLinecap']}
-          opacity={0.9}
+        <g
+          key={`${flag}-${key}-${i}`}
+          transform={`translate(${cx},${cy})`}
           style={{ pointerEvents: 'none' }}
-        />
+        >
+          <path
+            d={d}
+            transform={transform || undefined}
+            fill="none"
+            stroke={style.color}
+            strokeWidth={style.width}
+            strokeLinecap={style.linecap as React.SVGAttributes<SVGPathElement>['strokeLinecap']}
+            opacity={0.9}
+          />
+        </g>
       );
     });
+  });
+};
+
+interface CausewayStyle {
+  color: string;
+  width: number;
+  linecap: string;
+  notchColor: string;
+  notchWidth: number;
+}
+
+// Renders causeways: roads passing through deep-water tiles.
+// Draws the road embankment (same path as road) plus short perpendicular notch
+// lines to suggest water channels flowing beneath the raised structure.
+export const renderCausewayPaths = (
+  tiles: TilesState,
+  style: CausewayStyle
+): React.ReactElement[] => {
+  return Object.values(tiles).flatMap((tile) => {
+    if (!tile.hasRoad) return [];
+    if (!DEEP_WATER.has(tile.terrain)) return [];
+
+    const { q, r } = tile;
+    const key = toKey(q, r);
+    const { x: cx, y: cy } = axialToPixel(q, r);
+    const bitmask = computeBitmask(tiles, q, r, 'hasRoad');
+
+    if (bitmask === 0) {
+      return [
+        <circle
+          key={`causeway-pool-${key}`}
+          cx={cx}
+          cy={cy}
+          r={theme.road.poolRadius}
+          fill={style.color}
+          opacity={0.85}
+          style={{ pointerEvents: 'none' }}
+        />,
+      ];
+    }
+
+    const { paths, notches } = resolveCausewayPaths(bitmask);
+
+    const embankment = paths.map(({ d, transform }, i) => {
+      return (
+        <g
+          key={`causeway-emb-${key}-${i}`}
+          transform={`translate(${cx},${cy})`}
+          style={{ pointerEvents: 'none' }}
+        >
+          <path
+            d={d}
+            transform={transform || undefined}
+            fill="none"
+            stroke={style.color}
+            strokeWidth={style.width}
+            strokeLinecap={style.linecap as React.SVGAttributes<SVGPathElement>['strokeLinecap']}
+            opacity={0.9}
+          />
+        </g>
+      );
+    });
+
+    const channels = notches.map(({ d, transform }, i) => {
+      return (
+        <g
+          key={`causeway-notch-${key}-${i}`}
+          transform={`translate(${cx},${cy})`}
+          style={{ pointerEvents: 'none' }}
+        >
+          <path
+            d={d}
+            transform={transform || undefined}
+            fill="none"
+            stroke={style.notchColor}
+            strokeWidth={style.notchWidth}
+            strokeLinecap="round"
+            opacity={0.8}
+          />
+        </g>
+      );
+    });
+
+    return [...embankment, ...channels];
   });
 };
 

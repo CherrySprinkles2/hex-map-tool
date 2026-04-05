@@ -77,6 +77,15 @@ export const theme: AppTheme = {
     pilingLen: 13,
   },
 
+  // ── Causeways ─────────────────────────────────────────────────────────────────
+  causeway: {
+    color: '#8B7355', // same brown as road (continuous embankment appearance)
+    width: 4, // slightly wider than road to suggest a raised structure
+    linecap: 'square',
+    notchColor: '#4499cc', // river blue — water flowing through the channels
+    notchWidth: 2.5,
+  },
+
   // ── Faction colour palette ────────────────────────────────────────────────────
   factionColors: [
     '#e94560',

@@ -73,6 +73,14 @@ export interface AppTheme {
     pilingLen: number;
   };
 
+  causeway: {
+    color: string;
+    width: number;
+    linecap: string;
+    notchColor: string;
+    notchWidth: number;
+  };
+
   factionColors: string[];
 
   army: {
