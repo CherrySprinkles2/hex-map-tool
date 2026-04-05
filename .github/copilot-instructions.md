@@ -152,7 +152,7 @@ All spatial logic uses **pointy-top axial coordinates (q, r)** — see `src/util
 
 - Armies are placed via **TileEditPanel** "⚔ Add Army to Tile" button (no canvas placing mode)
 - Army shape includes `factionId: string | null`; `setArmyFaction({ id, factionId })` reducer in `armiesSlice` updates `army.factionId`
-- `ArmyPanel` (left side on desktop, bottom sheet on mobile) shows when `selectedArmyId !== null`; includes a faction `<select>` dropdown (hidden when no factions exist) that dispatches `setArmyFaction`
+- `ArmyPanel` (right side on desktop, bottom sheet on mobile) shows when `selectedArmyId !== null`; includes a faction `<select>` dropdown (hidden when no factions exist) that dispatches `setArmyFaction`. When open, it suppresses `FactionPaintPanel` (passed as `suppressed` prop from `Editor`).
 - `ArmyToken` accepts `factionId` and renders a faction-coloured ring around the token when a faction is assigned
 - **Move mode** (Option B): tap army → "↪ Move Army" in panel → army pulses orange → tap any tile/ghost tile to move; Cancel or Escape exits without moving. `HexTile` and `GhostTile` check `store.getState().ui.movingArmyId` on click — no new subscriptions
 - **Garrison visual**: when a town tile has armies, `renderTowns` renders a castle + gold dashed ring instead of a house. Single army → army name shown above. Multiple armies → ring only. Army tokens are suppressed on town tiles (HexGrid checks `tiles[key]?.hasTown`)
@@ -160,7 +160,7 @@ All spatial logic uses **pointy-top axial coordinates (q, r)** — see `src/util
 
 ### Toolbar
 
-- Adds `padding-right: 296px` on desktop when `rightPanelOpen` is true (i.e. `mapMode === 'terrain'`, `mapMode === 'faction'`, or `showShortcuts === true`) to prevent the right panel from obscuring the Settings button
+- Adds `padding-right: 296px` on desktop when `rightPanelOpen` is true (i.e. `mapMode === 'terrain'`, `mapMode === 'faction'`, `showShortcuts === true`, or `selectedArmyId !== null`) to prevent the right panel from obscuring the Settings button
 - Has a desktop-only `⌨` button that toggles `showShortcuts`; dispatches `openShortcuts` / `closeShortcuts` from `uiSlice`
 - Has a desktop-only **EN / FI** segmented language toggle (`LangToggle`) that calls `i18n.changeLanguage(lang)` directly — no Redux involvement
 - On mobile, the Settings sheet contains a 🌐 "Language / Kieli" item (`$desktopHide`) that opens a centred `ModalBackdrop` + `ModalCard` with `LangOption` buttons for each language

@@ -45,9 +45,7 @@ const selectTileArmies = createSelector(
 const Panel = styled.div<{ $open: boolean; $desktopTerrain: boolean }>`
   position: fixed;
   top: 0;
-  right: ${({ $open }) => {
-    return $open ? '0' : '-300px';
-  }};
+  right: 0;
   width: 280px;
   height: 100vh;
   background: ${({ theme }) => {
@@ -58,7 +56,6 @@ const Panel = styled.div<{ $open: boolean; $desktopTerrain: boolean }>`
       return theme.panelBorder;
     }};
   padding: 24px 16px;
-  transition: right 0.25s ease;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -68,9 +65,13 @@ const Panel = styled.div<{ $open: boolean; $desktopTerrain: boolean }>`
   overflow-y: auto;
 
   @media (min-width: 601px) {
-    right: ${({ $desktopTerrain }) => {
-      return $desktopTerrain ? '0' : '-300px';
+    opacity: ${({ $desktopTerrain }) => {
+      return $desktopTerrain ? '1' : '0';
     }};
+    pointer-events: ${({ $desktopTerrain }) => {
+      return $desktopTerrain ? 'auto' : 'none';
+    }};
+    transition: opacity 0.25s ease;
   }
 
   @media (max-width: 600px) {
@@ -611,6 +612,9 @@ const TileEditPanel = (): React.ReactElement => {
   const showShortcuts = useAppSelector((state) => {
     return state.ui.showShortcuts;
   });
+  const selectedArmyId = useAppSelector((state) => {
+    return state.ui.selectedArmyId;
+  });
   const activePaintBrush = useAppSelector((state) => {
     return state.ui.activePaintBrush;
   });
@@ -665,8 +669,10 @@ const TileEditPanel = (): React.ReactElement => {
 
   return (
     <Panel
-      $open={(!!selectedKey || mapMode === 'terrain-paint') && !showShortcuts}
-      $desktopTerrain={(mapMode === 'terrain' || mapMode === 'terrain-paint') && !showShortcuts}
+      $open={(!!selectedKey || mapMode === 'terrain-paint') && !showShortcuts && !selectedArmyId}
+      $desktopTerrain={
+        (mapMode === 'terrain' || mapMode === 'terrain-paint') && !showShortcuts && !selectedArmyId
+      }
     >
       <DragHandle />
 

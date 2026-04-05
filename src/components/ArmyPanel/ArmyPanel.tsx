@@ -8,20 +8,17 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 const Panel = styled.div<{ $open: boolean }>`
   position: fixed;
   top: 0;
-  left: ${({ $open }) => {
-    return $open ? '0' : '-300px';
-  }};
+  right: 0;
   width: 280px;
   height: 100vh;
   background: ${({ theme }) => {
     return theme.panelBackground;
   }};
-  border-right: 2px solid
+  border-left: 2px solid
     ${({ theme }) => {
       return theme.panelBorder;
     }};
   padding: 24px 16px;
-  transition: left 0.25s ease;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -30,15 +27,26 @@ const Panel = styled.div<{ $open: boolean }>`
   }};
   overflow-y: auto;
 
+  @media (min-width: 601px) {
+    opacity: ${({ $open }) => {
+      return $open ? '1' : '0';
+    }};
+    pointer-events: ${({ $open }) => {
+      return $open ? 'auto' : 'none';
+    }};
+    transition: opacity 0.25s ease;
+  }
+
   @media (max-width: 600px) {
     top: auto;
     left: 0;
+    right: 0;
     bottom: ${({ $open }) => {
       return $open ? '0' : '-60vh';
     }};
     width: 100%;
     height: 60vh;
-    border-right: none;
+    border-left: none;
     border-top: 2px solid
       ${({ theme }) => {
         return theme.panelBorder;

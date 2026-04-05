@@ -10,6 +10,7 @@ import MapModeToggle from '../MapModeToggle/MapModeToggle';
 import KeyboardShortcutsPanel from '../KeyboardShortcutsPanel/KeyboardShortcutsPanel';
 import useLocalStorageSync from '../../hooks/useLocalStorageSync';
 import useKeyboardShortcuts from '../../hooks/useKeyboardShortcuts';
+import { useAppSelector } from '../../app/hooks';
 
 const AppShell = styled.div`
   display: flex;
@@ -28,6 +29,9 @@ const CanvasArea = styled.div`
 const Editor = (): React.ReactElement => {
   useLocalStorageSync();
   useKeyboardShortcuts();
+  const selectedArmyId = useAppSelector((state) => {
+    return state.ui.selectedArmyId;
+  });
   return (
     <AppShell>
       <Toolbar />
@@ -36,7 +40,7 @@ const Editor = (): React.ReactElement => {
         <HexGrid />
         <MapModeToggle />
         <TileEditPanel />
-        <FactionPaintPanel />
+        <FactionPaintPanel suppressed={selectedArmyId !== null} />
         <FactionsPanel />
         <KeyboardShortcutsPanel />
       </CanvasArea>

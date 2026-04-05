@@ -451,13 +451,17 @@ const Toolbar = (): React.ReactElement => {
   const showShortcuts = useAppSelector((state) => {
     return state.ui.showShortcuts;
   });
+  const selectedArmyId = useAppSelector((state) => {
+    return state.ui.selectedArmyId;
+  });
   const fileInput = useRef<HTMLInputElement | null>(null);
   const [localName, setLocalName] = useState('');
   const [editing, setEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [langModalOpen, setLangModalOpen] = useState(false);
 
-  const rightPanelOpen = mapMode === 'terrain' || mapMode === 'faction' || showShortcuts;
+  const rightPanelOpen =
+    mapMode === 'terrain' || mapMode === 'faction' || showShortcuts || selectedArmyId !== null;
 
   const displayName = editing ? localName : mapName;
 

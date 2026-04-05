@@ -16,7 +16,7 @@ There is nothing to install and no account to create. Your maps save automatical
 
 **Switch language.** The app supports English and Finnish. On desktop, use the **EN / FI** toggle in the toolbar. On mobile, open the Settings menu and tap **Language / Kieli** to choose your preferred language. The choice is remembered in your browser.
 
-**Paint terrain.** Every tile on the map can be set to one of six terrain types — Grass, Farm, Forest, Mountain, Lake, or Ocean — each rendered with its own distinct texture so your map looks like a map, not a spreadsheet.
+**Paint terrain.** Every tile on the map can be set to one of six terrain types — Grass, Farm, Forest, Mountain, Lake, or Ocean — each rendered with its own distinct texture.
 
 **Draw rivers and roads.** Toggle a river or road on any tile and it will automatically connect with neighbouring tiles that share the same flag, forming smooth curved paths across your landscape. You can even block individual connections if a river shouldn't flow between two specific tiles.
 

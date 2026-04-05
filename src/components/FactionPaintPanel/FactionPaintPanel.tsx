@@ -6,12 +6,10 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 
 const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
 
-const Panel = styled.div<{ $open: boolean }>`
+const Panel = styled.div<{ $open: boolean; $suppressed: boolean }>`
   position: fixed;
   top: 0;
-  right: ${({ $open }) => {
-    return $open ? '0' : '-300px';
-  }};
+  right: 0;
   width: 280px;
   height: 100vh;
   background: ${({ theme }) => {
@@ -22,7 +20,6 @@ const Panel = styled.div<{ $open: boolean }>`
       return theme.panelBorder;
     }};
   padding: 24px 16px;
-  transition: right 0.25s ease;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -31,11 +28,21 @@ const Panel = styled.div<{ $open: boolean }>`
   }};
   overflow-y: auto;
 
+  @media (min-width: 601px) {
+    opacity: ${({ $open, $suppressed }) => {
+      return $open && !$suppressed ? '1' : '0';
+    }};
+    pointer-events: ${({ $open, $suppressed }) => {
+      return $open && !$suppressed ? 'auto' : 'none';
+    }};
+    transition: opacity 0.25s ease;
+  }
+
   @media (max-width: 600px) {
     top: auto;
     right: 0;
-    bottom: ${({ $open }) => {
-      return $open ? '0' : '-60vh';
+    bottom: ${({ $open, $suppressed }) => {
+      return $open && !$suppressed ? '0' : '-60vh';
     }};
     width: 100%;
     height: 60vh;
@@ -177,7 +184,11 @@ const Empty = styled.div`
   line-height: 1.6;
 `;
 
-const FactionPaintPanel = (): React.ReactElement => {
+interface FactionPaintPanelProps {
+  suppressed: boolean;
+}
+
+const FactionPaintPanel = ({ suppressed }: FactionPaintPanelProps): React.ReactElement => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
   const factions = useAppSelector((state) => {
@@ -193,7 +204,7 @@ const FactionPaintPanel = (): React.ReactElement => {
   const isOpen = mapMode === 'faction';
 
   return (
-    <Panel $open={isOpen}>
+    <Panel $open={isOpen} $suppressed={suppressed}>
       <DragHandle />
       <Header>
         <Title>{t('factionPaintPanel.title')}</Title>
