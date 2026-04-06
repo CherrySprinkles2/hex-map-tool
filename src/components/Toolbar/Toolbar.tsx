@@ -1,7 +1,10 @@
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import i18n from '../../i18n';
+import { Backdrop, SheetItem, SheetIcon } from '../shared/sheet';
+import { LanguageToggle } from '../shared/LanguageToggle';
+import { LanguageModal } from '../shared/LanguageModal';
+import { SettingsButton } from '../shared/SettingsButton';
 import { importTiles } from '../../features/tiles/tilesSlice';
 import { importArmies } from '../../features/armies/armiesSlice';
 import { importFactions } from '../../features/factions/factionsSlice';
@@ -101,31 +104,6 @@ const MapNameInput = styled.input`
   }
 `;
 
-const SettingsBtn = styled.button<{ $active: boolean }>`
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1.5px solid
-    ${({ theme }) => {
-      return theme.panelBorder;
-    }};
-  background: ${({ $active, theme }) => {
-    return $active ? theme.panelBorder : 'transparent';
-  }};
-  color: ${({ theme }) => {
-    return theme.text;
-  }};
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.15s;
-  line-height: 1;
-  flex-shrink: 0;
-  &:hover {
-    background: ${({ theme }) => {
-      return theme.panelBorder;
-    }};
-  }
-`;
-
 const DesktopFactionsBtn = styled.button<{ $active: boolean }>`
   display: none;
 
@@ -190,138 +168,6 @@ const ShortcutsBtn = styled.button<{ $active: boolean }>`
   }
 `;
 
-const LangToggle = styled.div`
-  display: none;
-
-  @media (min-width: 601px) {
-    display: flex;
-    border-radius: 6px;
-    border: 1.5px solid
-      ${({ theme }) => {
-        return theme.panelBorder;
-      }};
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-`;
-
-const LangBtn = styled.button<{ $active: boolean }>`
-  padding: 5px 10px;
-  border: none;
-  background: ${({ $active, theme }) => {
-    return $active ? theme.panelBorder : 'transparent';
-  }};
-  color: ${({ $active, theme }) => {
-    return $active ? theme.text : theme.textMuted;
-  }};
-  font-size: 0.75rem;
-  font-weight: ${({ $active }) => {
-    return $active ? '700' : '400';
-  }};
-  letter-spacing: 0.06em;
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    color 0.15s;
-
-  &:hover {
-    color: ${({ theme }) => {
-      return theme.text;
-    }};
-    background: ${({ $active, theme }) => {
-      return $active ? theme.panelBorder : 'rgba(255,255,255,0.06)';
-    }};
-  }
-`;
-
-const ModalBackdrop = styled.div<{ $open: boolean }>`
-  display: ${({ $open }) => {
-    return $open ? 'flex' : 'none';
-  }};
-  position: fixed;
-  inset: 0;
-  z-index: ${({ theme }) => {
-    return theme.zIndex.sheet + 1;
-  }};
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
-
-  @media (min-width: 601px) {
-    display: none;
-  }
-`;
-
-const ModalCard = styled.div`
-  background: ${({ theme }) => {
-    return theme.panelBackground;
-  }};
-  border: 2px solid
-    ${({ theme }) => {
-      return theme.panelBorder;
-    }};
-  border-radius: 12px;
-  padding: 20px 16px;
-  width: min(320px, 90vw);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`;
-
-const ModalTitle = styled.h3`
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: ${({ theme }) => {
-    return theme.text;
-  }};
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin: 0 0 4px;
-`;
-
-const LangOption = styled.button<{ $active: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 2px solid
-    ${({ $active, theme }) => {
-      return $active ? theme.textMuted : 'transparent';
-    }};
-  background: ${({ $active }) => {
-    return $active ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)';
-  }};
-  color: ${({ theme }) => {
-    return theme.text;
-  }};
-  font-size: 0.9rem;
-  font-weight: ${({ $active }) => {
-    return $active ? '600' : '400';
-  }};
-  cursor: pointer;
-  text-align: left;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.08);
-  }
-`;
-
-const Backdrop = styled.div<{ $open: boolean }>`
-  display: ${({ $open }) => {
-    return $open ? 'block' : 'none';
-  }};
-  position: fixed;
-  inset: 0;
-  z-index: ${({ theme }) => {
-    return theme.zIndex.backdrop;
-  }};
-`;
-
 const Sheet = styled.div<{ $open: boolean }>`
   position: fixed;
   left: 0;
@@ -383,45 +229,6 @@ const SheetHandle = styled.div`
   @media (min-width: 601px) {
     display: none;
   }
-`;
-
-const SheetItem = styled.button<{ $active?: boolean; $desktopHide?: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  padding: 14px 24px;
-  background: ${({ $active }) => {
-    return $active ? 'rgba(255,255,255,0.06)' : 'transparent';
-  }};
-  border: none;
-  color: ${({ theme }) => {
-    return theme.text;
-  }};
-  font-size: 0.9rem;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.12s;
-  letter-spacing: 0.02em;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.08);
-  }
-
-  @media (min-width: 601px) {
-    padding: 10px 20px;
-    font-size: 0.85rem;
-    display: ${({ $desktopHide }) => {
-      return $desktopHide ? 'none' : 'flex';
-    }};
-  }
-`;
-
-const SheetIcon = styled.span`
-  font-size: 1.1rem;
-  width: 22px;
-  text-align: center;
-  flex-shrink: 0;
 `;
 
 const Toolbar = (): React.ReactElement => {
@@ -570,14 +377,6 @@ const Toolbar = (): React.ReactElement => {
     dispatch(openShortcuts());
   };
 
-  const handleLanguageSelect = (lang: string) => {
-    i18n.changeLanguage(lang);
-    setLangModalOpen(false);
-    setSettingsOpen(false);
-  };
-
-  const currentLang = i18n.language.startsWith('fi') ? 'fi' : 'en';
-
   return (
     <>
       <Bar $rightPanelOpen={rightPanelOpen}>
@@ -602,25 +401,12 @@ const Toolbar = (): React.ReactElement => {
         >
           ⌨
         </ShortcutsBtn>
-        <LangToggle aria-label="Language">
-          <LangBtn
-            $active={currentLang === 'en'}
-            onClick={() => {
-              return handleLanguageSelect('en');
-            }}
-          >
-            EN
-          </LangBtn>
-          <LangBtn
-            $active={currentLang === 'fi'}
-            onClick={() => {
-              return handleLanguageSelect('fi');
-            }}
-          >
-            FI
-          </LangBtn>
-        </LangToggle>
-        <SettingsBtn
+        <LanguageToggle
+          onAfterSelect={() => {
+            return setSettingsOpen(false);
+          }}
+        />
+        <SettingsButton
           $active={settingsOpen}
           onClick={() => {
             return setSettingsOpen((o) => {
@@ -630,7 +416,7 @@ const Toolbar = (): React.ReactElement => {
           aria-label="Settings"
         >
           ⚙
-        </SettingsBtn>
+        </SettingsButton>
       </Bar>
 
       <Backdrop
@@ -675,36 +461,15 @@ const Toolbar = (): React.ReactElement => {
         </SheetItem>
       </Sheet>
 
-      <ModalBackdrop
-        $open={langModalOpen}
-        onClick={() => {
+      <LanguageModal
+        open={langModalOpen}
+        onClose={() => {
           return setLangModalOpen(false);
         }}
-      >
-        <ModalCard
-          onClick={(e) => {
-            return e.stopPropagation();
-          }}
-        >
-          <ModalTitle>{t('toolbar.languageLabel')}</ModalTitle>
-          <LangOption
-            $active={currentLang === 'en'}
-            onClick={() => {
-              return handleLanguageSelect('en');
-            }}
-          >
-            🇬🇧 English
-          </LangOption>
-          <LangOption
-            $active={currentLang === 'fi'}
-            onClick={() => {
-              return handleLanguageSelect('fi');
-            }}
-          >
-            🇫🇮 Suomi
-          </LangOption>
-        </ModalCard>
-      </ModalBackdrop>
+        onAfterSelect={() => {
+          return setSettingsOpen(false);
+        }}
+      />
 
       <input
         ref={fileInput}

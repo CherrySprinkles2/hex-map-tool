@@ -3,6 +3,10 @@ import { useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import { useTranslation, Trans } from 'react-i18next';
 import type { TFunction } from 'i18next';
+import { Backdrop, SheetItem, SheetIcon } from '../shared/sheet';
+import { LanguageToggle } from '../shared/LanguageToggle';
+import { LanguageModal } from '../shared/LanguageModal';
+import { SettingsButton } from '../shared/SettingsButton';
 import { getAllMaps, createMap, deleteMap, loadMapData } from '../../utils/mapsStorage';
 import { loadMap } from '../../features/currentMap/currentMapSlice';
 import { importTiles } from '../../features/tiles/tilesSlice';
@@ -28,6 +32,91 @@ const Shell = styled.div`
 
 const Header = styled.div`
   padding: 32px 40px 0;
+
+  @media (max-width: 600px) {
+    padding: 16px 20px 0;
+  }
+`;
+
+const HeaderTop = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 4px;
+`;
+
+const HeaderLeft = styled.div`
+  min-width: 0;
+`;
+
+const MobileBar = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: ${({ theme }) => {
+    return theme.panelBackground;
+  }};
+  border-bottom: 2px solid
+    ${({ theme }) => {
+      return theme.panelBorder;
+    }};
+  flex-shrink: 0;
+  z-index: ${({ theme }) => {
+    return theme.zIndex.toolbar;
+  }};
+
+  @media (min-width: 601px) {
+    display: none;
+  }
+`;
+
+const MobileBarTitle = styled.span`
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
+`;
+
+const Sheet = styled.div<{ $open: boolean }>`
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: ${({ $open }) => {
+    return $open ? '0' : '-100%';
+  }};
+  z-index: ${({ theme }) => {
+    return theme.zIndex.sheet;
+  }};
+  background: ${({ theme }) => {
+    return theme.panelBackground;
+  }};
+  border-top: 2px solid
+    ${({ theme }) => {
+      return theme.panelBorder;
+    }};
+  border-radius: 16px 16px 0 0;
+  padding: 8px 0 env(safe-area-inset-bottom, 0);
+  transition: bottom 0.25s ease;
+  max-width: 480px;
+  margin: 0 auto;
+
+  @media (min-width: 601px) {
+    display: none;
+  }
+`;
+
+const SheetHandle = styled.div`
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: ${({ theme }) => {
+    return theme.panelBorder;
+  }};
+  margin: 8px auto 12px;
 `;
 
 const Title = styled.h1`
@@ -38,6 +127,10 @@ const Title = styled.h1`
   }};
   letter-spacing: 0.06em;
   margin: 0 0 4px;
+
+  @media (max-width: 600px) {
+    display: none;
+  }
 `;
 
 const Subtitle = styled.p`
@@ -233,6 +326,8 @@ const HomeScreen = (): React.ReactElement => {
   const { t } = useTranslation();
   const [maps, setMaps] = useState<MapEntry[]>([]);
   const [tilesCache, setTilesCache] = useState<Record<string, TilesState>>({});
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [langModalOpen, setLangModalOpen] = useState(false);
 
   const refreshMaps = useCallback(() => {
     const all = getAllMaps();
@@ -282,9 +377,34 @@ const HomeScreen = (): React.ReactElement => {
 
   return (
     <Shell>
+      {/* Mobile-only top bar */}
+      <MobileBar>
+        <MobileBarTitle>{t('home.title')}</MobileBarTitle>
+        <SettingsButton
+          $active={settingsOpen}
+          onClick={() => {
+            return setSettingsOpen((o) => {
+              return !o;
+            });
+          }}
+          aria-label="Settings"
+        >
+          ⚙
+        </SettingsButton>
+      </MobileBar>
+
       <Header>
-        <Title>{t('home.title')}</Title>
-        <Subtitle>{t('home.subtitle')}</Subtitle>
+        <HeaderTop>
+          <HeaderLeft>
+            <Title>{t('home.title')}</Title>
+            <Subtitle>{t('home.subtitle')}</Subtitle>
+          </HeaderLeft>
+          <LanguageToggle
+            onAfterSelect={() => {
+              return setSettingsOpen(false);
+            }}
+          />
+        </HeaderTop>
         <Description>{t('home.description')}</Description>
         <Notice>
           <span>⚠️</span>
@@ -347,6 +467,36 @@ const HomeScreen = (): React.ReactElement => {
           );
         })}
       </Grid>
+
+      {/* Mobile settings sheet */}
+      <Backdrop
+        $open={settingsOpen}
+        onClick={() => {
+          return setSettingsOpen(false);
+        }}
+      />
+      <Sheet $open={settingsOpen}>
+        <SheetHandle />
+        <SheetItem
+          onClick={() => {
+            setSettingsOpen(false);
+            setLangModalOpen(true);
+          }}
+        >
+          <SheetIcon>🌐</SheetIcon>
+          {t('toolbar.languageLabel')}
+        </SheetItem>
+      </Sheet>
+
+      <LanguageModal
+        open={langModalOpen}
+        onClose={() => {
+          return setLangModalOpen(false);
+        }}
+        onAfterSelect={() => {
+          return setSettingsOpen(false);
+        }}
+      />
     </Shell>
   );
 };

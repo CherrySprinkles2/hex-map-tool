@@ -5,99 +5,10 @@ import { addFaction, deleteFaction, updateFaction } from '../../features/faction
 import { closeFactionsPanel } from '../../features/ui/uiSlice';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import type { Faction } from '../../types/domain';
-
-const Panel = styled.div<{ $open: boolean }>`
-  position: fixed;
-  top: 0;
-  right: ${({ $open }) => {
-    return $open ? '0' : '-320px';
-  }};
-  width: 300px;
-  height: 100vh;
-  background: ${({ theme }) => {
-    return theme.panelBackground;
-  }};
-  border-left: 2px solid
-    ${({ theme }) => {
-      return theme.panelBorder;
-    }};
-  padding: 24px 16px;
-  transition: right 0.25s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  z-index: ${({ theme }) => {
-    return theme.zIndex.panel;
-  }};
-  overflow-y: auto;
-
-  @media (max-width: 600px) {
-    top: auto;
-    right: 0;
-    bottom: ${({ $open }) => {
-      return $open ? '0' : '-70vh';
-    }};
-    width: 100%;
-    height: 70vh;
-    border-left: none;
-    border-top: 2px solid
-      ${({ theme }) => {
-        return theme.panelBorder;
-      }};
-    border-radius: 16px 16px 0 0;
-    padding: 16px 16px 32px;
-    transition: bottom 0.25s ease;
-  }
-`;
-
-const DragHandle = styled.div`
-  display: none;
-  width: 40px;
-  height: 4px;
-  border-radius: 2px;
-  background: ${({ theme }) => {
-    return theme.panelBorder;
-  }};
-  margin: 0 auto 12px;
-
-  @media (max-width: 600px) {
-    display: block;
-  }
-`;
-
-const Header = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-`;
-
-const Title = styled.h2`
-  font-size: 1rem;
-  font-weight: 600;
-  color: ${({ theme }) => {
-    return theme.text;
-  }};
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin: 0;
-`;
-
-const CloseBtn = styled.button`
-  background: none;
-  border: none;
-  color: ${({ theme }) => {
-    return theme.textMuted;
-  }};
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 2px 6px;
-  &:hover {
-    color: ${({ theme }) => {
-      return theme.text;
-    }};
-  }
-`;
+import { SidePanel } from '../shared/SidePanel';
+import { DragHandle } from '../shared/DragHandle';
+import { PanelHeader } from '../shared/PanelHeader';
+import { SectionLabel } from '../shared/SectionLabel';
 
 const FactionList = styled.div`
   display: flex;
@@ -165,16 +76,6 @@ const DeleteBtn = styled.button`
       return theme.accent;
     }};
   }
-`;
-
-const SectionLabel = styled.div`
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: ${({ theme }) => {
-    return theme.textMuted;
-  }};
-  margin-bottom: 4px;
 `;
 
 const SwatchRow = styled.div`
@@ -372,18 +273,15 @@ const FactionsPanel = (): React.ReactElement => {
   };
 
   return (
-    <Panel $open={isOpen}>
-      <DragHandle />
-      <Header>
-        <Title>{t('factionsPanel.title')}</Title>
-        <CloseBtn
-          onClick={() => {
-            return dispatch(closeFactionsPanel());
-          }}
-        >
-          ✕
-        </CloseBtn>
-      </Header>
+    <SidePanel $open={isOpen} $desktopSlide $width="300px" $mobileHeight="70vh" $gap="0">
+      <DragHandle $margin="0 auto 12px" />
+      <PanelHeader
+        title={t('factionsPanel.title')}
+        onClose={() => {
+          return dispatch(closeFactionsPanel());
+        }}
+        $marginBottom="20px"
+      />
 
       <FactionList>
         {factions.length === 0 && <Empty>{t('factionsPanel.noFactions')}</Empty>}
@@ -393,7 +291,7 @@ const FactionsPanel = (): React.ReactElement => {
       </FactionList>
 
       <AddBtn onClick={handleAdd}>{t('factionsPanel.addFaction')}</AddBtn>
-    </Panel>
+    </SidePanel>
   );
 };
 

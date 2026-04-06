@@ -24,6 +24,10 @@ import { NEIGHBOR_DIRS, toKey, DEEP_WATER } from '../../utils/hexUtils';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import type { RootState } from '../../app/store';
 import type { TileFlag, TerrainType } from '../../types/domain';
+import { SidePanel } from '../shared/SidePanel';
+import { DragHandle } from '../shared/DragHandle';
+import { SectionLabel } from '../shared/SectionLabel';
+import { StyledTextarea } from '../shared/StyledTextarea';
 
 const selectTileArmies = createSelector(
   [
@@ -42,57 +46,6 @@ const selectTileArmies = createSelector(
   }
 );
 
-const Panel = styled.div<{ $open: boolean; $desktopTerrain: boolean }>`
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 280px;
-  height: 100vh;
-  background: ${({ theme }) => {
-    return theme.panelBackground;
-  }};
-  border-left: 2px solid
-    ${({ theme }) => {
-      return theme.panelBorder;
-    }};
-  padding: 24px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  z-index: ${({ theme }) => {
-    return theme.zIndex.panel;
-  }};
-  overflow-y: auto;
-
-  @media (min-width: 601px) {
-    opacity: ${({ $desktopTerrain }) => {
-      return $desktopTerrain ? '1' : '0';
-    }};
-    pointer-events: ${({ $desktopTerrain }) => {
-      return $desktopTerrain ? 'auto' : 'none';
-    }};
-    transition: opacity 0.25s ease;
-  }
-
-  @media (max-width: 600px) {
-    top: auto;
-    right: 0;
-    bottom: ${({ $open }) => {
-      return $open ? '0' : '-60vh';
-    }};
-    width: 100%;
-    height: 60vh;
-    border-left: none;
-    border-top: 2px solid
-      ${({ theme }) => {
-        return theme.panelBorder;
-      }};
-    border-radius: 16px 16px 0 0;
-    padding: 16px 16px 32px;
-    transition: bottom 0.25s ease;
-  }
-`;
-
 const PanelTitle = styled.h2`
   margin: 0;
   font-size: 1rem;
@@ -102,21 +55,6 @@ const PanelTitle = styled.h2`
   }};
   text-transform: uppercase;
   letter-spacing: 0.08em;
-`;
-
-const DragHandle = styled.div`
-  display: none;
-  width: 40px;
-  height: 4px;
-  border-radius: 2px;
-  background: ${({ theme }) => {
-    return theme.panelBorder;
-  }};
-  margin: 0 auto -8px;
-
-  @media (max-width: 600px) {
-    display: block;
-  }
 `;
 
 const CloseBtn = styled.button`
@@ -139,16 +77,6 @@ const CloseBtn = styled.button`
   @media (min-width: 601px) {
     display: none;
   }
-`;
-
-const SectionLabel = styled.div`
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: ${({ theme }) => {
-    return theme.textMuted;
-  }};
-  margin-bottom: 4px;
 `;
 
 const EmptyState = styled.div`
@@ -397,35 +325,6 @@ const TownNameInput = styled.input`
     border-color: ${({ theme }) => {
       return theme.town.color;
     }};
-  }
-
-  &::placeholder {
-    color: ${({ theme }) => {
-      return theme.textMuted;
-    }};
-  }
-`;
-
-const NotesTextarea = styled.textarea`
-  width: 100%;
-  min-height: 160px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: ${({ theme }) => {
-    return theme.text;
-  }};
-  font-size: 0.875rem;
-  line-height: 1.5;
-  box-sizing: border-box;
-  outline: none;
-  resize: vertical;
-  font-family: inherit;
-  transition: border-color 0.15s;
-
-  &:focus {
-    border-color: rgba(255, 255, 255, 0.35);
   }
 
   &::placeholder {
@@ -693,13 +592,14 @@ const TileEditPanel = (): React.ReactElement => {
   };
 
   return (
-    <Panel
+    <SidePanel
       $open={(!!selectedKey || mapMode === 'terrain-paint') && !showShortcuts && !selectedArmyId}
-      $desktopTerrain={
+      $desktopVisible={
         (mapMode === 'terrain' || mapMode === 'terrain-paint') && !showShortcuts && !selectedArmyId
       }
+      $gap="20px"
     >
-      <DragHandle />
+      <DragHandle $margin="0 auto -8px" />
 
       {mapMode === 'terrain-paint' ? (
         <>
@@ -952,7 +852,8 @@ const TileEditPanel = (): React.ReactElement => {
 
               <div>
                 <SectionLabel>{t('tilePanel.notes')}</SectionLabel>
-                <NotesTextarea
+                <StyledTextarea
+                  $minHeight="160px"
                   value={tile?.notes ?? ''}
                   onChange={handleNotesChange}
                   placeholder={t('tilePanel.notesPlaceholder')}
@@ -994,7 +895,7 @@ const TileEditPanel = (): React.ReactElement => {
           )}
         </>
       )}
-    </Panel>
+    </SidePanel>
   );
 };
 

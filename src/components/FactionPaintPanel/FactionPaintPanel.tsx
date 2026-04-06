@@ -3,108 +3,11 @@ import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { setActiveFaction, setMapMode } from '../../features/ui/uiSlice';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { SidePanel } from '../shared/SidePanel';
+import { DragHandle } from '../shared/DragHandle';
+import { PanelHeader } from '../shared/PanelHeader';
 
 const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
-
-const Panel = styled.div<{ $open: boolean; $suppressed: boolean }>`
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 280px;
-  height: 100vh;
-  background: ${({ theme }) => {
-    return theme.panelBackground;
-  }};
-  border-left: 2px solid
-    ${({ theme }) => {
-      return theme.panelBorder;
-    }};
-  padding: 24px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: ${({ theme }) => {
-    return theme.zIndex.panel;
-  }};
-  overflow-y: auto;
-
-  @media (min-width: 601px) {
-    opacity: ${({ $open, $suppressed }) => {
-      return $open && !$suppressed ? '1' : '0';
-    }};
-    pointer-events: ${({ $open, $suppressed }) => {
-      return $open && !$suppressed ? 'auto' : 'none';
-    }};
-    transition: opacity 0.25s ease;
-  }
-
-  @media (max-width: 600px) {
-    top: auto;
-    right: 0;
-    bottom: ${({ $open, $suppressed }) => {
-      return $open && !$suppressed ? '0' : '-60vh';
-    }};
-    width: 100%;
-    height: 60vh;
-    border-left: none;
-    border-top: 2px solid
-      ${({ theme }) => {
-        return theme.panelBorder;
-      }};
-    border-radius: 16px 16px 0 0;
-    padding: 16px 16px 32px;
-    transition: bottom 0.25s ease;
-  }
-`;
-
-const DragHandle = styled.div`
-  display: none;
-  width: 40px;
-  height: 4px;
-  border-radius: 2px;
-  background: ${({ theme }) => {
-    return theme.panelBorder;
-  }};
-  margin: 0 auto 8px;
-
-  @media (max-width: 600px) {
-    display: block;
-  }
-`;
-
-const Title = styled.h2`
-  font-size: 1rem;
-  font-weight: 600;
-  color: ${({ theme }) => {
-    return theme.text;
-  }};
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin: 0 0 4px;
-`;
-
-const Header = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
-`;
-
-const CloseBtn = styled.button`
-  background: none;
-  border: none;
-  color: ${({ theme }) => {
-    return theme.textMuted;
-  }};
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 2px 6px;
-  &:hover {
-    color: ${({ theme }) => {
-      return theme.text;
-    }};
-  }
-`;
 
 const Hint = styled.p`
   font-size: 0.75rem;
@@ -204,18 +107,15 @@ const FactionPaintPanel = ({ suppressed }: FactionPaintPanelProps): React.ReactE
   const isOpen = mapMode === 'faction';
 
   return (
-    <Panel $open={isOpen} $suppressed={suppressed}>
+    <SidePanel $open={isOpen && !suppressed} $gap="8px">
       <DragHandle />
-      <Header>
-        <Title>{t('factionPaintPanel.title')}</Title>
-        <CloseBtn
-          onClick={() => {
-            return dispatch(setMapMode('terrain'));
-          }}
-        >
-          ✕
-        </CloseBtn>
-      </Header>
+      <PanelHeader
+        title={t('factionPaintPanel.title')}
+        onClose={() => {
+          return dispatch(setMapMode('terrain'));
+        }}
+        $marginBottom="4px"
+      />
       <Hint>{isTouchDevice ? t('factionPaintPanel.hintTouch') : t('factionPaintPanel.hint')}</Hint>
 
       <FactionBtn
@@ -259,7 +159,7 @@ const FactionPaintPanel = ({ suppressed }: FactionPaintPanelProps): React.ReactE
           </FactionBtn>
         );
       })}
-    </Panel>
+    </SidePanel>
   );
 };
 

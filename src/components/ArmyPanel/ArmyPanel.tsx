@@ -1,120 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { updateArmy, deleteArmy, setArmyFaction } from '../../features/armies/armiesSlice';
 import { deselectArmy, startMovingArmy, stopMovingArmy } from '../../features/ui/uiSlice';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-
-const Panel = styled.div<{ $open: boolean }>`
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 280px;
-  height: 100vh;
-  background: ${({ theme }) => {
-    return theme.panelBackground;
-  }};
-  border-left: 2px solid
-    ${({ theme }) => {
-      return theme.panelBorder;
-    }};
-  padding: 24px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  z-index: ${({ theme }) => {
-    return theme.zIndex.panel;
-  }};
-  overflow-y: auto;
-
-  @media (min-width: 601px) {
-    opacity: ${({ $open }) => {
-      return $open ? '1' : '0';
-    }};
-    pointer-events: ${({ $open }) => {
-      return $open ? 'auto' : 'none';
-    }};
-    transition: opacity 0.25s ease;
-  }
-
-  @media (max-width: 600px) {
-    top: auto;
-    left: 0;
-    right: 0;
-    bottom: ${({ $open }) => {
-      return $open ? '0' : '-60vh';
-    }};
-    width: 100%;
-    height: 60vh;
-    border-left: none;
-    border-top: 2px solid
-      ${({ theme }) => {
-        return theme.panelBorder;
-      }};
-    border-radius: 16px 16px 0 0;
-    padding: 16px 16px 32px;
-    transition: bottom 0.25s ease;
-  }
-`;
-
-const DragHandle = styled.div`
-  display: none;
-  width: 40px;
-  height: 4px;
-  border-radius: 2px;
-  background: ${({ theme }) => {
-    return theme.panelBorder;
-  }};
-  margin: 0 auto -8px;
-
-  @media (max-width: 600px) {
-    display: block;
-  }
-`;
-
-const PanelHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const PanelTitle = styled.h2`
-  font-size: 1rem;
-  font-weight: 600;
-  color: ${({ theme }) => {
-    return theme.text;
-  }};
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  flex: 1;
-`;
-
-const CloseBtn = styled.button`
-  background: none;
-  border: none;
-  color: ${({ theme }) => {
-    return theme.textMuted;
-  }};
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
-  &:hover {
-    color: ${({ theme }) => {
-      return theme.text;
-    }};
-  }
-`;
-
-const SectionLabel = styled.div`
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: ${({ theme }) => {
-    return theme.textMuted;
-  }};
-  margin-bottom: 4px;
-`;
+import { SidePanel } from '../shared/SidePanel';
+import { DragHandle } from '../shared/DragHandle';
+import { PanelHeader } from '../shared/PanelHeader';
+import { SectionLabel } from '../shared/SectionLabel';
+import { StyledTextarea } from '../shared/StyledTextarea';
+import styled from 'styled-components';
 
 const NameInput = styled.input`
   width: 100%;
@@ -132,35 +26,6 @@ const NameInput = styled.input`
 
   &:focus {
     border-color: rgba(255, 255, 255, 0.4);
-  }
-
-  &::placeholder {
-    color: ${({ theme }) => {
-      return theme.textMuted;
-    }};
-  }
-`;
-
-const CompositionTextarea = styled.textarea`
-  width: 100%;
-  min-height: 130px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: ${({ theme }) => {
-    return theme.text;
-  }};
-  font-size: 0.875rem;
-  line-height: 1.5;
-  box-sizing: border-box;
-  outline: none;
-  resize: vertical;
-  font-family: inherit;
-  transition: border-color 0.15s;
-
-  &:focus {
-    border-color: rgba(255, 255, 255, 0.35);
   }
 
   &::placeholder {
@@ -350,14 +215,9 @@ const ArmyPanel = (): React.ReactElement => {
   }, [isMoving, dispatch]);
 
   return (
-    <Panel $open={isOpen}>
-      <DragHandle />
-      <PanelHeader>
-        <PanelTitle>{t('armyPanel.title')}</PanelTitle>
-        <CloseBtn onClick={handleClose} title="Close (Esc)">
-          ×
-        </CloseBtn>
-      </PanelHeader>
+    <SidePanel $open={isOpen} $gap="20px">
+      <DragHandle $margin="0 auto -8px" />
+      <PanelHeader title={t('armyPanel.title')} onClose={handleClose} />
 
       {army && (
         <>
@@ -377,7 +237,7 @@ const ArmyPanel = (): React.ReactElement => {
 
           <div>
             <SectionLabel>{t('armyPanel.composition')}</SectionLabel>
-            <CompositionTextarea
+            <StyledTextarea
               value={localComposition}
               onChange={(e) => {
                 return setLocalComposition(e.target.value);
@@ -412,7 +272,7 @@ const ArmyPanel = (): React.ReactElement => {
           <DeleteBtn onClick={handleDelete}>{t('armyPanel.deleteArmy')}</DeleteBtn>
         </>
       )}
-    </Panel>
+    </SidePanel>
   );
 };
 
