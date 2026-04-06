@@ -4,7 +4,8 @@ import {
   renderFlagPaths,
   renderCausewayPaths,
   renderWaterEdges,
-  renderTowns,
+  renderTownIcons,
+  renderTownLabels,
   renderPorts,
 } from '../../utils/overlayHelpers';
 import type { Army } from '../../types/domain';
@@ -32,8 +33,11 @@ const WaterOverlay = React.memo(
     const causewayPaths = useMemo(() => {
       return renderCausewayPaths(tiles, theme.causeway);
     }, [tiles]);
-    const towns = useMemo(() => {
-      return renderTowns(tiles, armiesByTile ?? {});
+    const townIcons = useMemo(() => {
+      return renderTownIcons(tiles, armiesByTile ?? {});
+    }, [tiles, armiesByTile]);
+    const townLabels = useMemo(() => {
+      return renderTownLabels(tiles, armiesByTile ?? {});
     }, [tiles, armiesByTile]);
     const ports = useMemo(() => {
       return renderPorts(tiles);
@@ -46,8 +50,9 @@ const WaterOverlay = React.memo(
         {riverPaths}
         {roadPaths}
         {causewayPaths}
-        {towns}
+        {townIcons}
         {ports}
+        {townLabels}
       </g>
     );
   }

@@ -52,15 +52,20 @@ export interface AppTheme {
   town: {
     color: string;
     labelColor: string;
-    door: string;
-    window: string;
     labelShadow: string;
+    wallColor: string;
+    wallWidth: number;
+    palisadeColor: string;
+    groundColor: string;
+    buildingColor: string;
+    brickColor: string;
+    palisadeMarkColor: string;
+    brickCount: number;
   };
 
   garrison: {
-    ringColor: string;
-    ringDash: string;
-    ringWidth: number;
+    borderColor: string;
+    borderWidth: number;
     nameColor: string;
     nameShadow: string;
   };

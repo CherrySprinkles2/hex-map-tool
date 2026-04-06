@@ -54,16 +54,21 @@ export const theme: AppTheme = {
   town: {
     color: '#f5a623',
     labelColor: '#f5a623',
-    door: 'rgba(0,0,0,0.45)',
-    window: 'rgba(0,0,0,0.35)',
     labelShadow: 'rgba(0,0,0,0.7)',
+    wallColor: '#8a8a8a',
+    wallWidth: 5,
+    palisadeColor: '#8B5E3C',
+    groundColor: '#7ec850',
+    buildingColor: '#012731',
+    brickColor: '#555555',
+    palisadeMarkColor: '#5a3a1a',
+    brickCount: 16,
   },
 
   // ── Garrison (town with armies) ───────────────────────────────────────────────
   garrison: {
-    ringColor: '#d4a017',
-    ringDash: '5 3',
-    ringWidth: 1.8,
+    borderColor: '#921b1b',
+    borderWidth: 2.5,
     nameColor: '#d4a017',
     nameShadow: 'rgba(0,0,0,0.75)',
   },

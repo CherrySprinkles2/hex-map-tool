@@ -207,7 +207,83 @@ export const renderWaterEdges = (tiles: TilesState, terrainType: string): React.
   });
 };
 
-export const renderTowns = (
+// Layout constants for town icon rendering — shared between icon and label passes.
+const TOWN_WALL_R = 33;
+
+const townLayout = (garrisoned: boolean) => {
+  const wallW = theme.town.wallWidth;
+  const garrisonBorderR = TOWN_WALL_R + wallW / 2 - 6; // flush outside the wall outer edge
+  const outerR = garrisoned
+    ? garrisonBorderR + theme.garrison.borderWidth / 2
+    : TOWN_WALL_R + wallW / 2;
+  return { wallW, garrisonBorderR, outerR };
+};
+
+export const renderTownIcons = (
+  tiles: TilesState,
+  armiesByTile: Record<string, Army[]> = {}
+): React.ReactElement[] => {
+  return Object.values(tiles).flatMap((tile) => {
+    if (!tile.hasTown) return [];
+    const { q, r, terrain } = tile;
+    if (DEEP_WATER.has(terrain)) return [];
+    const { x: cx, y: cy } = axialToPixel(q, r);
+    const key = toKey(q, r);
+    const armies = armiesByTile[key] ?? [];
+    const garrisoned = armies.length > 0;
+
+    const { wallW, garrisonBorderR } = townLayout(garrisoned);
+    const wallColor = garrisoned ? theme.town.wallColor : theme.town.palisadeColor;
+    const markColor = garrisoned ? theme.town.brickColor : theme.town.palisadeMarkColor;
+
+    const wallMarks = Array.from({ length: theme.town.brickCount }, (_, i) => {
+      const angle = (i / theme.town.brickCount) * 2 * Math.PI;
+      const inner = TOWN_WALL_R - 1.5;
+      const outer = TOWN_WALL_R + 1.5;
+      return (
+        <line
+          key={i}
+          x1={cx + inner * Math.cos(angle)}
+          y1={cy + inner * Math.sin(angle)}
+          x2={cx + outer * Math.cos(angle)}
+          y2={cy + outer * Math.sin(angle)}
+          stroke={markColor}
+          strokeWidth={1.5}
+        />
+      );
+    });
+
+    return [
+      <g key={`town-${key}`} style={{ pointerEvents: 'none' }}>
+        <circle cx={cx} cy={cy} r={TOWN_WALL_R} fill={theme.town.groundColor} />
+        {garrisoned && (
+          <circle
+            cx={cx}
+            cy={cy}
+            r={garrisonBorderR}
+            fill="none"
+            stroke={theme.garrison.borderColor}
+            strokeWidth={theme.garrison.borderWidth}
+          />
+        )}
+        <circle
+          cx={cx}
+          cy={cy}
+          r={TOWN_WALL_R}
+          fill="none"
+          stroke={wallColor}
+          strokeWidth={wallW}
+        />
+        {wallMarks}
+        <rect x={cx - 14} y={cy - 14} width={10} height={8} fill={theme.town.buildingColor} />
+        <rect x={cx + 4} y={cy - 12} width={9} height={8} fill={theme.town.buildingColor} />
+        <rect x={cx - 6} y={cy + 5} width={12} height={8} fill={theme.town.buildingColor} />
+      </g>,
+    ];
+  });
+};
+
+export const renderTownLabels = (
   tiles: TilesState,
   armiesByTile: Record<string, Army[]> = {}
 ): React.ReactElement[] => {
@@ -219,114 +295,57 @@ export const renderTowns = (
     const key = toKey(q, r);
     const armies = armiesByTile[key] ?? [];
     const garrisoned = armies.length > 0;
+    const { outerR } = townLayout(garrisoned);
 
-    const bx = cx - 9,
-      by = cy - 3;
-    const bw = 18,
-      bh = 13;
+    const labels: React.ReactElement[] = [];
 
-    return [
-      <g key={`town-${key}`} style={{ pointerEvents: 'none' }}>
-        {garrisoned ? (
-          <>
-            <circle
-              cx={cx}
-              cy={cy - 3}
-              r={21}
-              fill="none"
-              stroke={theme.garrison.ringColor}
-              strokeWidth={theme.garrison.ringWidth}
-              strokeDasharray={theme.garrison.ringDash}
-              opacity={0.85}
-            />
-            <rect x={bx} y={by} width={bw} height={bh} fill={theme.town.color} opacity={0.92} />
-            <rect
-              x={cx - 11}
-              y={cy - 8}
-              width={22}
-              height={5}
-              fill={theme.town.color}
-              opacity={0.92}
-            />
-            <rect
-              x={cx - 10}
-              y={cy - 14}
-              width={5}
-              height={6}
-              fill={theme.town.color}
-              opacity={0.92}
-            />
-            <rect
-              x={cx - 3}
-              y={cy - 14}
-              width={5}
-              height={6}
-              fill={theme.town.color}
-              opacity={0.92}
-            />
-            <rect
-              x={cx + 4}
-              y={cy - 14}
-              width={5}
-              height={6}
-              fill={theme.town.color}
-              opacity={0.92}
-            />
-            <rect x={cx - 3} y={by + bh - 7} width={6} height={7} fill={theme.town.door} />
-            <rect x={cx + 3} y={by + 2} width={4} height={4} fill={theme.town.window} />
-            <rect x={cx - 7} y={by + 2} width={4} height={4} fill={theme.town.window} />
-            {armies.length === 1 && armies[0].name && (
-              <text
-                x={cx}
-                y={cy - 24}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="9"
-                fontWeight="bold"
-                fontFamily="sans-serif"
-                stroke={theme.garrison.nameShadow}
-                strokeWidth={3}
-                strokeLinejoin="round"
-                paintOrder="stroke"
-                fill={theme.garrison.nameColor}
-              >
-                {armies[0].name}
-              </text>
-            )}
-          </>
-        ) : (
-          <>
-            <polygon
-              points={`${cx},${cy - 16} ${cx - 12},${cy - 3} ${cx + 12},${cy - 3}`}
-              fill={theme.town.color}
-              opacity={0.92}
-            />
-            <rect x={bx} y={by} width={bw} height={bh} fill={theme.town.color} opacity={0.92} />
-            <rect x={cx - 3} y={by + bh - 7} width={6} height={7} fill={theme.town.door} />
-            <rect x={cx + 3} y={by + 2} width={4} height={4} fill={theme.town.window} />
-            <rect x={cx - 7} y={by + 2} width={4} height={4} fill={theme.town.window} />
-          </>
-        )}
-        {townName && (
-          <text
-            x={cx}
-            y={cy + 16}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fontSize="10"
-            fontWeight="bold"
-            fontFamily="sans-serif"
-            stroke={theme.town.labelShadow}
-            strokeWidth={3}
-            strokeLinejoin="round"
-            paintOrder="stroke"
-            fill={theme.town.labelColor}
-          >
-            {townName}
-          </text>
-        )}
-      </g>,
-    ];
+    if (garrisoned && armies.length === 1 && armies[0].name) {
+      labels.push(
+        <text
+          key={`army-label-${key}`}
+          x={cx}
+          y={cy - outerR - 8}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="9"
+          fontWeight="bold"
+          fontFamily="sans-serif"
+          stroke={theme.garrison.nameShadow}
+          strokeWidth={3}
+          strokeLinejoin="round"
+          paintOrder="stroke"
+          fill={theme.garrison.nameColor}
+          style={{ pointerEvents: 'none' }}
+        >
+          {armies[0].name}
+        </text>
+      );
+    }
+
+    if (townName) {
+      labels.push(
+        <text
+          key={`town-label-${key}`}
+          x={cx}
+          y={cy + outerR + 9}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="10"
+          fontWeight="bold"
+          fontFamily="sans-serif"
+          stroke={theme.town.labelShadow}
+          strokeWidth={3}
+          strokeLinejoin="round"
+          paintOrder="stroke"
+          fill={theme.town.labelColor}
+          style={{ pointerEvents: 'none' }}
+        >
+          {townName}
+        </text>
+      );
+    }
+
+    return labels;
   });
 };
 
