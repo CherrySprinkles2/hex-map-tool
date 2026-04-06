@@ -107,12 +107,14 @@ To keep a permanent backup or share a map with someone else, use the **Export JS
 
 ```bash
 npm install
-npm start        # dev server at http://localhost:3000
-npm run build    # production build
-npm run deploy   # deploy to GitHub Pages
+npm start              # dev server at http://localhost:3000
+npm run build          # production build
+npm run deploy         # deploy to GitHub Pages
+npm run test:e2e       # run Playwright integration tests (headless)
+npm run test:e2e:ui    # run Playwright tests in interactive UI mode
 ```
 
-There is no test suite. Validate changes with `npm run build`.
+Validate source changes with `npm run build`. Playwright runs against a live dev server (auto-started); see `docs/playwright-testing-plan.md` for the full test architecture.
 
 ---
 
@@ -123,6 +125,7 @@ There is no test suite. Validate changes with `npm run build`.
 - **styled-components v6** — theming and component styles
 - **SVG** — all map rendering (patterns, overlays, tokens)
 - **react-i18next + i18next** — internationalisation (EN + FI); `i18next-browser-languagedetector` auto-detects from browser and caches to localStorage
+- **Playwright** — end-to-end integration tests (`e2e/`)
 - **Prettier** — `singleQuote`, `trailingComma: es5`, `printWidth: 100`; enforced via a husky pre-commit hook
 - **ESLint** — extends `react-app`; adds `arrow-body-style: ["error", "always"]`
 
@@ -131,45 +134,66 @@ There is no test suite. Validate changes with `npm run build`.
 ## Project structure
 
 ```
+e2e/
+  fixtures/app.fixture.ts        Playwright custom fixture (clears localStorage, navigates to app)
+  helpers/storage.ts             localStorage helpers for tests
+  pages/                         Page Object Models for each UI area
+  tests/                         Playwright spec files (one per feature area)
+playwright.config.ts             Playwright config: baseURL, webServer, chromium + mobile projects
+
 src/
-  app/                    Redux store
+  app/                    Redux store + typed hooks (useAppDispatch, useAppSelector, useAppStore)
   components/
-    ArmyPanel/            Left-side panel for editing a selected army (name, composition, faction)
+    ArmyPanel/            Panel for editing a selected army (name, composition, faction, move/delete)
     FactionPaintPanel/    Right-side panel for painting faction territories
     FactionsPanel/        Faction management (create, edit, delete factions)
     HexGrid/              SVG canvas — hex math, tiles, ghost tiles, water overlay,
                           terrain patterns, water caps, army tokens
-    HomeScreen/           Home screen (map cards, example maps)
+    HomeScreen/           Home screen (map cards, example maps, import)
     KeyboardShortcutsPanel/ Slide-in reference panel listing all keyboard shortcuts
-    MapModeToggle/        Terrain / Faction mode switcher
+    MapModeToggle/        Fixed toggle button (bottom-right) to switch Terrain / Faction mode
     TileEditPanel/        Right-side panel for editing the selected tile
     Toolbar/              Map name (inline-editable), back, export/import, ⌨ shortcuts button,
                           EN/FI language toggle (desktop), language modal (mobile)
+    shared/               UI primitives: SidePanel, DragHandle, PanelHeader, SectionLabel,
+                          StyledTextarea, CloseButton, SettingsButton, sheet.ts, modal.ts,
+                          LanguageToggle, LanguageModal
   data/
-    example-map.json      Small bundled example (Finnish-themed, 208 tiles, 2 factions, 5 armies)
-    large-map.json        3 000-tile performance test map (4 factions, 10 armies)
+    example-map.json      Small bundled example map
+    large-map.json        3 000-tile performance test map
     exampleMaps.ts        Loads, normalises, and exports both example maps
   features/
     armies/               armiesSlice — addArmy, deleteArmy, moveArmy, updateArmy, setArmyFaction, importArmies
     currentMap/           currentMapSlice — id + name of the open map
     factions/             factionsSlice — addFaction, updateFaction, deleteFaction, importFactions
-    tiles/                tilesSlice — addTile, updateTile, toggleTileFlag, blockConnection, importTiles, …
+    tiles/                tilesSlice — addTile, updateTile, toggleTileFlag, setTileFeature, blockConnection,
+                          unblockConnection, setTileFaction, setTownName, setTileNotes, deleteTile, importTiles
     viewport/             viewportSlice — setViewport, resetViewport (scale range 0.2–4)
     ui/                   uiSlice — selectedTile, selectedArmyId, movingArmyId, screen, mapMode,
-                          factionsOpen, activeFactionId, showShortcuts, activePaintBrush
-    history/              historyActions — restoreSnapshot (used by undo/redo)
+                          factionsOpen, activeFactionId, showShortcuts, activePaintBrush,
+                          enterTerrainPaint, exitTerrainPaint, startMovingArmy, stopMovingArmy, …
+    history/              historyActions — restoreSnapshot (used by undo/redo across all data slices)
   hooks/
-    useKeyboardShortcuts  Ctrl+Z/Y undo/redo, Escape deselect, Delete tile, R reset viewport
+    useKeyboardShortcuts  Ctrl+Z/Y undo/redo, Escape deselect/cancel, Delete tile, R reset viewport
+    useLanguage           Returns { language, changeLanguage } wrapping i18n
     useLocalStorageSync   Auto-saves tiles, armies, factions on every change; lazy for examples
   i18n/
     index.ts              i18next init — LanguageDetector, EN + FI resources, localStorage cache
-    locales/en.json       English translation strings
+    locales/en.json       English translation strings (100+ keys)
     locales/fi.json       Finnish translation strings
-  styles/                 theme.ts, GlobalStyles.ts
+  styles/                 theme.ts (all visual properties), GlobalStyles.ts (resets + body)
+  types/
+    domain.ts             TerrainType, TileFlag, Tile, Army, Faction, MapEntry, MapData, MapEnvelope, ExampleMap
+    history.ts            HistorySnapshot
+    state.ts              TilesState, ArmiesState, FactionsState, MapMode, Screen, UiState, …
+    theme.ts              AppTheme interface
   utils/
+    generateId.ts         Creates unique IDs with a given prefix (e.g. army_12345)
     hexUtils.ts           Axial coordinate math, toKey/fromKey, NEIGHBOR_DIRS, DEEP_WATER
     historyManager.ts     Snapshot-based undo/redo (past/future stacks)
     mapsStorage.ts        localStorage CRUD for maps, tiles, armies, factions + legacy migration
+    overlayHelpers.tsx    SVG rendering helpers for water edges, town icons, ports, river pools
+    routeLookup.ts        Maps road/river bitmasks to canonical SVG path data for bezier curves
 ```
 
 ---
@@ -184,14 +208,16 @@ src/
   factions:   [ { id, name, color, description } ],
   viewport:   { x, y, scale },
   ui: {
-    selectedTile:    "q,r" | null,
-    selectedArmyId:  string | null,
-    movingArmyId:    string | null,
-    screen:          'home' | 'editor',
-    mapMode:         'terrain' | 'faction',
-    factionsOpen:    boolean,
-    activeFactionId: string | null,
-    showShortcuts:   boolean,
+    selectedTile:     "q,r" | null,
+    selectedArmyId:   string | null,
+    placingArmy:      boolean,          // unused entry; army placement is via TileEditPanel
+    movingArmyId:     string | null,    // army currently in move-mode
+    screen:           'home' | 'editor',
+    mapMode:          'terrain' | 'faction' | 'terrain-paint',
+    factionsOpen:     boolean,
+    activeFactionId:  string | null,
+    activePaintBrush: string | null,    // terrain key, or 'river-on/off', 'road-on/off'
+    showShortcuts:    boolean,
   },
   currentMap: { id: string | null, name: string },
 }
@@ -246,6 +272,7 @@ All visual properties are centralised in `src/styles/theme.ts`. `GlobalStyles.ts
 | `theme.garrison`             | Ring colour, dash pattern, army name colour                       |
 | `theme.port`                 | Dock colour, plank/piling widths and lengths                      |
 | `theme.army`                 | Token fill, idle/selected/moving colours, label, ring size        |
+| `theme.causeway`             | Causeway terrain colour and notch styling                         |
 | `theme.zIndex`               | Layering: toolbar (50), panels (100), backdrop (149), sheet (150) |
 
 ---

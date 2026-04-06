@@ -159,6 +159,7 @@ const HexTile = React.memo(({ q, r }: HexTileProps): React.ReactElement => {
 
   return (
     <g
+      data-testid={`hex-tile-${q},${r}`}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
       onPointerDown={handlePointerDown}

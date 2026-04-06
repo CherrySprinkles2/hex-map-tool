@@ -193,6 +193,7 @@ const FactionItem = ({ faction }: FactionItemProps): React.ReactElement => {
     <FactionCard $color={faction.color}>
       <CardRow>
         <NameInput
+          data-testid={`faction-name-${faction.id}`}
           value={localName}
           onChange={(e) => {
             return setLocalName(e.target.value);
@@ -204,6 +205,7 @@ const FactionItem = ({ faction }: FactionItemProps): React.ReactElement => {
           maxLength={48}
         />
         <DeleteBtn
+          data-testid={`faction-delete-${faction.id}`}
           onClick={() => {
             return dispatch(deleteFaction(faction.id));
           }}
@@ -290,7 +292,9 @@ const FactionsPanel = (): React.ReactElement => {
         })}
       </FactionList>
 
-      <AddBtn onClick={handleAdd}>{t('factionsPanel.addFaction')}</AddBtn>
+      <AddBtn data-testid="add-faction-btn" onClick={handleAdd}>
+        {t('factionsPanel.addFaction')}
+      </AddBtn>
     </SidePanel>
   );
 };

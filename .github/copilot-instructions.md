@@ -11,11 +11,13 @@
 ## Commands
 
 ```bash
-npm start          # dev server (localhost:3000)
-npm run build      # production build — use this to verify changes compile correctly
+npm start              # dev server (localhost:3000)
+npm run build          # production build — use this to verify changes compile correctly
+npm run test:e2e       # run Playwright integration tests (headless)
+npm run test:e2e:ui    # run Playwright tests in interactive UI mode
 ```
 
-There is no test suite. Validate changes with `npm run build`.
+Validate source changes with `npm run build`. Integration tests live in `e2e/` and use Playwright; see `docs/playwright-testing-plan.md` for the full test architecture.
 
 ---
 
@@ -130,6 +132,7 @@ All spatial logic uses **pointy-top axial coordinates (q, r)** — see `src/util
 - `theme.town` — building fill, label colour, door/window shading
 - `theme.garrison` — ring colour, dash pattern, army name colour (garrisoned town visual)
 - `theme.port` — dock colour, plank/piling widths and lengths
+- `theme.causeway` — embankment colour, width, notch colour (water channels through causeways)
 - `theme.army` — token fill, idle/selected/moving colours, label, ring size, stack spacing
 
 ### Redux
@@ -262,3 +265,66 @@ Tiles render two polygons: a solid base colour and an SVG `<pattern>` texture ov
 
 - Home screen or unsaved example (`currentMap.id === null`): `"Hex Map Tool"`
 - Saved map open: `"<map name> — Hex Map Tool"`
+
+---
+
+## Utility Modules
+
+| File                           | Purpose                                                                                                                                                                                  |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/utils/hexUtils.ts`        | Axial coordinate math — `toKey`, `fromKey`, `axialToPixel`, `hexPointsString`, `getNeighbors`, `NEIGHBOR_DIRS`, `DEEP_WATER`. Always import hex math from here — do not inline formulas. |
+| `src/utils/mapsStorage.ts`     | localStorage CRUD: `getAllMaps`, `createMap`, `renameMap`, `deleteMap`, `loadMapData`, `saveMapData`, `touchMap`, `migrateFromLegacy`                                                    |
+| `src/utils/overlayHelpers.tsx` | Renders SVG water edges, town icons/labels, ports, river pools on top of tiles — used by `WaterOverlay`                                                                                  |
+| `src/utils/routeLookup.ts`     | Maps road/river connection bitmasks to canonical SVG path data and transforms — used by `WaterOverlay` for rendering bezier curves                                                       |
+| `src/utils/generateId.ts`      | Creates unique IDs with a given prefix (e.g. `army_12345`)                                                                                                                               |
+| `src/utils/historyManager.ts`  | In-memory undo/redo stack: `pushSnapshot`, `undo`, `redo`, `clearHistory`                                                                                                                |
+
+## Custom Hooks
+
+| Hook                   | Purpose                                                                                                                                                                                 |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `useKeyboardShortcuts` | Listens for Escape (deselect/cancel), Delete/Backspace (delete tile), `R` (reset viewport), Ctrl+Z (undo), Ctrl+Y/Ctrl+Shift+Z (redo)                                                   |
+| `useLocalStorageSync`  | Auto-saves `tiles`, `armies`, `factions` to localStorage on every store change; loads on mount; re-runs when `currentMap.id` changes; skips saves when `id === null` (unsaved examples) |
+| `useLanguage`          | Returns `{ language, changeLanguage }` wrapping `i18n.changeLanguage` — use this in components instead of calling `i18n` directly                                                       |
+
+---
+
+## Integration Testing (Playwright)
+
+Tests live in `e2e/` at the repo root, separate from `src/`. The full architecture and test coverage plan is documented in `docs/playwright-testing-plan.md`.
+
+```
+e2e/
+  fixtures/app.fixture.ts        # custom test() — clears localStorage, navigates to app, waits for HomeScreen
+  helpers/storage.ts             # clearStorage, readStorage, readStorageJson, getMapIndex
+  pages/
+    HomeScreen.page.ts           # Page Object: new map, open map, delete map, open example
+    Editor.page.ts               # Page Object: tile clicks, rename, export, goBack
+    TileEditPanel.page.ts        # Page Object: terrain, flags, paint mode, army, notes
+    ArmyPanel.page.ts            # Page Object: name, move, delete
+    FactionsPanel.page.ts        # Page Object: add, name, delete factions
+  tests/
+    home-screen.spec.ts
+    tile-placement.spec.ts       # also covers tile-editing tests
+    paint-mode.spec.ts
+    armies.spec.ts
+    factions.spec.ts
+    import-export.spec.ts
+    multi-map.spec.ts
+    language.spec.ts
+playwright.config.ts             # baseURL, webServer (npm start), chromium + mobile projects
+```
+
+### `data-testid` convention
+
+Playwright selectors use `data-testid` on key elements. All spec files import `test`/`expect` from the custom fixture, not directly from `@playwright/test`. When adding new interactive elements that tests may need to reach, add a `data-testid`.
+
+Currently instrumented elements include:
+
+- `hex-tile-{q},{r}` / `ghost-tile-{q},{r}` — SVG tile elements
+- `new-map-card`, `map-card-{id}`, `delete-map-{id}`, `example-card-{id}` — HomeScreen cards
+- `back-btn`, `map-name-input`, `factions-btn`, `export-json-btn`, `import-json-btn` — Toolbar
+- `terrain-btn-{type}`, `flag-toggle-{flag}`, `paint-terrain-btn`, `exit-paint-btn`, `paint-brush-{type}` — TileEditPanel
+- `add-army-btn`, `delete-tile-btn`, `notes-textarea`, `town-name-input` — TileEditPanel
+- `army-name-input`, `move-army-btn`, `delete-army-btn` — ArmyPanel
+- `add-faction-btn`, `faction-name-{id}`, `faction-delete-{id}` — FactionsPanel

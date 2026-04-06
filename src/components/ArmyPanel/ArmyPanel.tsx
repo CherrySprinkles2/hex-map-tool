@@ -224,6 +224,7 @@ const ArmyPanel = (): React.ReactElement => {
           <div>
             <SectionLabel>{t('armyPanel.name')}</SectionLabel>
             <NameInput
+              data-testid="army-name-input"
               value={localName}
               onChange={(e) => {
                 return setLocalName(e.target.value);
@@ -263,13 +264,15 @@ const ArmyPanel = (): React.ReactElement => {
             </div>
           )}
 
-          <MoveBtn $active={isMoving} onClick={handleMoveToggle}>
+          <MoveBtn data-testid="move-army-btn" $active={isMoving} onClick={handleMoveToggle}>
             {isMoving ? t('armyPanel.cancelMove') : t('armyPanel.moveArmy')}
           </MoveBtn>
 
           {isMoving && <Hint>{t('armyPanel.moveHint')}</Hint>}
 
-          <DeleteBtn onClick={handleDelete}>{t('armyPanel.deleteArmy')}</DeleteBtn>
+          <DeleteBtn data-testid="delete-army-btn" onClick={handleDelete}>
+            {t('armyPanel.deleteArmy')}
+          </DeleteBtn>
         </>
       )}
     </SidePanel>

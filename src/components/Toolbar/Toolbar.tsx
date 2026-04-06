@@ -380,8 +380,11 @@ const Toolbar = (): React.ReactElement => {
   return (
     <>
       <Bar $rightPanelOpen={rightPanelOpen}>
-        <BackBtn onClick={handleBack}>{t('toolbar.back')}</BackBtn>
+        <BackBtn onClick={handleBack} data-testid="back-btn">
+          {t('toolbar.back')}
+        </BackBtn>
         <MapNameInput
+          data-testid="map-name-input"
           value={displayName}
           onChange={(e) => {
             return setLocalName(e.target.value);
@@ -391,7 +394,11 @@ const Toolbar = (): React.ReactElement => {
           onKeyDown={handleNameKeyDown}
           maxLength={48}
         />
-        <DesktopFactionsBtn $active={factionsOpen} onClick={handleFactionsClick}>
+        <DesktopFactionsBtn
+          data-testid="factions-btn"
+          $active={factionsOpen}
+          onClick={handleFactionsClick}
+        >
           {t('toolbar.factions')}
         </DesktopFactionsBtn>
         <ShortcutsBtn
@@ -436,11 +443,12 @@ const Toolbar = (): React.ReactElement => {
           <SheetIcon>⌨</SheetIcon>
           {t('toolbar.keyboardShortcuts')}
         </SheetItem>
-        <SheetItem onClick={handleExport}>
+        <SheetItem data-testid="export-json-btn" onClick={handleExport}>
           <SheetIcon>⬇</SheetIcon>
           {t('toolbar.exportJSON')}
         </SheetItem>
         <SheetItem
+          data-testid="import-json-btn"
           onClick={() => {
             setSettingsOpen(false);
             fileInput.current?.click();

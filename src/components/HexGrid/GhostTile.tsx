@@ -146,6 +146,7 @@ const GhostTile = React.memo(({ q, r }: GhostTileProps): React.ReactElement => {
 
   return (
     <polygon
+      data-testid={`ghost-tile-${q},${r}`}
       points={points}
       fill={hovered ? 'rgba(255,255,255,0.15)' : theme.ghostFill}
       stroke={hovered ? 'rgba(255,255,255,0.6)' : theme.ghostStroke}

@@ -606,6 +606,7 @@ const TileEditPanel = (): React.ReactElement => {
           <PaintModeHeader>
             <PanelTitle>{t('tilePanel.paintMode')}</PanelTitle>
             <ExitPaintBtn
+              data-testid="exit-paint-btn"
               onClick={() => {
                 return dispatch(exitTerrainPaint());
               }}
@@ -621,6 +622,7 @@ const TileEditPanel = (): React.ReactElement => {
                 return (
                   <TerrainBtn
                     key={type}
+                    data-testid={`paint-brush-${type}`}
                     $active={activePaintBrush === type}
                     $color={color}
                     onClick={() => {
@@ -712,6 +714,7 @@ const TileEditPanel = (): React.ReactElement => {
                     return (
                       <TerrainBtn
                         key={type}
+                        data-testid={`terrain-btn-${type}`}
                         $active={tile?.terrain === type}
                         $color={color}
                         onClick={() => {
@@ -727,6 +730,7 @@ const TileEditPanel = (): React.ReactElement => {
                   })}
                 </TerrainGrid>
                 <PaintModeBtn
+                  data-testid="paint-terrain-btn"
                   style={{ marginTop: '10px' }}
                   onClick={() => {
                     return dispatch(enterTerrainPaint(tile?.terrain ?? null));
@@ -789,6 +793,7 @@ const TileEditPanel = (): React.ReactElement => {
                     return (
                       <div key={key}>
                         <FlagToggle
+                          data-testid={`flag-toggle-${key}`}
                           $active={active}
                           $color={color}
                           onClick={() => {
@@ -839,6 +844,7 @@ const TileEditPanel = (): React.ReactElement => {
                 </FlagList>
                 {tile?.hasTown && (
                   <TownNameInput
+                    data-testid="town-name-input"
                     value={tile.townName ?? ''}
                     onChange={handleNameChange}
                     placeholder={t('tilePanel.townNamePlaceholder')}
@@ -853,6 +859,7 @@ const TileEditPanel = (): React.ReactElement => {
               <div>
                 <SectionLabel>{t('tilePanel.notes')}</SectionLabel>
                 <StyledTextarea
+                  data-testid="notes-textarea"
                   $minHeight="160px"
                   value={tile?.notes ?? ''}
                   onChange={handleNotesChange}
@@ -868,6 +875,7 @@ const TileEditPanel = (): React.ReactElement => {
                       return (
                         <ArmyRow
                           key={army.id}
+                          data-testid={`select-army-${army.id}`}
                           onClick={() => {
                             return dispatch(selectArmy(army.id));
                           }}
@@ -883,6 +891,7 @@ const TileEditPanel = (): React.ReactElement => {
               )}
 
               <AddArmyBtn
+                data-testid="add-army-btn"
                 onClick={() => {
                   return tile && dispatch(addArmy({ q: tile.q, r: tile.r }));
                 }}
@@ -890,7 +899,9 @@ const TileEditPanel = (): React.ReactElement => {
                 {t('tilePanel.addArmy')}
               </AddArmyBtn>
 
-              <DeleteBtn onClick={handleDelete}>{t('tilePanel.deleteTile')}</DeleteBtn>
+              <DeleteBtn data-testid="delete-tile-btn" onClick={handleDelete}>
+                {t('tilePanel.deleteTile')}
+              </DeleteBtn>
             </>
           )}
         </>

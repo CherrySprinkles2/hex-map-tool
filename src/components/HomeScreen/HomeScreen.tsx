@@ -422,7 +422,7 @@ const HomeScreen = (): React.ReactElement => {
         </Notice>
       </Header>
       <Grid>
-        <NewCard onClick={handleNew}>
+        <NewCard onClick={handleNew} data-testid="new-map-card">
           <span>＋</span>
           <NewLabel>{t('home.newMap')}</NewLabel>
         </NewCard>
@@ -430,6 +430,7 @@ const HomeScreen = (): React.ReactElement => {
           return (
             <Card
               key={example.id}
+              data-testid={`example-card-${example.id}`}
               onClick={() => {
                 return handleOpenExample(example);
               }}
@@ -447,12 +448,14 @@ const HomeScreen = (): React.ReactElement => {
           return (
             <Card
               key={map.id}
+              data-testid={`map-card-${map.id}`}
               onClick={() => {
                 return handleOpen(map);
               }}
             >
               <MapThumbnail tilesData={tilesCache[map.id] ?? {}} />
               <DeleteBtn
+                data-testid={`delete-map-${map.id}`}
                 onClick={(e) => {
                   return handleDelete(e, map.id);
                 }}
@@ -460,7 +463,7 @@ const HomeScreen = (): React.ReactElement => {
                 ✕
               </DeleteBtn>
               <CardMeta>
-                <CardName>{map.name}</CardName>
+                <CardName data-testid={`map-name-${map.id}`}>{map.name}</CardName>
                 <CardDate>{t('home.edited', { time: formatDate(map.updatedAt, t) })}</CardDate>
               </CardMeta>
             </Card>
