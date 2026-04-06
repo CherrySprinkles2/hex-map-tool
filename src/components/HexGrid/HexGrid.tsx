@@ -15,7 +15,12 @@ import {
   stopMovingArmy,
   exitTerrainPaint,
 } from '../../features/ui/uiSlice';
-import { updateTile, setTileFeature, setTileFaction } from '../../features/tiles/tilesSlice';
+import {
+  addTile,
+  updateTile,
+  setTileFeature,
+  setTileFaction,
+} from '../../features/tiles/tilesSlice';
 import { getNeighbors, toKey, pixelToAxial, hexLine } from '../../utils/hexUtils';
 import { theme } from '../../styles/theme';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../app/hooks';
@@ -25,7 +30,7 @@ import WaterOverlay from './WaterOverlay';
 import ArmyToken from './ArmyToken';
 import TerrainPatterns from './TerrainPatterns';
 import { PaintContext } from './PaintContext';
-import type { TileFlag } from '../../types/domain';
+import type { TileFlag, TerrainType } from '../../types/domain';
 import type { HexCoord } from '../../utils/hexUtils';
 import type { Army } from '../../types/domain';
 import type { ViewportState } from '../../types/state';
@@ -141,13 +146,19 @@ const HexGrid = (): React.ReactElement => {
       const tilesState = store.getState().tiles;
 
       coords.forEach(({ q, r }) => {
-        if (!tilesState[toKey(q, r)]) return;
+        const tileExists = !!tilesState[toKey(q, r)];
 
         if (ui.mapMode === 'terrain-paint') {
           const brush = ui.activePaintBrush;
           if (!brush) return;
           if (theme.terrain[brush as keyof typeof theme.terrain]) {
-            dispatch(updateTile({ q, r, terrain: brush }));
+            if (!tileExists) {
+              dispatch(addTile({ q, r, terrain: brush as TerrainType }));
+            } else {
+              dispatch(updateTile({ q, r, terrain: brush }));
+            }
+          } else if (!tileExists) {
+            return;
           } else if (brush === 'river-on') {
             dispatch(setTileFeature({ q, r, flag: 'hasRiver' as TileFlag, value: true }));
           } else if (brush === 'river-off') {
@@ -158,6 +169,7 @@ const HexGrid = (): React.ReactElement => {
             dispatch(setTileFeature({ q, r, flag: 'hasRoad' as TileFlag, value: false }));
           }
         } else {
+          if (!tileExists) return;
           dispatch(setTileFaction({ q, r, factionId: ui.activeFactionId }));
         }
       });

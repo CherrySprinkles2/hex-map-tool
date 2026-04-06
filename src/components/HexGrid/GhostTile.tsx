@@ -1,12 +1,16 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useContext } from 'react';
 import { useTheme } from 'styled-components';
 import { hexPointsString, axialToPixel, toKey, getNeighbors } from '../../utils/hexUtils';
 import { addTile, setTileFaction } from '../../features/tiles/tilesSlice';
 import { selectTile, setPlacingArmy, stopMovingArmy } from '../../features/ui/uiSlice';
 import { addArmy, moveArmy } from '../../features/armies/armiesSlice';
 import { useAppDispatch, useAppStore } from '../../app/hooks';
+import { PaintContext } from './PaintContext';
+import { theme as appTheme } from '../../styles/theme';
 import type { TerrainType } from '../../types/domain';
 import type { TilesState } from '../../types/state';
+
+const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
 
 interface GhostTileProps {
   q: number;
@@ -51,6 +55,7 @@ const GhostTile = React.memo(({ q, r }: GhostTileProps): React.ReactElement => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const store = useAppStore();
+  const isPaintingRef = useContext(PaintContext);
   const [hovered, setHovered] = useState(false);
 
   const { x, y } = useMemo(() => {
@@ -64,11 +69,11 @@ const GhostTile = React.memo(({ q, r }: GhostTileProps): React.ReactElement => {
     (e: React.MouseEvent) => {
       e.stopPropagation();
       const state = store.getState();
-      const { movingArmyId, placingArmy, mapMode, activeFactionId } = state.ui;
+      const { movingArmyId, placingArmy, mapMode, activeFactionId, activePaintBrush } = state.ui;
       const tiles = state.tiles;
-      const terrain = inferTerrain(q, r, tiles);
 
       if (movingArmyId) {
+        const terrain = inferTerrain(q, r, tiles);
         dispatch(addTile({ q, r, terrain }));
         dispatch(moveArmy({ id: movingArmyId, q, r }));
         dispatch(stopMovingArmy());
@@ -76,22 +81,67 @@ const GhostTile = React.memo(({ q, r }: GhostTileProps): React.ReactElement => {
       }
 
       if (placingArmy) {
+        const terrain = inferTerrain(q, r, tiles);
         dispatch(addTile({ q, r, terrain }));
         dispatch(addArmy({ q, r }));
         dispatch(setPlacingArmy(false));
         return;
       }
 
+      if (mapMode === 'terrain-paint') {
+        if (
+          activePaintBrush &&
+          appTheme.terrain[activePaintBrush as keyof typeof appTheme.terrain]
+        ) {
+          dispatch(addTile({ q, r, terrain: activePaintBrush as TerrainType }));
+        } else {
+          const terrain = inferTerrain(q, r, tiles);
+          dispatch(addTile({ q, r, terrain }));
+          dispatch(selectTile(toKey(q, r)));
+        }
+        return;
+      }
+
       if (mapMode === 'faction') {
+        const terrain = inferTerrain(q, r, tiles);
         dispatch(addTile({ q, r, terrain }));
         dispatch(setTileFaction({ q, r, factionId: activeFactionId }));
         return;
       }
 
+      const terrain = inferTerrain(q, r, tiles);
       dispatch(addTile({ q, r, terrain }));
       dispatch(selectTile(toKey(q, r)));
     },
     [q, r, store, dispatch]
+  );
+
+  const handlePointerDown = useCallback(
+    (_e: React.PointerEvent) => {
+      if (isTouchDevice) return;
+      const ui = store.getState().ui;
+      if (ui.mapMode !== 'terrain-paint') return;
+      const brush = ui.activePaintBrush;
+      if (!brush || !appTheme.terrain[brush as keyof typeof appTheme.terrain]) return;
+      dispatch(addTile({ q, r, terrain: brush as TerrainType }));
+      isPaintingRef.current = true;
+    },
+    [store, isPaintingRef, dispatch, q, r]
+  );
+
+  const handlePointerEnter = useCallback(
+    (_e: React.PointerEvent) => {
+      if (isTouchDevice) return;
+      if (!isPaintingRef.current) return;
+      const ui = store.getState().ui;
+      if (ui.mapMode !== 'terrain-paint') return;
+      const brush = ui.activePaintBrush;
+      if (!brush || !appTheme.terrain[brush as keyof typeof appTheme.terrain]) return;
+      if (!store.getState().tiles[toKey(q, r)]) {
+        dispatch(addTile({ q, r, terrain: brush as TerrainType }));
+      }
+    },
+    [store, isPaintingRef, dispatch, q, r]
   );
 
   return (
@@ -102,6 +152,8 @@ const GhostTile = React.memo(({ q, r }: GhostTileProps): React.ReactElement => {
       strokeWidth={hovered ? 2 : 1.5}
       strokeDasharray="6 4"
       onClick={handleClick}
+      onPointerDown={handlePointerDown}
+      onPointerEnter={handlePointerEnter}
       onMouseEnter={() => {
         return setHovered(true);
       }}
