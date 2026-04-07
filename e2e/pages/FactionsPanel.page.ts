@@ -4,7 +4,14 @@ export class FactionsPanelPage {
   constructor(private page: Page) {}
 
   async openPanel(): Promise<void> {
-    await this.page.getByTestId('factions-btn').click();
+    const desktopBtn = this.page.getByTestId('factions-btn');
+    if (await desktopBtn.isVisible()) {
+      await desktopBtn.click();
+    } else {
+      // Mobile: factions live inside the settings sheet
+      await this.page.getByLabel('Settings').click();
+      await this.page.getByTestId('mobile-factions-btn').click();
+    }
     await this.page.waitForSelector('[data-testid="add-faction-btn"]');
   }
 

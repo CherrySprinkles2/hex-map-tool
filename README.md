@@ -114,7 +114,7 @@ npm run test:e2e       # run Playwright integration tests (headless)
 npm run test:e2e:ui    # run Playwright tests in interactive UI mode
 ```
 
-Validate source changes with `npm run build`. Playwright runs against a live dev server (auto-started); see `docs/playwright-testing-plan.md` for the full test architecture.
+Validate source changes with `npm run build`. Playwright runs against a live dev server (auto-started); see the **Integration Testing** section of `.github/copilot-instructions.md` for the test architecture.
 
 ---
 

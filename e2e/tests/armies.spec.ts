@@ -73,22 +73,29 @@ test.describe('Army Management', () => {
     const editor = new EditorPage(appPage);
     const tilePanel = new TileEditPanelPage(appPage);
     await tilePanel.waitForPanel();
+
+    // Create a destination tile before entering move mode
+    const ghost = appPage.locator('[data-testid^="ghost-tile-"]').first();
+    const testId = await ghost.getAttribute('data-testid');
+    const [, coords] = testId!.split('ghost-tile-');
+    const [destQ, destR] = coords.split(',').map(Number);
+    await editor.clickGhost(destQ, destR);
+    // Re-select the original tile so TileEditPanel is on the army's tile
+    await editor.clickTile(tileQ, tileR);
+    await tilePanel.waitForPanel();
+
     await tilePanel.addArmy();
     await tilePanel.selectFirstArmy();
     const armyPanel = new ArmyPanelPage(appPage);
     await armyPanel.waitForPanel();
     await armyPanel.startMove();
 
-    // Create a new tile adjacent to first and click it to move the army
-    const ghost = appPage.locator('[data-testid^="ghost-tile-"]').first();
-    const testId = await ghost.getAttribute('data-testid');
-    const [, coords] = testId!.split('ghost-tile-');
-    const [destQ, destR] = coords.split(',').map(Number);
-    await editor.clickGhost(destQ, destR);
+    // Move to the destination tile (already a real tile — no ghost click needed)
+    await editor.clickTile(destQ, destR);
 
     // Army panel stays open (selectedArmyId not cleared by move)
     await expect(appPage.getByTestId('delete-army-btn')).toBeVisible();
-    // Move succeeded — destination tile now exists
+    // Destination tile still exists
     await expect(appPage.getByTestId(`hex-tile-${destQ},${destR}`)).toBeVisible();
   });
 

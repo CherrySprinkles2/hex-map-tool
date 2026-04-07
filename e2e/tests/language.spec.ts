@@ -49,7 +49,7 @@ test.describe('Language Switching (mobile)', () => {
 
   test('mobile settings sheet shows Language option', async ({ appPage }) => {
     await appPage.getByLabel('Settings').click();
-    // The sheet should contain a Language / Kieli item
-    await expect(appPage.getByText(/language/i)).toBeVisible();
+    // Use getByRole to avoid strict-mode clash with the hidden LanguageModal h3 title
+    await expect(appPage.getByRole('button', { name: /language/i })).toBeVisible();
   });
 });

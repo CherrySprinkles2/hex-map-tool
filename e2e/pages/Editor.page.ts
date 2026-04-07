@@ -31,17 +31,19 @@ export class EditorPage {
 
   /** Click an existing hex tile by its axial coordinate. */
   async clickTile(q: number, r: number): Promise<void> {
-    await this.page.getByTestId(`hex-tile-${q},${r}`).click();
+    // dispatchEvent bypasses browser hit-testing so mobile bottom sheets
+    // (TileEditPanel / ArmyPanel) don't intercept the event.
+    await this.page.getByTestId(`hex-tile-${q},${r}`).dispatchEvent('click');
   }
 
   /** Right-click an existing hex tile (delete). */
   async rightClickTile(q: number, r: number): Promise<void> {
-    await this.page.getByTestId(`hex-tile-${q},${r}`).click({ button: 'right' });
+    await this.page.getByTestId(`hex-tile-${q},${r}`).dispatchEvent('contextmenu');
   }
 
   /** Click a ghost (unoccupied) tile to create it. */
   async clickGhost(q: number, r: number): Promise<void> {
-    await this.page.getByTestId(`ghost-tile-${q},${r}`).click();
+    await this.page.getByTestId(`ghost-tile-${q},${r}`).dispatchEvent('click');
   }
 
   /** Return whether a tile exists in the SVG. */

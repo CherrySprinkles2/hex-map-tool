@@ -435,7 +435,12 @@ const Toolbar = (): React.ReactElement => {
 
       <Sheet $open={settingsOpen}>
         <SheetHandle />
-        <SheetItem $active={factionsOpen} $desktopHide onClick={handleFactionsClick}>
+        <SheetItem
+          data-testid="mobile-factions-btn"
+          $active={factionsOpen}
+          $desktopHide
+          onClick={handleFactionsClick}
+        >
           <SheetIcon>⚑</SheetIcon>
           {t('toolbar.factions')}
         </SheetItem>

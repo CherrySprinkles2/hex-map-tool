@@ -33,7 +33,8 @@ test.describe('Tile Placement', () => {
     await expect(appPage.getByTestId('delete-tile-btn')).toBeVisible();
   });
 
-  test('right-clicking a tile deletes it', async ({ appPage }) => {
+  test('right-clicking a tile deletes it', async ({ appPage, isMobile }) => {
+    test.skip(isMobile, 'Right-click/context-menu is not available on touch devices');
     const editor = new EditorPage(appPage);
     const ghost = appPage.locator('[data-testid^="ghost-tile-"]').first();
     const testId = await ghost.getAttribute('data-testid');

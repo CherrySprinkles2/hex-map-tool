@@ -17,7 +17,7 @@ npm run test:e2e       # run Playwright integration tests (headless)
 npm run test:e2e:ui    # run Playwright tests in interactive UI mode
 ```
 
-Validate source changes with `npm run build`. Integration tests live in `e2e/` and use Playwright; see `docs/playwright-testing-plan.md` for the full test architecture.
+Validate source changes with `npm run build`. Integration tests live in `e2e/` and use Playwright; see the **Integration Testing** section below for the full test architecture.
 
 ---
 
@@ -291,7 +291,7 @@ Tiles render two polygons: a solid base colour and an SVG `<pattern>` texture ov
 
 ## Integration Testing (Playwright)
 
-Tests live in `e2e/` at the repo root, separate from `src/`. The full architecture and test coverage plan is documented in `docs/playwright-testing-plan.md`.
+Tests live in `e2e/` at the repo root, separate from `src/`. Run with `npm run test:e2e` (headless) or `npm run test:e2e:ui` (interactive). Tests run in parallel with two projects: `chromium` (1280×900 desktop) and `mobile` (iPhone 12 emulation, 390×844, touch).
 
 ```
 e2e/
@@ -304,14 +304,14 @@ e2e/
     ArmyPanel.page.ts            # Page Object: name, move, delete
     FactionsPanel.page.ts        # Page Object: add, name, delete factions
   tests/
-    home-screen.spec.ts
-    tile-placement.spec.ts       # also covers tile-editing tests
-    paint-mode.spec.ts
-    armies.spec.ts
-    factions.spec.ts
-    import-export.spec.ts
-    multi-map.spec.ts
-    language.spec.ts
+    home-screen.spec.ts          # HomeScreen CRUD, example maps
+    tile-placement.spec.ts       # tile creation, editing (terrain/river/road/town/notes), reload persistence
+    paint-mode.spec.ts           # paint mode entry/exit, brush selection, terrain painting
+    armies.spec.ts               # add, edit, move, delete armies; garrison visual
+    factions.spec.ts             # add, edit, delete factions
+    import-export.spec.ts        # JSON export shape, import, duplicate-name dedup
+    multi-map.spec.ts            # isolation between maps, switching, deletion
+    language.spec.ts             # EN/FI toggle (desktop), settings sheet (mobile)
 playwright.config.ts             # baseURL, webServer (npm start), chromium + mobile projects
 ```
 
@@ -321,10 +321,22 @@ Playwright selectors use `data-testid` on key elements. All spec files import `t
 
 Currently instrumented elements include:
 
-- `hex-tile-{q},{r}` / `ghost-tile-{q},{r}` — SVG tile elements
+- `hex-tile-{q},{r}` / `ghost-tile-{q},{r}` — SVG tile elements (on the `<g>` and `<polygon>` respectively)
 - `new-map-card`, `map-card-{id}`, `delete-map-{id}`, `example-card-{id}` — HomeScreen cards
-- `back-btn`, `map-name-input`, `factions-btn`, `export-json-btn`, `import-json-btn` — Toolbar
+- `back-btn`, `map-name-input`, `factions-btn`, `mobile-factions-btn`, `export-json-btn`, `import-json-btn` — Toolbar (desktop / mobile settings sheet variants)
 - `terrain-btn-{type}`, `flag-toggle-{flag}`, `paint-terrain-btn`, `exit-paint-btn`, `paint-brush-{type}` — TileEditPanel
-- `add-army-btn`, `delete-tile-btn`, `notes-textarea`, `town-name-input` — TileEditPanel
+- `add-army-btn`, `select-army-{id}`, `delete-tile-btn`, `notes-textarea`, `town-name-input` — TileEditPanel
 - `army-name-input`, `move-army-btn`, `delete-army-btn` — ArmyPanel
 - `add-faction-btn`, `faction-name-{id}`, `faction-delete-{id}` — FactionsPanel
+
+### SVG interaction
+
+`EditorPage.clickTile()` and `clickGhost()` use `locator.dispatchEvent('click')` rather than `.click()`. This fires the event directly on the element, bypassing browser hit-testing. It is required because on mobile the TileEditPanel and ArmyPanel are bottom sheets that physically overlap the SVG canvas; a coordinate-based click (even with `force: true`) would be intercepted by the sheet.
+
+### Mobile-specific patterns
+
+- `factions-btn` is a desktop-only button. On mobile, `FactionsPanel.page.ts` opens it by first clicking the Settings gear, then clicking `mobile-factions-btn` in the slide-up sheet.
+- Right-click tests (tile deletion via context menu) are skipped on mobile (`test.skip(isMobile)`).
+- Desktop-only tests (EN/FI toggle) use `test.skip(({ browserName }) => browserName !== 'chromium')`. Mobile-only tests use `test.skip(({ isMobile }) => !isMobile)`.
+- File download tests use `page.waitForEvent('download')`.
+- The app is entirely client-side — no network calls need stubbing.
