@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import { theme } from '../../styles/theme';
 import {
   renderFlagPaths,
+  renderRoadPaths,
+  computeAllRiverCurves,
   renderCausewayPaths,
   renderWaterEdges,
   renderTownIcons,
@@ -27,9 +29,14 @@ const WaterOverlay = React.memo(
     const riverPaths = useMemo(() => {
       return renderFlagPaths(tiles, 'hasRiver', theme.river);
     }, [tiles]);
-    const roadPaths = useMemo(() => {
-      return renderFlagPaths(tiles, 'hasRoad', theme.road);
+    // River curves computed after river paths so roads can detect intersections.
+    // Memoised on the same tiles dependency — same recompute boundary as riverPaths.
+    const riverCurvesByTile = useMemo(() => {
+      return computeAllRiverCurves(tiles);
     }, [tiles]);
+    const roadPaths = useMemo(() => {
+      return renderRoadPaths(tiles, theme.road, riverCurvesByTile);
+    }, [tiles, riverCurvesByTile]);
     const causewayPaths = useMemo(() => {
       return renderCausewayPaths(tiles, theme.causeway);
     }, [tiles]);

@@ -1,12 +1,20 @@
 import React from 'react';
-import { axialToPixel, hexCorners, NEIGHBOR_DIRS, toKey, DIR_TO_EDGE_CORNER } from './hexUtils';
+import {
+  axialToPixel,
+  hexCorners,
+  NEIGHBOR_DIRS,
+  toKey,
+  DIR_TO_EDGE_CORNER,
+  DEEP_WATER,
+} from './hexUtils';
 import {
   computeBitmask,
-  resolveSinglePaths,
-  resolveRoadRiverPaths,
-  resolveCausewayPaths,
-  DEEP_WATER,
-} from './routeLookup';
+  computeConnectedDirs,
+  buildFeaturePaths,
+  buildRoadPaths,
+} from './pathGenerator';
+import type { CubicBezier } from './pathGenerator';
+import { resolveCausewayPaths } from './routeLookup';
 import { theme } from '../styles/theme';
 import type { TilesState } from '../types/state';
 import type { Army } from '../types/domain';
@@ -20,10 +28,10 @@ interface PathStyle {
 
 type FlagKey = 'hasRiver' | 'hasRoad';
 
-// Renders road and river paths for all tiles.
-// For tiles that have both features the combined lookup table is checked first
-// (enabling bridge and parallel-offset visuals); otherwise each feature is
-// resolved independently via the canonical path tables.
+// Renders road and river paths for all tiles using the programmatic path generator.
+// Rivers and roads each use offset edge anchors so they never overlap even when
+// sharing the same tile edges. Each feature is rendered independently — no
+// combined lookup table is required.
 export const renderFlagPaths = (
   tiles: TilesState,
   flag: FlagKey,
@@ -38,10 +46,10 @@ export const renderFlagPaths = (
     if (DEEP_WATER.has(terrain)) return [];
 
     const { x: cx, y: cy } = axialToPixel(q, r);
-    const bitmask = computeBitmask(tiles, q, r, flag);
+    const connectedDirs = computeConnectedDirs(tiles, q, r, flag);
 
-    // Isolated tile — render a pool dot
-    if (bitmask === 0) {
+    // Isolated tile — render a pool dot at the tile centre
+    if (connectedDirs.length === 0) {
       return [
         <circle
           key={`${flag}-pool-${key}`}
@@ -55,31 +63,88 @@ export const renderFlagPaths = (
       ];
     }
 
-    const otherFlag: FlagKey = flag === 'hasRiver' ? 'hasRoad' : 'hasRiver';
-    const hasOther = !!tile[otherFlag];
+    const feature = flag === 'hasRiver' ? 'river' : 'road';
+    const paths = buildFeaturePaths(cx, cy, connectedDirs, feature);
 
-    let segments: Array<{ d: string; transform: string }>;
+    return paths.map(({ svgPath }, i) => {
+      return (
+        <g key={`${flag}-${key}-${i}`} style={{ pointerEvents: 'none' }}>
+          <path
+            d={svgPath}
+            fill="none"
+            stroke={style.color}
+            strokeWidth={style.width}
+            strokeLinecap={style.linecap as React.SVGAttributes<SVGPathElement>['strokeLinecap']}
+            opacity={0.9}
+          />
+        </g>
+      );
+    });
+  });
+};
 
-    if (hasOther) {
-      // Both road and river present — use combined lookup
-      const roadBitmask = computeBitmask(tiles, q, r, 'hasRoad');
-      const riverBitmask = computeBitmask(tiles, q, r, 'hasRiver');
-      const resolved = resolveRoadRiverPaths(roadBitmask, riverBitmask);
-      segments = flag === 'hasRoad' ? resolved.road : resolved.river;
-    } else {
-      segments = resolveSinglePaths(bitmask, flag);
+// Collects all river CubicBezier descriptors for every tile, keyed by "q,r".
+// Called once per render cycle in WaterOverlay so road rendering can use the
+// same river geometry for intersection detection without recomputing it.
+export const computeAllRiverCurves = (tiles: TilesState): Map<string, CubicBezier[]> => {
+  const result = new Map<string, CubicBezier[]>();
+  Object.values(tiles).forEach((tile) => {
+    if (!tile.hasRiver || DEEP_WATER.has(tile.terrain)) return;
+    const { q, r } = tile;
+    const { x: cx, y: cy } = axialToPixel(q, r);
+    const connectedDirs = computeConnectedDirs(tiles, q, r, 'hasRiver');
+    if (connectedDirs.length === 0) return;
+    const paths = buildFeaturePaths(cx, cy, connectedDirs, 'river');
+    const curves = paths.flatMap((p) => {
+      return p.curve !== null ? [p.curve] : [];
+    });
+    if (curves.length > 0) result.set(toKey(q, r), curves);
+  });
+  return result;
+};
+
+// Renders river-aware road paths for all tiles.
+// Roads are routed around rivers when possible; unavoidable crossings are
+// reconstructed to cross at 90°. Receives pre-computed river curves from
+// WaterOverlay so geometry is not duplicated.
+export const renderRoadPaths = (
+  tiles: TilesState,
+  style: PathStyle,
+  riverCurvesByTile: Map<string, CubicBezier[]>
+): React.ReactElement[] => {
+  return Object.values(tiles).flatMap((tile) => {
+    if (!tile.hasRoad) return [];
+
+    const { q, r, terrain, hasTown } = tile;
+    const key = toKey(q, r);
+
+    if (DEEP_WATER.has(terrain)) return [];
+
+    const { x: cx, y: cy } = axialToPixel(q, r);
+    const connectedDirs = computeConnectedDirs(tiles, q, r, 'hasRoad');
+
+    if (connectedDirs.length === 0) {
+      return [
+        <circle
+          key={`hasRoad-pool-${key}`}
+          cx={cx}
+          cy={cy}
+          r={style.poolRadius}
+          fill={style.color}
+          opacity={0.85}
+          style={{ pointerEvents: 'none' }}
+        />,
+      ];
     }
 
-    return segments.map(({ d, transform }, i) => {
+    const riverCurves = riverCurvesByTile.get(key) ?? [];
+    const svgPaths = buildRoadPaths(cx, cy, connectedDirs, riverCurves, hasTown);
+
+    return svgPaths.map((svgPath, i) => {
       return (
-        <g
-          key={`${flag}-${key}-${i}`}
-          transform={`translate(${cx},${cy})`}
-          style={{ pointerEvents: 'none' }}
-        >
+        <g key={`hasRoad-${key}-${i}`} style={{ pointerEvents: 'none' }}>
           <path
-            d={d}
-            transform={transform || undefined}
+            d={svgPath}
             fill="none"
             stroke={style.color}
             strokeWidth={style.width}

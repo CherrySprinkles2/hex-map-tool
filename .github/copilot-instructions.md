@@ -1,4 +1,4 @@
-# Copilot Instructions — Hex Map Tool
+# Hex Map Tool — Claude Instructions
 
 ## Working with the Owner
 
@@ -197,18 +197,18 @@ Each tile has the shape:
 
 ```js
 {
-  (q,
-    r,
-    terrain,
-    hasRiver,
-    hasRoad,
-    riverBlocked,
-    roadBlocked,
-    hasTown,
-    townName,
-    portBlocked,
-    factionId,
-    notes);
+  q,
+  r,
+  terrain,
+  hasRiver,
+  hasRoad,
+  riverBlocked,
+  roadBlocked,
+  hasTown,
+  townName,
+  portBlocked,
+  factionId,
+  notes,
 }
 ```
 
@@ -232,6 +232,7 @@ const ONE_SIDED = new Set(['hasTown']);
 - **Symmetric flags** (`hasRiver`, `hasRoad`): block stored on **both** tiles
 - **One-sided flags** (`hasTown`/port): block stored only on the **town tile**
 - When `toggleTileFlag` turns a flag OFF, it clears that tile's blocked array and (for symmetric flags) removes this tile's key from all neighbours' blocked arrays
+- `setTileFeature(q, r, flag, value)` is a lower-level action that sets any boolean tile flag directly (used internally by paint mode); it also clears blocked arrays when turning a flag off
 
 ### Tile interactions
 
@@ -270,20 +271,20 @@ Tiles render two polygons: a solid base colour and an SVG `<pattern>` texture ov
 
 ## Utility Modules
 
-| File                           | Purpose                                                                                                                                                                                  |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/utils/hexUtils.ts`        | Axial coordinate math — `toKey`, `fromKey`, `axialToPixel`, `hexPointsString`, `getNeighbors`, `NEIGHBOR_DIRS`, `DEEP_WATER`. Always import hex math from here — do not inline formulas. |
-| `src/utils/mapsStorage.ts`     | localStorage CRUD: `getAllMaps`, `createMap`, `renameMap`, `deleteMap`, `loadMapData`, `saveMapData`, `touchMap`, `migrateFromLegacy`                                                    |
-| `src/utils/overlayHelpers.tsx` | Renders SVG water edges, town icons/labels, ports, river pools on top of tiles — used by `WaterOverlay`                                                                                  |
-| `src/utils/routeLookup.ts`     | Maps road/river connection bitmasks to canonical SVG path data and transforms — used by `WaterOverlay` for rendering bezier curves                                                       |
-| `src/utils/generateId.ts`      | Creates unique IDs with a given prefix (e.g. `army_12345`)                                                                                                                               |
-| `src/utils/historyManager.ts`  | In-memory undo/redo stack: `pushSnapshot`, `undo`, `redo`, `clearHistory`                                                                                                                |
+| File                           | Purpose                                                                                                                                                                                                                                                                             |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/utils/hexUtils.ts`        | Axial coordinate math — `toKey`, `fromKey`, `axialToPixel`, `pixelToAxial`, `hexRound`, `hexLine`, `hexCorners`, `hexPointsString`, `edgeMidpoint`, `getNeighbors`, `NEIGHBOR_DIRS`, `DIR_TO_EDGE_CORNER`, `DEEP_WATER`. Always import hex math from here — do not inline formulas. |
+| `src/utils/mapsStorage.ts`     | localStorage CRUD: `getAllMaps`, `createMap`, `renameMap`, `deleteMap`, `loadMapData`, `saveMapData`, `touchMap`, `migrateFromLegacy`                                                                                                                                               |
+| `src/utils/overlayHelpers.tsx` | Renders SVG water edges, town icons/labels, ports, river pools on top of tiles — used by `WaterOverlay`                                                                                                                                                                             |
+| `src/utils/routeLookup.ts`     | Maps road/river connection bitmasks to canonical SVG path data and transforms — used by `WaterOverlay` for rendering bezier curves                                                                                                                                                  |
+| `src/utils/generateId.ts`      | Creates unique IDs with a given prefix (e.g. `army_12345`)                                                                                                                                                                                                                          |
+| `src/utils/historyManager.ts`  | In-memory undo/redo stack: `pushSnapshot`, `undo`, `redo`, `clearHistory`                                                                                                                                                                                                           |
 
 ## Custom Hooks
 
 | Hook                   | Purpose                                                                                                                                                                                 |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `useKeyboardShortcuts` | Listens for Escape (deselect/cancel), Delete/Backspace (delete tile), `R` (reset viewport), Ctrl+Z (undo), Ctrl+Y/Ctrl+Shift+Z (redo)                                                   |
+| `useKeyboardShortcuts` | Listens for Escape (deselect tile + army), Delete/Backspace (delete selected tile), `r` (reset viewport), Ctrl+Z (undo), Ctrl+Y/Ctrl+Shift+Z (redo)                                     |
 | `useLocalStorageSync`  | Auto-saves `tiles`, `armies`, `factions` to localStorage on every store change; loads on mount; re-runs when `currentMap.id` changes; skips saves when `id === null` (unsaved examples) |
 | `useLanguage`          | Returns `{ language, changeLanguage }` wrapping `i18n.changeLanguage` — use this in components instead of calling `i18n` directly                                                       |
 
