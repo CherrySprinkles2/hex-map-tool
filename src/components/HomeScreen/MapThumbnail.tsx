@@ -2,16 +2,20 @@ import React, { useMemo } from 'react';
 import { axialToPixel, hexPointsString, HEX_SIZE } from '../../utils/hexUtils';
 import { theme } from '../../styles/theme';
 import type { TilesState } from '../../types/state';
-import type { TerrainType } from '../../types/domain';
+import type { TerrainType, CustomTerrainType } from '../../types/domain';
 
 const THUMB_W = 220;
 const THUMB_H = 160;
 
 interface MapThumbnailProps {
   tilesData: TilesState;
+  customTerrains?: CustomTerrainType[];
 }
 
-const MapThumbnail = ({ tilesData }: MapThumbnailProps): React.ReactElement => {
+const MapThumbnail = ({
+  tilesData,
+  customTerrains = [],
+}: MapThumbnailProps): React.ReactElement => {
   const tiles = useMemo(() => {
     return Object.values(tilesData || {});
   }, [tilesData]);
@@ -67,7 +71,12 @@ const MapThumbnail = ({ tilesData }: MapThumbnailProps): React.ReactElement => {
         <g transform={transform}>
           {tiles.map(({ q, r, terrain }) => {
             const { x, y } = axialToPixel(q, r);
-            const color = theme.terrain[terrain as TerrainType]?.color ?? theme.terrain.grass.color;
+            const color =
+              theme.terrain[terrain as TerrainType]?.color ??
+              customTerrains.find((ct) => {
+                return ct.id === terrain;
+              })?.color ??
+              theme.terrain.grass.color;
             return (
               <polygon
                 key={`${q},${r}`}

@@ -12,11 +12,15 @@ import { loadMap } from '../../features/currentMap/currentMapSlice';
 import { importTiles } from '../../features/tiles/tilesSlice';
 import { importArmies } from '../../features/armies/armiesSlice';
 import { importFactions } from '../../features/factions/factionsSlice';
+import {
+  importTerrainConfig,
+  DEFAULT_TERRAIN_CONFIG,
+} from '../../features/terrainConfig/terrainConfigSlice';
 import { setScreen } from '../../features/ui/uiSlice';
 import { resetViewport } from '../../features/viewport/viewportSlice';
 import MapThumbnail from './MapThumbnail';
 import { exampleMaps } from '../../data/exampleMaps';
-import type { MapEntry } from '../../types/domain';
+import type { MapEntry, CustomTerrainType } from '../../types/domain';
 import type { TilesState } from '../../types/state';
 
 const Shell = styled.div`
@@ -326,6 +330,9 @@ const HomeScreen = (): React.ReactElement => {
   const { t } = useTranslation();
   const [maps, setMaps] = useState<MapEntry[]>([]);
   const [tilesCache, setTilesCache] = useState<Record<string, TilesState>>({});
+  const [customTerrainsCache, setCustomTerrainsCache] = useState<
+    Record<string, CustomTerrainType[]>
+  >({});
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [langModalOpen, setLangModalOpen] = useState(false);
 
@@ -333,10 +340,14 @@ const HomeScreen = (): React.ReactElement => {
     const all = getAllMaps();
     setMaps(all);
     const cache: Record<string, TilesState> = {};
+    const ctCache: Record<string, CustomTerrainType[]> = {};
     all.forEach(({ id }) => {
-      cache[id] = loadMapData(id)?.tiles ?? {};
+      const data = loadMapData(id);
+      cache[id] = data?.tiles ?? {};
+      ctCache[id] = data?.terrainConfig?.custom ?? [];
     });
     setTilesCache(cache);
+    setCustomTerrainsCache(ctCache);
   }, []);
 
   useEffect(() => {
@@ -363,6 +374,7 @@ const HomeScreen = (): React.ReactElement => {
     dispatch(importTiles(example.tiles));
     dispatch(importArmies(example.armies));
     dispatch(importFactions(example.factions));
+    dispatch(importTerrainConfig(example.terrainConfig ?? DEFAULT_TERRAIN_CONFIG));
     dispatch(loadMap({ id: null, name: t('home.copyOf', { name: example.name }) }));
     dispatch(resetViewport());
     dispatch(setScreen('editor'));
@@ -435,7 +447,10 @@ const HomeScreen = (): React.ReactElement => {
                 return handleOpenExample(example);
               }}
             >
-              <MapThumbnail tilesData={example.tiles} />
+              <MapThumbnail
+                tilesData={example.tiles}
+                customTerrains={example.terrainConfig?.custom ?? []}
+              />
               <ExampleBadge>{t('home.example')}</ExampleBadge>
               <CardMeta>
                 <CardName>{example.name}</CardName>
@@ -453,7 +468,10 @@ const HomeScreen = (): React.ReactElement => {
                 return handleOpen(map);
               }}
             >
-              <MapThumbnail tilesData={tilesCache[map.id] ?? {}} />
+              <MapThumbnail
+                tilesData={tilesCache[map.id] ?? {}}
+                customTerrains={customTerrainsCache[map.id] ?? []}
+              />
               <DeleteBtn
                 data-testid={`delete-map-${map.id}`}
                 onClick={(e) => {

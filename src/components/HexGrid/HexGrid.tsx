@@ -24,6 +24,7 @@ import {
 import { getNeighbors, toKey, pixelToAxial, hexLine } from '../../utils/hexUtils';
 import { theme } from '../../styles/theme';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../app/hooks';
+import useViewportCulling from '../../hooks/useViewportCulling';
 import HexTile from './HexTile';
 import GhostTile from './GhostTile';
 import WaterOverlay from './WaterOverlay';
@@ -81,6 +82,8 @@ const HexGrid = (): React.ReactElement => {
   const viewportRef = useRef<ViewportState>({ x: 0, y: 0, scale: 1 });
   const groupRef = useRef<SVGGElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+
+  const visibleKeys = useViewportCulling(viewportRef, svgRef, tiles);
 
   const applyTransform = useCallback(() => {
     if (!groupRef.current || !svgRef.current) return;
@@ -340,14 +343,17 @@ const HexGrid = (): React.ReactElement => {
       set.add(toKey(0, 0));
       return set;
     }
-    Object.values(deferredTiles).forEach(({ q, r }) => {
-      getNeighbors(q, r).forEach((n) => {
+    // Only compute ghosts for visible tiles to avoid off-screen ghost accumulation.
+    visibleKeys.forEach((key) => {
+      const tile = deferredTiles[key];
+      if (!tile) return;
+      getNeighbors(tile.q, tile.r).forEach((n) => {
         const k = toKey(n.q, n.r);
         if (!deferredTiles[k]) set.add(k);
       });
     });
     return set;
-  }, [deferredTiles]);
+  }, [deferredTiles, visibleKeys]);
 
   return (
     <PaintContext.Provider value={isPaintingRef}>
@@ -377,20 +383,28 @@ const HexGrid = (): React.ReactElement => {
             return <GhostTile key={`ghost-${key}`} q={q} r={r} />;
           })}
 
-          {Object.values(tiles).map(({ q, r }) => {
-            return <HexTile key={toKey(q, r)} q={q} r={r} />;
-          })}
+          {Object.values(tiles)
+            .filter(({ q, r }) => {
+              return visibleKeys.has(toKey(q, r));
+            })
+            .map(({ q, r }) => {
+              return <HexTile key={toKey(q, r)} q={q} r={r} />;
+            })}
 
           <WaterOverlay tiles={deferredTiles} armiesByTile={armiesByTile} />
 
-          {Object.entries(armiesByTile).map(([tileKey, tileArmies]) => {
-            if (tiles[tileKey]?.hasTown) return null;
-            return tileArmies.map((army, idx) => {
-              return (
-                <ArmyToken key={army.id} army={army} tileIndex={idx} total={tileArmies.length} />
-              );
-            });
-          })}
+          {Object.entries(armiesByTile)
+            .filter(([tileKey]) => {
+              return visibleKeys.has(tileKey);
+            })
+            .map(([tileKey, tileArmies]) => {
+              if (tiles[tileKey]?.hasTown) return null;
+              return tileArmies.map((army, idx) => {
+                return (
+                  <ArmyToken key={army.id} army={army} tileIndex={idx} total={tileArmies.length} />
+                );
+              });
+            })}
         </g>
       </SvgCanvas>
     </PaintContext.Provider>

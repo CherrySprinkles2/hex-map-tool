@@ -5,7 +5,6 @@ import {
   renderRoadPaths,
   computeAllRiverCurves,
   renderCausewayPaths,
-  renderWaterEdges,
   renderTownIcons,
   renderTownLabels,
   renderPorts,
@@ -29,12 +28,6 @@ const WaterOverlay = React.memo(
       return buildDeepWaterSet(customTerrains);
     }, [customTerrains]);
 
-    const waterEdgesLake = useMemo(() => {
-      return renderWaterEdges(tiles, 'lake', deepWaterSet);
-    }, [tiles, deepWaterSet]);
-    const waterEdgesOcean = useMemo(() => {
-      return renderWaterEdges(tiles, 'ocean', deepWaterSet);
-    }, [tiles, deepWaterSet]);
     const riverPaths = useMemo(() => {
       return renderFlagPaths(tiles, 'hasRiver', theme.river, deepWaterSet);
     }, [tiles, deepWaterSet]);
@@ -58,8 +51,6 @@ const WaterOverlay = React.memo(
     }, [tiles, deepWaterSet]);
     return (
       <g>
-        {waterEdgesLake}
-        {waterEdgesOcean}
         {riverPaths}
         {roadPaths}
         {causewayPaths}

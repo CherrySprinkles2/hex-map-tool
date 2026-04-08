@@ -3,11 +3,13 @@ import type { TerrainConfig, CustomTerrainType } from '../../types/domain';
 
 const DEFAULT_ORDER = ['grass', 'farm', 'forest', 'mountain', 'lake', 'ocean'];
 
-const initialState: TerrainConfig = {
+export const DEFAULT_TERRAIN_CONFIG: TerrainConfig = {
   disabled: [],
   custom: [],
   order: DEFAULT_ORDER,
 };
+
+const initialState: TerrainConfig = DEFAULT_TERRAIN_CONFIG;
 
 const terrainConfigSlice = createSlice({
   name: 'terrainConfig',

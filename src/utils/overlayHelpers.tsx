@@ -247,41 +247,6 @@ export const renderCausewayPaths = (
   });
 };
 
-export const renderWaterEdges = (
-  tiles: TilesState,
-  terrainType: string,
-  deepWaterSet: Set<string> = DEEP_WATER
-): React.ReactElement[] => {
-  return Object.values(tiles).flatMap(({ q, r, terrain }) => {
-    if (terrain !== terrainType) return [];
-    const { x: cx, y: cy } = axialToPixel(q, r);
-    const corners = hexCorners(cx, cy);
-    return NEIGHBOR_DIRS.flatMap((dir, i) => {
-      const neighbor = tiles[toKey(q + dir.q, r + dir.r)];
-      if (neighbor && deepWaterSet.has(neighbor.terrain)) return [];
-      const ci = DIR_TO_EDGE_CORNER[i];
-      const a = corners[ci];
-      const b = corners[(ci + 1) % 6];
-      return [
-        <line
-          key={`${terrainType}-edge-${toKey(q, r)}-${i}`}
-          x1={a.x}
-          y1={a.y}
-          x2={b.x}
-          y2={b.y}
-          stroke={theme.terrain[terrainType as keyof typeof theme.terrain]?.color ?? terrainType}
-          strokeWidth={
-            terrainType === 'ocean' ? theme.waterEdge.oceanWidth : theme.waterEdge.lakeWidth
-          }
-          strokeLinecap="round"
-          opacity={theme.waterEdge.opacity}
-          style={{ pointerEvents: 'none' }}
-        />,
-      ];
-    });
-  });
-};
-
 // Layout constants for town icon rendering — shared between icon and label passes.
 const TOWN_WALL_R = 33;
 

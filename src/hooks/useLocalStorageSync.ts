@@ -6,7 +6,10 @@ import type { RootState } from '../app/store';
 import { importTiles } from '../features/tiles/tilesSlice';
 import { importArmies } from '../features/armies/armiesSlice';
 import { importFactions } from '../features/factions/factionsSlice';
-import { importTerrainConfig } from '../features/terrainConfig/terrainConfigSlice';
+import {
+  importTerrainConfig,
+  DEFAULT_TERRAIN_CONFIG,
+} from '../features/terrainConfig/terrainConfigSlice';
 import { loadMap } from '../features/currentMap/currentMapSlice';
 import { saveMapData, loadMapData, createMap } from '../utils/mapsStorage';
 import * as historyManager from '../utils/historyManager';
@@ -14,12 +17,6 @@ import type { TilesState, ArmiesState, FactionsState, TerrainConfigState } from 
 import type { HistorySnapshot } from '../types/history';
 
 const PAINT_SAVE_DEBOUNCE_MS = 500;
-
-const DEFAULT_TERRAIN_CONFIG: TerrainConfigState = {
-  disabled: [],
-  custom: [],
-  order: ['grass', 'farm', 'forest', 'mountain', 'lake', 'ocean'],
-};
 
 const useLocalStorageSync = (): void => {
   const dispatch = useAppDispatch();

@@ -3,6 +3,7 @@
 // Tile defaults are applied here so the rest of the app never has to guard for missing properties.
 import rawSmall from './example-map.json';
 import rawLarge from './large-map.json';
+import rawBahamas from './bahamas-map.json';
 import type { Tile, Army, Faction, TerrainConfig } from '../types/domain';
 import type { TilesState, ArmiesState } from '../types/state';
 
@@ -83,4 +84,5 @@ const fromEnvelope = (raw: RawEnvelope, id: string): ExampleMapData => {
 export const exampleMaps: ExampleMapData[] = [
   fromEnvelope(rawSmall as RawEnvelope, 'builtin-example-1'),
   fromEnvelope(rawLarge as RawEnvelope, 'builtin-example-large'),
+  fromEnvelope(rawBahamas as RawEnvelope, 'builtin-example-bahamas'),
 ];
