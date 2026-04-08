@@ -35,7 +35,8 @@ type FlagKey = 'hasRiver' | 'hasRoad';
 export const renderFlagPaths = (
   tiles: TilesState,
   flag: FlagKey,
-  style: PathStyle
+  style: PathStyle,
+  deepWaterSet: Set<string> = DEEP_WATER
 ): React.ReactElement[] => {
   return Object.values(tiles).flatMap((tile) => {
     if (!tile[flag]) return [];
@@ -43,7 +44,7 @@ export const renderFlagPaths = (
     const { q, r, terrain } = tile;
     const key = toKey(q, r);
 
-    if (DEEP_WATER.has(terrain)) return [];
+    if (deepWaterSet.has(terrain)) return [];
 
     const { x: cx, y: cy } = axialToPixel(q, r);
     const connectedDirs = computeConnectedDirs(tiles, q, r, flag);
@@ -86,10 +87,13 @@ export const renderFlagPaths = (
 // Collects all river CubicBezier descriptors for every tile, keyed by "q,r".
 // Called once per render cycle in WaterOverlay so road rendering can use the
 // same river geometry for intersection detection without recomputing it.
-export const computeAllRiverCurves = (tiles: TilesState): Map<string, CubicBezier[]> => {
+export const computeAllRiverCurves = (
+  tiles: TilesState,
+  deepWaterSet: Set<string> = DEEP_WATER
+): Map<string, CubicBezier[]> => {
   const result = new Map<string, CubicBezier[]>();
   Object.values(tiles).forEach((tile) => {
-    if (!tile.hasRiver || DEEP_WATER.has(tile.terrain)) return;
+    if (!tile.hasRiver || deepWaterSet.has(tile.terrain)) return;
     const { q, r } = tile;
     const { x: cx, y: cy } = axialToPixel(q, r);
     const connectedDirs = computeConnectedDirs(tiles, q, r, 'hasRiver');
@@ -110,7 +114,8 @@ export const computeAllRiverCurves = (tiles: TilesState): Map<string, CubicBezie
 export const renderRoadPaths = (
   tiles: TilesState,
   style: PathStyle,
-  riverCurvesByTile: Map<string, CubicBezier[]>
+  riverCurvesByTile: Map<string, CubicBezier[]>,
+  deepWaterSet: Set<string> = DEEP_WATER
 ): React.ReactElement[] => {
   return Object.values(tiles).flatMap((tile) => {
     if (!tile.hasRoad) return [];
@@ -118,7 +123,7 @@ export const renderRoadPaths = (
     const { q, r, terrain, hasTown } = tile;
     const key = toKey(q, r);
 
-    if (DEEP_WATER.has(terrain)) return [];
+    if (deepWaterSet.has(terrain)) return [];
 
     const { x: cx, y: cy } = axialToPixel(q, r);
     const connectedDirs = computeConnectedDirs(tiles, q, r, 'hasRoad');
@@ -170,11 +175,12 @@ interface CausewayStyle {
 // lines to suggest water channels flowing beneath the raised structure.
 export const renderCausewayPaths = (
   tiles: TilesState,
-  style: CausewayStyle
+  style: CausewayStyle,
+  deepWaterSet: Set<string> = DEEP_WATER
 ): React.ReactElement[] => {
   return Object.values(tiles).flatMap((tile) => {
     if (!tile.hasRoad) return [];
-    if (!DEEP_WATER.has(tile.terrain)) return [];
+    if (!deepWaterSet.has(tile.terrain)) return [];
 
     const { q, r } = tile;
     const key = toKey(q, r);
@@ -241,14 +247,18 @@ export const renderCausewayPaths = (
   });
 };
 
-export const renderWaterEdges = (tiles: TilesState, terrainType: string): React.ReactElement[] => {
+export const renderWaterEdges = (
+  tiles: TilesState,
+  terrainType: string,
+  deepWaterSet: Set<string> = DEEP_WATER
+): React.ReactElement[] => {
   return Object.values(tiles).flatMap(({ q, r, terrain }) => {
     if (terrain !== terrainType) return [];
     const { x: cx, y: cy } = axialToPixel(q, r);
     const corners = hexCorners(cx, cy);
     return NEIGHBOR_DIRS.flatMap((dir, i) => {
       const neighbor = tiles[toKey(q + dir.q, r + dir.r)];
-      if (neighbor?.terrain === terrainType) return [];
+      if (neighbor && deepWaterSet.has(neighbor.terrain)) return [];
       const ci = DIR_TO_EDGE_CORNER[i];
       const a = corners[ci];
       const b = corners[(ci + 1) % 6];
@@ -259,7 +269,7 @@ export const renderWaterEdges = (tiles: TilesState, terrainType: string): React.
           y1={a.y}
           x2={b.x}
           y2={b.y}
-          stroke={theme.terrain[terrainType].color}
+          stroke={theme.terrain[terrainType as keyof typeof theme.terrain]?.color ?? terrainType}
           strokeWidth={
             terrainType === 'ocean' ? theme.waterEdge.oceanWidth : theme.waterEdge.lakeWidth
           }
@@ -286,12 +296,13 @@ const townLayout = (garrisoned: boolean) => {
 
 export const renderTownIcons = (
   tiles: TilesState,
-  armiesByTile: Record<string, Army[]> = {}
+  armiesByTile: Record<string, Army[]> = {},
+  deepWaterSet: Set<string> = DEEP_WATER
 ): React.ReactElement[] => {
   return Object.values(tiles).flatMap((tile) => {
     if (!tile.hasTown) return [];
     const { q, r, terrain } = tile;
-    if (DEEP_WATER.has(terrain)) return [];
+    if (deepWaterSet.has(terrain)) return [];
     const { x: cx, y: cy } = axialToPixel(q, r);
     const key = toKey(q, r);
     const armies = armiesByTile[key] ?? [];
@@ -350,12 +361,13 @@ export const renderTownIcons = (
 
 export const renderTownLabels = (
   tiles: TilesState,
-  armiesByTile: Record<string, Army[]> = {}
+  armiesByTile: Record<string, Army[]> = {},
+  deepWaterSet: Set<string> = DEEP_WATER
 ): React.ReactElement[] => {
   return Object.values(tiles).flatMap((tile) => {
     if (!tile.hasTown) return [];
     const { q, r, terrain, townName } = tile;
-    if (DEEP_WATER.has(terrain)) return [];
+    if (deepWaterSet.has(terrain)) return [];
     const { x: cx, y: cy } = axialToPixel(q, r);
     const key = toKey(q, r);
     const armies = armiesByTile[key] ?? [];
@@ -414,9 +426,12 @@ export const renderTownLabels = (
   });
 };
 
-export const renderPorts = (tiles: TilesState): React.ReactElement[] => {
+export const renderPorts = (
+  tiles: TilesState,
+  deepWaterSet: Set<string> = DEEP_WATER
+): React.ReactElement[] => {
   return Object.values(tiles).flatMap((tile) => {
-    if (!DEEP_WATER.has(tile.terrain)) return [];
+    if (!deepWaterSet.has(tile.terrain)) return [];
     const { q, r } = tile;
     const myKey = toKey(q, r);
     const { x: cx, y: cy } = axialToPixel(q, r);

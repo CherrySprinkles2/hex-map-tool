@@ -35,7 +35,7 @@ export const theme: AppTheme = {
   // ── Rivers ───────────────────────────────────────────────────────────────────
   river: {
     color: '#4499cc',
-    width: 4,
+    width: 6,
     linecap: 'round',
     tension: 0.7,
     poolRadius: 7,

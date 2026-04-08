@@ -59,6 +59,9 @@ const HexGrid = (): React.ReactElement => {
   const mapMode = useAppSelector((state) => {
     return state.ui.mapMode;
   });
+  const customTerrains = useAppSelector((state) => {
+    return state.terrainConfig.custom;
+  });
 
   const armiesByTile = useMemo(() => {
     const grouped: Record<string, Army[]> = {};
@@ -151,7 +154,12 @@ const HexGrid = (): React.ReactElement => {
         if (ui.mapMode === 'terrain-paint') {
           const brush = ui.activePaintBrush;
           if (!brush) return;
-          if (theme.terrain[brush as keyof typeof theme.terrain]) {
+          const isTerrainBrush =
+            !!theme.terrain[brush as keyof typeof theme.terrain] ||
+            store.getState().terrainConfig.custom.some((ct) => {
+              return ct.id === brush;
+            });
+          if (isTerrainBrush) {
             if (!tileExists) {
               dispatch(addTile({ q, r, terrain: brush as TerrainType }));
             } else {
@@ -361,7 +369,7 @@ const HexGrid = (): React.ReactElement => {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <TerrainPatterns />
+        <TerrainPatterns customTerrains={customTerrains} />
 
         <g ref={groupRef}>
           {[...ghostKeys].map((key) => {

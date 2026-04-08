@@ -6,13 +6,20 @@ import type { RootState } from '../app/store';
 import { importTiles } from '../features/tiles/tilesSlice';
 import { importArmies } from '../features/armies/armiesSlice';
 import { importFactions } from '../features/factions/factionsSlice';
+import { importTerrainConfig } from '../features/terrainConfig/terrainConfigSlice';
 import { loadMap } from '../features/currentMap/currentMapSlice';
 import { saveMapData, loadMapData, createMap } from '../utils/mapsStorage';
 import * as historyManager from '../utils/historyManager';
-import type { TilesState, ArmiesState, FactionsState } from '../types/state';
+import type { TilesState, ArmiesState, FactionsState, TerrainConfigState } from '../types/state';
 import type { HistorySnapshot } from '../types/history';
 
 const PAINT_SAVE_DEBOUNCE_MS = 500;
+
+const DEFAULT_TERRAIN_CONFIG: TerrainConfigState = {
+  disabled: [],
+  custom: [],
+  order: ['grass', 'farm', 'forest', 'mountain', 'lake', 'ocean'],
+};
 
 const useLocalStorageSync = (): void => {
   const dispatch = useAppDispatch();
@@ -24,6 +31,7 @@ const useLocalStorageSync = (): void => {
   const lastTilesRef = useRef<TilesState | null>(null);
   const lastArmiesRef = useRef<ArmiesState | null>(null);
   const lastFactionsRef = useRef<FactionsState | null>(null);
+  const lastTerrainConfigRef = useRef<TerrainConfigState | null>(null);
   // Captured before-stroke snapshot; flushed as a single history entry after debounce
   const paintSnapshotRef = useRef<HistorySnapshot | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -47,10 +55,12 @@ const useLocalStorageSync = (): void => {
         }
         dispatch(importArmies(saved.armies ?? {}));
         dispatch(importFactions(saved.factions ?? []));
+        dispatch(importTerrainConfig(saved.terrainConfig ?? DEFAULT_TERRAIN_CONFIG));
       } else {
         dispatch(importTiles({}));
         dispatch(importArmies({}));
         dispatch(importFactions([]));
+        dispatch(importTerrainConfig(DEFAULT_TERRAIN_CONFIG));
       }
     }
 
@@ -58,22 +68,24 @@ const useLocalStorageSync = (): void => {
     lastTilesRef.current = initial.tiles;
     lastArmiesRef.current = initial.armies;
     lastFactionsRef.current = initial.factions;
+    lastTerrainConfigRef.current = initial.terrainConfig;
 
     const unsubscribe = store.subscribe(() => {
       const currentId = store.getState().currentMap.id;
       if (!currentId) return;
 
-      const { tiles, armies, factions, ui } = store.getState();
+      const { tiles, armies, factions, ui, terrainConfig } = store.getState();
 
       const tilesChanged = tiles !== lastTilesRef.current;
       const armiesChanged = armies !== lastArmiesRef.current;
       const factionsChanged = factions !== lastFactionsRef.current;
+      const terrainConfigChanged = terrainConfig !== lastTerrainConfigRef.current;
 
-      if (!tilesChanged && !armiesChanged && !factionsChanged) return;
+      if (!tilesChanged && !armiesChanged && !factionsChanged && !terrainConfigChanged) return;
 
       const isPaintMode = ui.mapMode === 'terrain-paint' || ui.mapMode === 'faction';
 
-      if (isPaintMode) {
+      if (isPaintMode && !terrainConfigChanged) {
         // Capture the pre-stroke state once; subsequent paints in the same stroke are suppressed
         if (!paintSnapshotRef.current) {
           paintSnapshotRef.current = {
@@ -86,6 +98,7 @@ const useLocalStorageSync = (): void => {
         lastTilesRef.current = tiles;
         lastArmiesRef.current = armies;
         lastFactionsRef.current = factions;
+        lastTerrainConfigRef.current = terrainConfig;
 
         // Debounce the actual save + history push so they fire once per stroke
         if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -97,6 +110,7 @@ const useLocalStorageSync = (): void => {
             tiles: lastTilesRef.current!,
             armies: lastArmiesRef.current!,
             factions: lastFactionsRef.current!,
+            terrainConfig: lastTerrainConfigRef.current ?? DEFAULT_TERRAIN_CONFIG,
           });
         }, PAINT_SAVE_DEBOUNCE_MS);
       } else {
@@ -119,8 +133,9 @@ const useLocalStorageSync = (): void => {
         lastTilesRef.current = tiles;
         lastArmiesRef.current = armies;
         lastFactionsRef.current = factions;
+        lastTerrainConfigRef.current = terrainConfig;
 
-        saveMapData(currentId, { tiles, armies, factions });
+        saveMapData(currentId, { tiles, armies, factions, terrainConfig });
       }
     });
 
@@ -141,6 +156,7 @@ const useLocalStorageSync = (): void => {
     const cleanTiles = store.getState().tiles;
     const cleanArmies = store.getState().armies;
     const cleanFactions = store.getState().factions;
+    const cleanTerrainConfig = store.getState().terrainConfig;
 
     let unsubscribe: (() => void) | undefined;
     unsubscribe = store.subscribe(() => {
@@ -148,7 +164,8 @@ const useLocalStorageSync = (): void => {
       if (
         state.tiles === cleanTiles &&
         state.armies === cleanArmies &&
-        state.factions === cleanFactions
+        state.factions === cleanFactions &&
+        state.terrainConfig === cleanTerrainConfig
       )
         return;
       if (state.currentMap.name === '') return;
@@ -157,7 +174,12 @@ const useLocalStorageSync = (): void => {
       justSavedPendingRef.current = true;
       const name = state.currentMap.name;
       const map = createMap(name);
-      saveMapData(map.id, { tiles: state.tiles, armies: state.armies, factions: state.factions });
+      saveMapData(map.id, {
+        tiles: state.tiles,
+        armies: state.armies,
+        factions: state.factions,
+        terrainConfig: state.terrainConfig,
+      });
       dispatch(loadMap({ id: map.id, name }));
     });
 

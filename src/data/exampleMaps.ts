@@ -3,7 +3,7 @@
 // Tile defaults are applied here so the rest of the app never has to guard for missing properties.
 import rawSmall from './example-map.json';
 import rawLarge from './large-map.json';
-import type { Tile, Army, Faction } from '../types/domain';
+import type { Tile, Army, Faction, TerrainConfig } from '../types/domain';
 import type { TilesState, ArmiesState } from '../types/state';
 
 type RawTile = Partial<Tile> & { q: number; r: number };
@@ -13,6 +13,7 @@ type RawEnvelope = {
   tiles?: Record<string, RawTile>;
   armies?: Record<string, RawArmy>;
   factions?: Faction[];
+  terrainConfig?: TerrainConfig;
 };
 
 export interface ExampleMapData {
@@ -21,6 +22,7 @@ export interface ExampleMapData {
   tiles: TilesState;
   armies: ArmiesState;
   factions: Faction[];
+  terrainConfig?: TerrainConfig;
 }
 
 const normalizeTile = (t: RawTile): Tile => {
@@ -74,6 +76,7 @@ const fromEnvelope = (raw: RawEnvelope, id: string): ExampleMapData => {
     tiles: normalizeTiles(raw.tiles ?? {}),
     armies: normalizeArmies(raw.armies ?? {}),
     factions: raw.factions ?? [],
+    terrainConfig: raw.terrainConfig,
   };
 };
 

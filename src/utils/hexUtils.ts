@@ -1,5 +1,7 @@
 // Pointy-top axial hex coordinate utilities
 
+import type { CustomTerrainType } from '../types/domain';
+
 export const HEX_SIZE = 50; // radius in pixels (center to corner)
 
 // Pre-computed constants to avoid repeated Math.sqrt calls
@@ -141,3 +143,11 @@ export const edgeMidpoint = (
 // - shared edges with neighbours are merged (no border drawn)
 // - ports appear on adjacent land tiles
 export const DEEP_WATER = new Set(['lake', 'ocean']);
+
+export const buildDeepWaterSet = (customTerrains: CustomTerrainType[]): Set<string> => {
+  const base = new Set(DEEP_WATER);
+  customTerrains.forEach((t) => {
+    if (t.isDeepWater) base.add(t.id);
+  });
+  return base;
+};

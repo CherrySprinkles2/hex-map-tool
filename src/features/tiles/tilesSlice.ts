@@ -190,6 +190,14 @@ const tilesSlice = createSlice({
     importTiles: (_state, action: PayloadAction<TilesState>) => {
       return action.payload;
     },
+    deleteTilesByTerrain: (state, action: PayloadAction<string>) => {
+      const terrainId = action.payload;
+      Object.keys(state).forEach((key) => {
+        if (state[key].terrain === terrainId) {
+          delete state[key];
+        }
+      });
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(restoreSnapshot, (_state, action) => {
@@ -218,5 +226,6 @@ export const {
   setTileFeature,
   deleteTile,
   importTiles,
+  deleteTilesByTerrain,
 } = tilesSlice.actions;
 export default tilesSlice.reducer;

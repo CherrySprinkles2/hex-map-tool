@@ -1,4 +1,33 @@
-export type TerrainType = 'grass' | 'farm' | 'forest' | 'mountain' | 'lake' | 'ocean';
+export type TerrainType = string;
+
+export type PatternKey =
+  | 'grass'
+  | 'farm'
+  | 'forest'
+  | 'mountain'
+  | 'lake'
+  | 'ocean'
+  | 'desert'
+  | 'swamp'
+  | 'jungle'
+  | 'hills'
+  | 'badlands'
+  | 'none';
+
+export interface CustomTerrainType {
+  id: string;
+  name: string;
+  color: string;
+  patternKey: PatternKey;
+  isDeepWater: boolean;
+  icon: string;
+}
+
+export interface TerrainConfig {
+  disabled: string[];
+  custom: CustomTerrainType[];
+  order: string[];
+}
 
 export type TileFlag = 'hasRiver' | 'hasRoad' | 'hasTown';
 
@@ -40,10 +69,11 @@ export interface MapEntry {
 }
 
 export interface MapData {
-  version: 1;
+  version: 1 | 2;
   tiles: Record<string, Tile>;
   armies: Record<string, Army>;
   factions: Faction[];
+  terrainConfig?: TerrainConfig;
 }
 
 export interface MapEnvelope {
@@ -51,6 +81,7 @@ export interface MapEnvelope {
   tiles: Record<string, Tile>;
   armies: Record<string, Army>;
   factions: Faction[];
+  terrainConfig?: TerrainConfig;
 }
 
 export interface ExampleMap {

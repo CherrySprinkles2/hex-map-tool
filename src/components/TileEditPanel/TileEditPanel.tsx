@@ -22,6 +22,7 @@ import {
 import { theme } from '../../styles/theme';
 import { NEIGHBOR_DIRS, toKey, DEEP_WATER } from '../../utils/hexUtils';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import useTerrainList from '../../hooks/useTerrainList';
 import type { RootState } from '../../app/store';
 import type { TileFlag, TerrainType } from '../../types/domain';
 import { SidePanel } from '../shared/SidePanel';
@@ -527,6 +528,7 @@ const FLAGS: Array<{
 const TileEditPanel = (): React.ReactElement => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
+  const terrainList = useTerrainList();
   const selectedKey = useAppSelector((state) => {
     return state.ui.selectedTile;
   });
@@ -618,20 +620,20 @@ const TileEditPanel = (): React.ReactElement => {
           <div>
             <SectionLabel>{t('tilePanel.terrain')}</SectionLabel>
             <TerrainGrid>
-              {Object.entries(theme.terrain).map(([type, { color, icon }]) => {
+              {terrainList.map(({ id, color, icon, name }) => {
                 return (
                   <TerrainBtn
-                    key={type}
-                    data-testid={`paint-brush-${type}`}
-                    $active={activePaintBrush === type}
+                    key={id}
+                    data-testid={`paint-brush-${id}`}
+                    $active={activePaintBrush === id}
                     $color={color}
                     onClick={() => {
-                      return dispatch(setActivePaintBrush(type));
+                      return dispatch(setActivePaintBrush(id));
                     }}
                   >
                     <span className="icon">{icon}</span>
                     <span className="label">
-                      {t(`terrain.${type}` as `terrain.${TerrainType}`)}
+                      {t(`terrain.${id}` as `terrain.${TerrainType}`, { defaultValue: name })}
                     </span>
                   </TerrainBtn>
                 );
@@ -710,20 +712,20 @@ const TileEditPanel = (): React.ReactElement => {
               <div>
                 <SectionLabel>{t('tilePanel.terrain')}</SectionLabel>
                 <TerrainGrid>
-                  {Object.entries(theme.terrain).map(([type, { color, icon }]) => {
+                  {terrainList.map(({ id, color, icon, name }) => {
                     return (
                       <TerrainBtn
-                        key={type}
-                        data-testid={`terrain-btn-${type}`}
-                        $active={tile?.terrain === type}
+                        key={id}
+                        data-testid={`terrain-btn-${id}`}
+                        $active={tile?.terrain === id}
                         $color={color}
                         onClick={() => {
-                          return handleTerrainChange(type as TerrainType);
+                          return handleTerrainChange(id as TerrainType);
                         }}
                       >
                         <span className="icon">{icon}</span>
                         <span className="label">
-                          {t(`terrain.${type}` as `terrain.${TerrainType}`)}
+                          {t(`terrain.${id}` as `terrain.${TerrainType}`, { defaultValue: name })}
                         </span>
                       </TerrainBtn>
                     );
@@ -810,7 +812,11 @@ const TileEditPanel = (): React.ReactElement => {
                               return (
                                 <ConnectionRow key={nk}>
                                   <span>
-                                    {theme.terrain[terrain as TerrainType]?.icon ?? terrain}
+                                    {terrainList.find((e) => {
+                                      return e.id === terrain;
+                                    })?.icon ??
+                                      theme.terrain[terrain as TerrainType]?.icon ??
+                                      terrain}
                                   </span>
                                   <span>{dirLabel}</span>
                                   {isBlocked && (

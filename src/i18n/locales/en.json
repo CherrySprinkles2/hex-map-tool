@@ -116,6 +116,26 @@
     "delete": "Delete the selected tile",
     "resetViewport": "Reset viewport to centre"
   },
+  "terrainConfig": {
+    "title": "Terrain Types",
+    "fieldName": "Name",
+    "fieldColor": "Color",
+    "fieldPattern": "Pattern",
+    "fieldIcon": "Icon",
+    "fieldDeepWater": "Deep Water",
+    "iconHint": "Find icons at",
+    "iconHintLink": "emojiterra.com",
+    "deepWaterHint": "Merges edges with adjacent water tiles, suppresses river and road visuals, and enables ports on neighbouring town tiles.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "add": "Add",
+    "addTerrain": "＋ Add Terrain",
+    "back": "← Back",
+    "newTerrainTitle": "New Terrain",
+    "editTerrainTitle": "Edit Terrain",
+    "disableWarning": "{{count}} tile(s) use this terrain. Disabling will hide it from the picker but won't delete tiles. Continue?",
+    "deleteWarning": "{{count}} tile(s) use this terrain. Delete those tiles too?"
+  },
   "errorBoundary": {
     "title": "⚠ Something went wrong",
     "body": "An unexpected error occurred. Try reloading the page. If the problem persists, your map data may be corrupted.",

@@ -54,7 +54,17 @@ const HexTile = React.memo(({ q, r }: HexTileProps): React.ReactElement => {
     );
   });
 
-  const terrainData = theme.terrain[terrain] ?? theme.terrain.grass;
+  const customTerrainColor = useAppSelector((state) => {
+    if (theme.terrain[terrain as keyof typeof theme.terrain]) return null;
+    return (
+      state.terrainConfig.custom.find((ct) => {
+        return ct.id === terrain;
+      })?.color ?? null
+    );
+  });
+
+  const terrainData = theme.terrain[terrain as keyof typeof theme.terrain] ?? theme.terrain.grass;
+  const fillColor = customTerrainColor ?? terrainData.color;
 
   const { x, y } = useMemo(() => {
     return axialToPixel(q, r);
@@ -69,7 +79,13 @@ const HexTile = React.memo(({ q, r }: HexTileProps): React.ReactElement => {
   const applyBrush = useCallback(
     (brushValue: string | null) => {
       if (!brushValue) return;
-      if (theme.terrain[brushValue as keyof typeof theme.terrain]) {
+      const customTerrains = store.getState().terrainConfig.custom;
+      const isTerrainBrush =
+        !!theme.terrain[brushValue as keyof typeof theme.terrain] ||
+        customTerrains.some((ct) => {
+          return ct.id === brushValue;
+        });
+      if (isTerrainBrush) {
         dispatch(updateTile({ q, r, terrain: brushValue }));
       } else if (brushValue === 'river-on') {
         dispatch(setTileFeature({ q, r, flag: 'hasRiver' as TileFlag, value: true }));
@@ -172,12 +188,7 @@ const HexTile = React.memo(({ q, r }: HexTileProps): React.ReactElement => {
       }}
       style={{ cursor: 'pointer' }}
     >
-      <polygon
-        points={points}
-        fill={terrainData.color}
-        stroke={theme.tileStroke}
-        strokeWidth={1.5}
-      />
+      <polygon points={points} fill={fillColor} stroke={theme.tileStroke} strokeWidth={1.5} />
       <polygon
         points={points}
         fill={`url(#pattern-${terrain})`}

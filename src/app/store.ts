@@ -5,6 +5,7 @@ import factionsReducer from '../features/factions/factionsSlice';
 import viewportReducer from '../features/viewport/viewportSlice';
 import uiReducer from '../features/ui/uiSlice';
 import currentMapReducer from '../features/currentMap/currentMapSlice';
+import terrainConfigReducer from '../features/terrainConfig/terrainConfigSlice';
 
 const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ const store = configureStore({
     viewport: viewportReducer,
     ui: uiReducer,
     currentMap: currentMapReducer,
+    terrainConfig: terrainConfigReducer,
   },
 });
 

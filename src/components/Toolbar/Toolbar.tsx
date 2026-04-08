@@ -8,6 +8,7 @@ import { SettingsButton } from '../shared/SettingsButton';
 import { importTiles } from '../../features/tiles/tilesSlice';
 import { importArmies } from '../../features/armies/armiesSlice';
 import { importFactions } from '../../features/factions/factionsSlice';
+import { importTerrainConfig } from '../../features/terrainConfig/terrainConfigSlice';
 import {
   deselectTile,
   deselectArmy,
@@ -18,7 +19,8 @@ import {
 } from '../../features/ui/uiSlice';
 import { renameCurrentMap, unloadMap } from '../../features/currentMap/currentMapSlice';
 import { renameMap, getAllMaps } from '../../utils/mapsStorage';
-import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../app/hooks';
+import TerrainConfigModal from '../TerrainConfigModal/TerrainConfigModal';
 
 const Bar = styled.div<{ $rightPanelOpen: boolean }>`
   display: flex;
@@ -266,6 +268,8 @@ const Toolbar = (): React.ReactElement => {
   const [editing, setEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [langModalOpen, setLangModalOpen] = useState(false);
+  const [terrainConfigOpen, setTerrainConfigOpen] = useState(false);
+  const store = useAppStore();
 
   const rightPanelOpen =
     mapMode === 'terrain' ||
@@ -306,7 +310,13 @@ const Toolbar = (): React.ReactElement => {
 
   const handleExport = () => {
     setSettingsOpen(false);
-    const payload = { name: mapName || 'hex-map', tiles, armies, factions };
+    const payload = {
+      name: mapName || 'hex-map',
+      tiles,
+      armies,
+      factions,
+      terrainConfig: store.getState().terrainConfig,
+    };
     const json = JSON.stringify(payload, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -328,6 +338,9 @@ const Toolbar = (): React.ReactElement => {
           dispatch(importTiles(data.tiles));
           dispatch(importArmies(data.armies ?? {}));
           dispatch(importFactions(data.factions ?? []));
+          if (data.terrainConfig) {
+            dispatch(importTerrainConfig(data.terrainConfig));
+          }
           const desired = (data.name || '').trim() || 'Untitled Map';
           const takenNames = new Set(
             getAllMaps()
@@ -448,6 +461,15 @@ const Toolbar = (): React.ReactElement => {
           <SheetIcon>⌨</SheetIcon>
           {t('toolbar.keyboardShortcuts')}
         </SheetItem>
+        <SheetItem
+          onClick={() => {
+            setSettingsOpen(false);
+            setTerrainConfigOpen(true);
+          }}
+        >
+          <SheetIcon>🗺</SheetIcon>
+          {t('terrainConfig.title')}
+        </SheetItem>
         <SheetItem data-testid="export-json-btn" onClick={handleExport}>
           <SheetIcon>⬇</SheetIcon>
           {t('toolbar.exportJSON')}
@@ -491,6 +513,13 @@ const Toolbar = (): React.ReactElement => {
         style={{ display: 'none' }}
         onChange={handleImport}
       />
+      {terrainConfigOpen && (
+        <TerrainConfigModal
+          onClose={() => {
+            return setTerrainConfigOpen(false);
+          }}
+        />
+      )}
     </>
   );
 };

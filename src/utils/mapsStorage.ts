@@ -10,7 +10,7 @@
 //   hex-map-tool-factions-{id}   (old per-map factions)
 
 import { generateId } from './generateId';
-import type { MapEntry, MapData, Faction } from '../types/domain';
+import type { MapEntry, MapData, Faction, TerrainConfig } from '../types/domain';
 import type { TilesState, ArmiesState } from '../types/state';
 
 const INDEX_KEY = 'hex-map-tool-index';
@@ -94,7 +94,7 @@ export const createMap = (name = 'Untitled Map'): MapEntry => {
   const id = generateId('map');
   const entry: MapEntry = { id, name, updatedAt: new Date().toISOString() };
   writeIndex([...getAllMaps(), entry]);
-  safeSetItem(DATA_KEY(id), JSON.stringify({ version: 1, tiles: {}, armies: {}, factions: [] }));
+  safeSetItem(DATA_KEY(id), JSON.stringify({ version: 2, tiles: {}, armies: {}, factions: [] }));
   return entry;
 };
 
@@ -132,6 +132,7 @@ export interface LoadedMapData {
   tiles: TilesState;
   armies: ArmiesState;
   factions: Faction[];
+  terrainConfig?: TerrainConfig;
 }
 
 // Returns { tiles, armies, factions } or null if no data found.
@@ -142,11 +143,12 @@ export const loadMapData = (id: string): LoadedMapData | null => {
     const raw = localStorage.getItem(DATA_KEY(id));
     if (raw) {
       const data = JSON.parse(raw) as MapData;
-      if (data.version === 1) {
+      if (data.version === 1 || data.version === 2) {
         return {
           tiles: (data.tiles ?? {}) as TilesState,
           armies: (data.armies ?? {}) as ArmiesState,
           factions: (data.factions ?? []) as Faction[],
+          terrainConfig: data.terrainConfig,
         };
       }
     }
@@ -181,6 +183,6 @@ export const loadMapData = (id: string): LoadedMapData | null => {
 
 // Saves tiles, armies and factions in a single atomic write and updates the index timestamp.
 export const saveMapData = (id: string, data: LoadedMapData): void => {
-  safeSetItem(DATA_KEY(id), JSON.stringify({ version: 1, ...data }));
+  safeSetItem(DATA_KEY(id), JSON.stringify({ version: 2, ...data }));
   touchMap(id);
 };

@@ -116,6 +116,26 @@
     "delete": "Poista valittu ruutu",
     "resetViewport": "Nollaa näkymä keskelle"
   },
+  "terrainConfig": {
+    "title": "Maastotyypit",
+    "fieldName": "Nimi",
+    "fieldColor": "Väri",
+    "fieldPattern": "Kuvio",
+    "fieldIcon": "Kuvake",
+    "fieldDeepWater": "Syvä vesi",
+    "iconHint": "Löydät kuvakkeita osoitteesta",
+    "iconHintLink": "emojiterra.com",
+    "deepWaterHint": "Yhdistää reunat viereisten vesialueiden kanssa, piilottaa joki- ja tievisualisoinnit sekä mahdollistaa satamat viereisten kaupunkien ruuduissa.",
+    "cancel": "Peruuta",
+    "save": "Tallenna",
+    "add": "Lisää",
+    "addTerrain": "＋ Lisää maastotyyppi",
+    "back": "← Takaisin",
+    "newTerrainTitle": "Uusi maastotyyppi",
+    "editTerrainTitle": "Muokkaa maastotyyppiä",
+    "disableWarning": "{{count}} ruutu(a) käyttää tätä maastotyyppiä. Poistaminen käytöstä piilottaa sen valitsimesta muttei poista ruutuja. Jatketaanko?",
+    "deleteWarning": "{{count}} ruutu(a) käyttää tätä maastotyyppiä. Poistetaanko nämä ruudutkin?"
+  },
   "errorBoundary": {
     "title": "⚠ Jokin meni pieleen",
     "body": "Odottamaton virhe tapahtui. Kokeile ladata sivu uudelleen. Jos ongelma jatkuu, karttadatasi saattaa olla vioittunut.",
