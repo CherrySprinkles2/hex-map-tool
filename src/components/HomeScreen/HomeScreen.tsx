@@ -438,6 +438,38 @@ const HomeScreen = (): React.ReactElement => {
           <span>＋</span>
           <NewLabel>{t('home.newMap')}</NewLabel>
         </NewCard>
+        {[...maps]
+          .sort((a, b) => {
+            return new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime();
+          })
+          .map((map) => {
+            return (
+              <Card
+                key={map.id}
+                data-testid={`map-card-${map.id}`}
+                onClick={() => {
+                  return handleOpen(map);
+                }}
+              >
+                <MapThumbnail
+                  tilesData={tilesCache[map.id] ?? {}}
+                  customTerrains={customTerrainsCache[map.id] ?? []}
+                />
+                <DeleteBtn
+                  data-testid={`delete-map-${map.id}`}
+                  onClick={(e) => {
+                    return handleDelete(e, map.id);
+                  }}
+                >
+                  ✕
+                </DeleteBtn>
+                <CardMeta>
+                  <CardName data-testid={`map-name-${map.id}`}>{map.name}</CardName>
+                  <CardDate>{t('home.edited', { time: formatDate(map.updatedAt, t) })}</CardDate>
+                </CardMeta>
+              </Card>
+            );
+          })}
         {exampleMaps.map((example) => {
           return (
             <Card
@@ -455,34 +487,6 @@ const HomeScreen = (): React.ReactElement => {
               <CardMeta>
                 <CardName>{example.name}</CardName>
                 <CardDate>{t('home.builtIn')}</CardDate>
-              </CardMeta>
-            </Card>
-          );
-        })}
-        {[...maps].reverse().map((map) => {
-          return (
-            <Card
-              key={map.id}
-              data-testid={`map-card-${map.id}`}
-              onClick={() => {
-                return handleOpen(map);
-              }}
-            >
-              <MapThumbnail
-                tilesData={tilesCache[map.id] ?? {}}
-                customTerrains={customTerrainsCache[map.id] ?? []}
-              />
-              <DeleteBtn
-                data-testid={`delete-map-${map.id}`}
-                onClick={(e) => {
-                  return handleDelete(e, map.id);
-                }}
-              >
-                ✕
-              </DeleteBtn>
-              <CardMeta>
-                <CardName data-testid={`map-name-${map.id}`}>{map.name}</CardName>
-                <CardDate>{t('home.edited', { time: formatDate(map.updatedAt, t) })}</CardDate>
               </CardMeta>
             </Card>
           );
