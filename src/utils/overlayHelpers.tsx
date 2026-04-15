@@ -1,7 +1,5 @@
 import React from 'react';
-import villageUrl from '../components/TownEditPanel/assets/village.svg';
-import townUrl from '../components/TownEditPanel/assets/town.svg';
-import cityUrl from '../components/TownEditPanel/assets/city.svg';
+import { VillageIcon, TownIcon, CityIcon } from '../assets/icons/town';
 import {
   axialToPixel,
   hexCorners,
@@ -21,7 +19,6 @@ import { resolveCausewayPaths } from './routeLookup';
 import { theme } from '../styles/theme';
 import type { TilesState } from '../types/state';
 import type { Army } from '../types/domain';
-import type { TownSize } from '../types/domain';
 
 interface PathStyle {
   color: string;
@@ -251,12 +248,6 @@ export const renderCausewayPaths = (
   });
 };
 
-const TOWN_SIZE_URL: Record<TownSize, string> = {
-  village: villageUrl,
-  town: townUrl,
-  city: cityUrl,
-};
-
 const townLayout = (radius: number, wallW: number) => {
   const outerR = radius + wallW / 2;
   return { outerR };
@@ -379,14 +370,41 @@ export const renderTownIcons = (
 
     return [
       <g key={`town-${key}`} style={{ pointerEvents: 'none' }}>
-        {/* SVG asset: ground fill + buildings for this town size */}
-        <image
-          href={TOWN_SIZE_URL[townSize]}
-          x={cx - radius}
-          y={cy - radius}
-          width={radius * 2}
-          height={radius * 2}
-        />
+        {/* Town icon: ground fill + buildings for this town size */}
+        {townSize === 'village' && (
+          <VillageIcon
+            x={cx - radius}
+            y={cy - radius}
+            width={radius * 2}
+            height={radius * 2}
+            groundColor={theme.town.groundColor}
+            buildingColor={theme.town.buildingColor}
+            streetColor={theme.town.streetColor}
+          />
+        )}
+        {townSize === 'town' && (
+          <TownIcon
+            x={cx - radius}
+            y={cy - radius}
+            width={radius * 2}
+            height={radius * 2}
+            groundColor={theme.town.groundColor}
+            buildingColor={theme.town.buildingColor}
+            streetColor={theme.town.streetColor}
+          />
+        )}
+        {townSize === 'city' && (
+          <CityIcon
+            x={cx - radius}
+            y={cy - radius}
+            width={radius * 2}
+            height={radius * 2}
+            groundColor={theme.town.groundColor}
+            buildingColor={theme.town.buildingColor}
+            streetColor={theme.town.streetColor}
+            courtyardColor={theme.town.courtyardColor}
+          />
+        )}
         {fortConfig && (
           <circle
             cx={cx}

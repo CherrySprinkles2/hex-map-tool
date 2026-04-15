@@ -23,7 +23,10 @@ const Toggle = styled.div`
     return theme.panelBackground;
   }};
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px
+    ${({ theme }) => {
+      return theme.surface.overlayMedium;
+    }};
 
   @media (min-width: 601px) {
     right: ${PANEL_OFFSET};

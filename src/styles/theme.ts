@@ -1,4 +1,15 @@
 import type { AppTheme } from '../types/theme';
+import {
+  GrassIcon,
+  FarmIcon,
+  ForestIcon,
+  MountainIcon,
+  LakeIcon,
+  OceanIcon,
+} from '../assets/icons/terrain';
+import { RiverIcon, RoadIcon, PortIcon } from '../assets/icons/features';
+import { LandIcon, NavalIcon } from '../assets/icons/army';
+import { VillageIcon, TownIcon, CityIcon } from '../assets/icons/town';
 
 export const theme: AppTheme = {
   // ── Chrome ────────────────────────────────────────────────────────────────────
@@ -8,6 +19,35 @@ export const theme: AppTheme = {
   text: '#e0e0e0',
   textMuted: '#888',
   accent: '#e94560',
+
+  // ── Surface opacity tokens ────────────────────────────────────────────────────
+  surface: {
+    base: 'rgba(255,255,255,0.02)',
+    subtle: 'rgba(255,255,255,0.03)',
+    card: 'rgba(255,255,255,0.05)',
+    hoverWeak: 'rgba(255,255,255,0.06)',
+    hover: 'rgba(255,255,255,0.08)',
+    activeWeak: 'rgba(255,255,255,0.10)',
+    active: 'rgba(255,255,255,0.12)',
+    borderFaint: 'rgba(255,255,255,0.10)',
+    border: 'rgba(255,255,255,0.15)',
+    borderMedium: 'rgba(255,255,255,0.20)',
+    borderStrong: 'rgba(255,255,255,0.25)',
+    borderFocus: 'rgba(255,255,255,0.40)',
+    overlayLight: 'rgba(0,0,0,0.30)',
+    overlayMedium: 'rgba(0,0,0,0.50)',
+    overlayHeavy: 'rgba(0,0,0,0.60)',
+  },
+
+  // ── Semantic UI colours ───────────────────────────────────────────────────────
+  ui: {
+    success: '#27ae60',
+    successLight: '#2ecc71',
+    successImport: '#50dc64',
+    danger: '#c0392b',
+    dangerLight: '#e74c3c',
+    paintMode: '#9370db',
+  },
 
   // ── Terrain tiles ─────────────────────────────────────────────────────────────
   terrain: {
@@ -57,6 +97,8 @@ export const theme: AppTheme = {
     labelShadow: 'rgba(0,0,0,0.7)',
     groundColor: '#7ec850',
     buildingColor: '#012731',
+    streetColor: '#a08060',
+    courtyardColor: '#5aaa44',
     fortification: {
       none: {
         groundColor: '#7ec850',
@@ -149,7 +191,36 @@ export const theme: AppTheme = {
     toggle: 40,
     toolbar: 50,
     panel: 100,
+    dropdown: 110,
     backdrop: 149,
     sheet: 150,
+    langModal: 151,
+    modal: 200,
+  },
+
+  // ── Icon component map ────────────────────────────────────────────────────────
+  icons: {
+    terrain: {
+      grass: GrassIcon,
+      farm: FarmIcon,
+      forest: ForestIcon,
+      mountain: MountainIcon,
+      lake: LakeIcon,
+      ocean: OceanIcon,
+    },
+    features: {
+      river: RiverIcon,
+      road: RoadIcon,
+      port: PortIcon,
+    },
+    army: {
+      land: LandIcon,
+      naval: NavalIcon,
+    },
+    town: {
+      village: VillageIcon,
+      town: TownIcon,
+      city: CityIcon,
+    },
   },
 };

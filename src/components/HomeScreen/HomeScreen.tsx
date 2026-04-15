@@ -1,13 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useDispatch } from 'react-redux';
-import styled from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import { useTranslation, Trans } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Backdrop, SheetItem, SheetIcon } from '../shared/sheet';
 import { LanguageToggle } from '../shared/LanguageToggle';
 import { LanguageModal } from '../shared/LanguageModal';
 import { SettingsButton } from '../shared/SettingsButton';
-import { getAllMaps, createMap, deleteMap, loadMapData } from '../../utils/mapsStorage';
+import {
+  getAllMaps,
+  createMap,
+  deleteMap,
+  loadMapData,
+  saveMapData,
+} from '../../utils/mapsStorage';
 import { loadMap } from '../../features/currentMap/currentMapSlice';
 import { importTiles } from '../../features/tiles/tilesSlice';
 import { importArmies } from '../../features/armies/armiesSlice';
@@ -20,6 +26,7 @@ import { setScreen } from '../../features/ui/uiSlice';
 import { resetViewport } from '../../features/viewport/viewportSlice';
 import MapThumbnail from './MapThumbnail';
 import { exampleMaps } from '../../data/exampleMaps';
+import { theme } from '../../styles/theme';
 import type { MapEntry, CustomTerrainType } from '../../types/domain';
 import type { TilesState } from '../../types/state';
 
@@ -162,8 +169,13 @@ const Notice = styled.div`
   margin-bottom: 28px;
   padding: 12px 16px;
   border-radius: 8px;
-  border: 1px solid #0f3460;
-  background: rgba(15, 52, 96, 0.25);
+  border: 1px solid
+    ${({ theme }) => {
+      return theme.panelBorder;
+    }};
+  background: ${({ theme }) => {
+    return `${theme.panelBorder}40`;
+  }};
   font-size: 0.8rem;
   color: ${({ theme }) => {
     return theme.textMuted;
@@ -184,7 +196,16 @@ const Grid = styled.div`
   gap: 20px;
 `;
 
-const Card = styled.div`
+const importPulse = keyframes`
+  0%   { border-color: ${theme.ui.successImport}; box-shadow: 0 0 0 4px ${theme.ui.successImport}59; }
+  20%  { border-color: ${theme.ui.successImport}; box-shadow: 0 0 0 8px ${theme.ui.successImport}26; }
+  40%  { border-color: ${theme.ui.successImport}; box-shadow: 0 0 0 4px ${theme.ui.successImport}59; }
+  60%  { border-color: ${theme.ui.successImport}; box-shadow: 0 0 0 6px ${theme.ui.successImport}33; }
+  80%  { border-color: ${theme.ui.successImport}; box-shadow: 0 0 0 3px ${theme.ui.successImport}40; }
+  100% { border-color: ${theme.ui.successImport}; box-shadow: none; }
+`;
+
+const Card = styled.div<{ $highlighted?: boolean }>`
   border-radius: 8px;
   border: 2px solid
     ${({ theme }) => {
@@ -199,6 +220,15 @@ const Card = styled.div`
     border-color 0.15s,
     transform 0.1s;
   position: relative;
+
+  ${({ $highlighted }) => {
+    return (
+      $highlighted &&
+      css`
+        animation: ${importPulse} 5s ease-out forwards;
+      `
+    );
+  }}
 
   &:hover {
     border-color: ${({ theme }) => {
@@ -264,7 +294,9 @@ const DeleteBtn = styled.button`
   position: absolute;
   top: 8px;
   right: 8px;
-  background: rgba(0, 0, 0, 0.5);
+  background: ${({ theme }) => {
+    return theme.surface.overlayMedium;
+  }};
   border: none;
   border-radius: 4px;
   color: ${({ theme }) => {
@@ -293,11 +325,75 @@ const DeleteBtn = styled.button`
   }
 `;
 
+const HeaderRight = styled.div`
+  display: none;
+
+  @media (min-width: 601px) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+`;
+
+const ImportBtn = styled.button`
+  display: none;
+
+  @media (min-width: 601px) {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1.5px solid
+      ${({ theme }) => {
+        return theme.panelBorder;
+      }};
+    background: transparent;
+    color: ${({ theme }) => {
+      return theme.textMuted;
+    }};
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      background 0.15s,
+      color 0.15s;
+    &:hover {
+      background: ${({ theme }) => {
+        return theme.panelBorder;
+      }};
+      color: ${({ theme }) => {
+        return theme.text;
+      }};
+    }
+  }
+`;
+
+const ImportedBadge = styled.div`
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: ${({ theme }) => {
+    return `${theme.ui.successImport}d9`;
+  }};
+  border-radius: 4px;
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+`;
+
 const ExampleBadge = styled.div`
   position: absolute;
   top: 8px;
   left: 8px;
-  background: rgba(0, 0, 0, 0.6);
+  background: ${({ theme }) => {
+    return theme.surface.overlayHeavy;
+  }};
   border: 1px solid
     ${({ theme }) => {
       return theme.panelBorder;
@@ -335,6 +431,8 @@ const HomeScreen = (): React.ReactElement => {
   >({});
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [langModalOpen, setLangModalOpen] = useState(false);
+  const [newlyImportedId, setNewlyImportedId] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement | null>(null);
 
   const refreshMaps = useCallback(() => {
     const all = getAllMaps();
@@ -387,6 +485,52 @@ const HomeScreen = (): React.ReactElement => {
     refreshMaps();
   };
 
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target!.result as string);
+        if (!data || typeof data !== 'object' || !data.tiles) {
+          alert('Invalid JSON file.');
+          return;
+        }
+        // Deduplicate name against existing maps
+        const desired = (data.name || '').trim() || t('home.untitledMap');
+        const takenNames = new Set(
+          getAllMaps().map((m) => {
+            return m.name;
+          })
+        );
+        let finalName = desired;
+        if (takenNames.has(finalName)) {
+          let n = 2;
+          while (takenNames.has(`${desired} (${n})`)) n++;
+          finalName = `${desired} (${n})`;
+        }
+        // Create a new map entry and save the imported data into it
+        const newMap = createMap(finalName);
+        saveMapData(newMap.id, {
+          tiles: data.tiles ?? {},
+          armies: data.armies ?? {},
+          factions: data.factions ?? [],
+          terrainConfig: data.terrainConfig,
+        });
+        refreshMaps();
+        // Highlight the new card for 5 seconds
+        setNewlyImportedId(newMap.id);
+        setTimeout(() => {
+          setNewlyImportedId(null);
+        }, 5000);
+      } catch {
+        alert('Invalid JSON file.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   return (
     <Shell>
       {/* Mobile-only top bar */}
@@ -411,11 +555,21 @@ const HomeScreen = (): React.ReactElement => {
             <Title>{t('home.title')}</Title>
             <Subtitle>{t('home.subtitle')}</Subtitle>
           </HeaderLeft>
-          <LanguageToggle
-            onAfterSelect={() => {
-              return setSettingsOpen(false);
-            }}
-          />
+          <HeaderRight>
+            <ImportBtn
+              data-testid="home-import-btn"
+              onClick={() => {
+                return fileInput.current?.click();
+              }}
+            >
+              ⬆ {t('toolbar.importJSON')}
+            </ImportBtn>
+            <LanguageToggle
+              onAfterSelect={() => {
+                return setSettingsOpen(false);
+              }}
+            />
+          </HeaderRight>
         </HeaderTop>
         <Description>{t('home.description')}</Description>
         <Notice>
@@ -443,10 +597,12 @@ const HomeScreen = (): React.ReactElement => {
             return new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime();
           })
           .map((map) => {
+            const isNew = map.id === newlyImportedId;
             return (
               <Card
                 key={map.id}
                 data-testid={`map-card-${map.id}`}
+                $highlighted={isNew}
                 onClick={() => {
                   return handleOpen(map);
                 }}
@@ -455,6 +611,7 @@ const HomeScreen = (): React.ReactElement => {
                   tilesData={tilesCache[map.id] ?? {}}
                   customTerrains={customTerrainsCache[map.id] ?? []}
                 />
+                {isNew && <ImportedBadge>{t('home.imported')}</ImportedBadge>}
                 <DeleteBtn
                   data-testid={`delete-map-${map.id}`}
                   onClick={(e) => {
@@ -503,6 +660,16 @@ const HomeScreen = (): React.ReactElement => {
       <Sheet $open={settingsOpen}>
         <SheetHandle />
         <SheetItem
+          data-testid="home-import-sheet-btn"
+          onClick={() => {
+            setSettingsOpen(false);
+            fileInput.current?.click();
+          }}
+        >
+          <SheetIcon>⬆</SheetIcon>
+          {t('toolbar.importJSON')}
+        </SheetItem>
+        <SheetItem
           onClick={() => {
             setSettingsOpen(false);
             setLangModalOpen(true);
@@ -512,6 +679,14 @@ const HomeScreen = (): React.ReactElement => {
           {t('toolbar.languageLabel')}
         </SheetItem>
       </Sheet>
+
+      <input
+        ref={fileInput}
+        type="file"
+        accept=".json"
+        style={{ display: 'none' }}
+        onChange={handleImportFile}
+      />
 
       <LanguageModal
         open={langModalOpen}

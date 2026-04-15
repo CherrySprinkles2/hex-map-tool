@@ -11,11 +11,13 @@ const ModalBackdrop = styled.div<{ $open: boolean }>`
   position: fixed;
   inset: 0;
   z-index: ${({ theme }) => {
-    return theme.zIndex.sheet + 1;
+    return theme.zIndex.langModal;
   }};
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
+  background: ${({ theme }) => {
+    return theme.surface.overlayHeavy;
+  }};
 
   @media (min-width: 601px) {
     display: none;
@@ -33,8 +35,8 @@ const LangOption = styled.button<{ $active: boolean }>`
     ${({ $active, theme }) => {
       return $active ? theme.textMuted : 'transparent';
     }};
-  background: ${({ $active }) => {
-    return $active ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)';
+  background: ${({ $active, theme }) => {
+    return $active ? theme.surface.hoverWeak : theme.surface.base;
   }};
   color: ${({ theme }) => {
     return theme.text;
@@ -50,7 +52,9 @@ const LangOption = styled.button<{ $active: boolean }>`
     border-color 0.15s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: ${({ theme }) => {
+      return theme.surface.hover;
+    }};
   }
 `;
 

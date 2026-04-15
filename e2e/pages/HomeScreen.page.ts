@@ -43,4 +43,34 @@ export class HomeScreenPage {
     await this.page.getByTestId('back-btn').click();
     await this.page.waitForSelector('[data-testid="new-map-card"]');
   }
+
+  /**
+   * Import a JSON string as a new map on the home screen.
+   * On desktop uses the header button; on mobile opens the settings sheet first.
+   * Returns after the file chooser has been fulfilled.
+   */
+  async importMap(jsonContent: string, isMobile = false): Promise<void> {
+    if (isMobile) {
+      await this.page.getByLabel('Settings').click();
+      const [fileChooser] = await Promise.all([
+        this.page.waitForEvent('filechooser'),
+        this.page.getByTestId('home-import-sheet-btn').click(),
+      ]);
+      await fileChooser.setFiles({
+        name: 'import.json',
+        mimeType: 'application/json',
+        buffer: Buffer.from(jsonContent),
+      });
+    } else {
+      const [fileChooser] = await Promise.all([
+        this.page.waitForEvent('filechooser'),
+        this.page.getByTestId('home-import-btn').click(),
+      ]);
+      await fileChooser.setFiles({
+        name: 'import.json',
+        mimeType: 'application/json',
+        buffer: Buffer.from(jsonContent),
+      });
+    }
+  }
 }

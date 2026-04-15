@@ -16,8 +16,13 @@ const NameInput = styled.input`
   width: 100%;
   padding: 8px 12px;
   border-radius: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid
+    ${({ theme }) => {
+      return theme.surface.border;
+    }};
+  background: ${({ theme }) => {
+    return theme.surface.card;
+  }};
   color: ${({ theme }) => {
     return theme.text;
   }};
@@ -27,7 +32,9 @@ const NameInput = styled.input`
   transition: border-color 0.15s;
 
   &:focus {
-    border-color: rgba(255, 255, 255, 0.4);
+    border-color: ${({ theme }) => {
+      return theme.surface.borderFocus;
+    }};
   }
 
   &::placeholder {
@@ -47,14 +54,14 @@ const MoveBtn = styled.button<{ $active: boolean }>`
   padding: 10px;
   border-radius: 8px 8px 0 0;
   border: 2px solid
-    ${({ $active }) => {
-      return $active ? '#ffaa00' : 'rgba(255,255,255,0.2)';
+    ${({ $active, theme }) => {
+      return $active ? theme.army.movingColor : theme.surface.borderMedium;
     }};
-  background: ${({ $active }) => {
-    return $active ? 'rgba(255,170,0,0.15)' : 'rgba(255,255,255,0.03)';
+  background: ${({ $active, theme }) => {
+    return $active ? `${theme.army.movingColor}26` : theme.surface.subtle;
   }};
   color: ${({ $active, theme }) => {
-    return $active ? '#ffaa00' : theme.text;
+    return $active ? theme.army.movingColor : theme.text;
   }};
   cursor: pointer;
   font-size: 0.85rem;
@@ -67,8 +74,8 @@ const MoveBtn = styled.button<{ $active: boolean }>`
     background 0.15s,
     border-color 0.15s;
   &:hover {
-    background: ${({ $active }) => {
-      return $active ? 'rgba(255,170,0,0.25)' : 'rgba(255,255,255,0.08)';
+    background: ${({ $active, theme }) => {
+      return $active ? `${theme.army.movingColor}40` : theme.surface.hover;
     }};
   }
 `;
@@ -104,8 +111,13 @@ const Hint = styled.div`
   color: ${({ theme }) => {
     return theme.textMuted;
   }};
-  background: rgba(255, 170, 0, 0.08);
-  border: 1px solid rgba(255, 170, 0, 0.2);
+  background: ${({ theme }) => {
+    return `${theme.army.movingColor}14`;
+  }};
+  border: 1px solid
+    ${({ theme }) => {
+      return `${theme.army.movingColor}33`;
+    }};
   border-radius: 6px;
   padding: 8px 10px;
   line-height: 1.5;
@@ -123,10 +135,12 @@ const DropdownTrigger = styled.button<{ $open: boolean }>`
   padding: 8px 36px 8px 12px;
   border-radius: 8px;
   border: 2px solid
-    ${({ $open }) => {
-      return $open ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)';
+    ${({ $open, theme }) => {
+      return $open ? theme.surface.borderFocus : theme.surface.border;
     }};
-  background: rgba(255, 255, 255, 0.05);
+  background: ${({ theme }) => {
+    return theme.surface.card;
+  }};
   color: ${({ theme }) => {
     return theme.text;
   }};
@@ -139,7 +153,9 @@ const DropdownTrigger = styled.button<{ $open: boolean }>`
   position: relative;
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: ${({ theme }) => {
+      return theme.surface.borderMedium;
+    }};
   }
 
   &::after {
@@ -153,7 +169,10 @@ const DropdownTrigger = styled.button<{ $open: boolean }>`
       }};
     border-left: 5px solid transparent;
     border-right: 5px solid transparent;
-    border-top: 5px solid rgba(255, 255, 255, 0.5);
+    border-top: 5px solid
+      ${({ theme }) => {
+        return theme.surface.borderFocus;
+      }};
     transition: transform 0.15s;
   }
 `;
@@ -167,12 +186,20 @@ const DropdownList = styled.ul`
   padding: 4px 0;
   list-style: none;
   border-radius: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.15);
+  border: 2px solid
+    ${({ theme }) => {
+      return theme.surface.border;
+    }};
   background: ${({ theme }) => {
     return theme.panelBackground;
   }};
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  z-index: 100;
+  box-shadow: 0 8px 24px
+    ${({ theme }) => {
+      return theme.surface.overlayMedium;
+    }};
+  z-index: ${({ theme }) => {
+    return theme.zIndex.dropdown;
+  }};
   max-height: 200px;
   overflow-y: auto;
 `;
@@ -183,14 +210,16 @@ const DropdownOption = styled.li<{ $selected: boolean }>`
   color: ${({ $selected, theme }) => {
     return $selected ? theme.text : theme.textMuted;
   }};
-  background: ${({ $selected }) => {
-    return $selected ? 'rgba(255,255,255,0.08)' : 'transparent';
+  background: ${({ $selected, theme }) => {
+    return $selected ? theme.surface.hover : 'transparent';
   }};
   cursor: pointer;
   transition: background 0.1s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: ${({ theme }) => {
+      return theme.surface.borderFaint;
+    }};
     color: ${({ theme }) => {
       return theme.text;
     }};

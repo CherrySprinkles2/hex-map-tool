@@ -1,7 +1,7 @@
 import React from 'react';
 import { theme } from '../../styles/theme';
 import type { Fortification } from '../../types/domain';
-import townUrl from './assets/town.svg';
+import { TownIcon } from '../../assets/icons/town';
 
 // Preview geometry — edit R to resize the preview circle.
 const CX = 30;
@@ -37,8 +37,15 @@ const FortificationPreview = ({ fortification }: Props): React.ReactElement => {
 
   return (
     <svg viewBox="0 0 60 60" width="60" height="60">
-      {/* Town SVG as base — same file used by the map renderer */}
-      <image href={townUrl} x={CX - R} y={CY - R} width={R * 2} height={R * 2} />
+      <TownIcon
+        x={CX - R}
+        y={CY - R}
+        width={R * 2}
+        height={R * 2}
+        groundColor={theme.town.groundColor}
+        buildingColor={theme.town.buildingColor}
+        streetColor={theme.town.streetColor}
+      />
       {cfg && (
         <circle
           cx={CX}

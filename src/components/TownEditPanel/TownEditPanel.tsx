@@ -20,8 +20,13 @@ const HeaderRow = styled.div`
 const BackBtn = styled.button`
   padding: 6px 12px;
   border-radius: 6px;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid
+    ${({ theme }) => {
+      return theme.surface.borderMedium;
+    }};
+  background: ${({ theme }) => {
+    return theme.surface.card;
+  }};
   color: ${({ theme }) => {
     return theme.textMuted;
   }};
@@ -33,8 +38,12 @@ const BackBtn = styled.button`
     color 0.15s,
     border-color 0.15s;
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.4);
+    background: ${({ theme }) => {
+      return theme.surface.borderFaint;
+    }};
+    border-color: ${({ theme }) => {
+      return theme.surface.borderFocus;
+    }};
     color: ${({ theme }) => {
       return theme.text;
     }};
@@ -60,7 +69,9 @@ const NameInput = styled.input`
     ${({ theme }) => {
       return theme.town.color;
     }}66;
-  background: rgba(255, 255, 255, 0.05);
+  background: ${({ theme }) => {
+    return theme.surface.card;
+  }};
   color: ${({ theme }) => {
     return theme.text;
   }};
@@ -95,11 +106,11 @@ const OptionBtn = styled.button<{ $active: boolean }>`
   padding: 10px 12px;
   border: 2px solid
     ${({ $active, theme }) => {
-      return $active ? theme.town.color : 'rgba(255,255,255,0.1)';
+      return $active ? theme.town.color : theme.surface.borderFaint;
     }};
   border-radius: 0;
   background: ${({ $active, theme }) => {
-    return $active ? `${theme.town.color}18` : 'rgba(255,255,255,0.02)';
+    return $active ? `${theme.town.color}18` : theme.surface.base;
   }};
   cursor: pointer;
   text-align: left;
@@ -123,10 +134,10 @@ const OptionBtn = styled.button<{ $active: boolean }>`
   &:hover {
     z-index: 1;
     border-color: ${({ $active, theme }) => {
-      return $active ? theme.town.color : 'rgba(255,255,255,0.3)';
+      return $active ? theme.town.color : theme.surface.hover;
     }};
     background: ${({ $active, theme }) => {
-      return $active ? `${theme.town.color}22` : 'rgba(255,255,255,0.06)';
+      return $active ? `${theme.town.color}22` : theme.surface.hoverWeak;
     }};
   }
 `;

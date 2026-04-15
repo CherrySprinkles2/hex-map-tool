@@ -14,7 +14,6 @@ import { deleteTilesByTerrain } from '../../features/tiles/tilesSlice';
 import { generateId } from '../../utils/generateId';
 import { patternMarkColor } from '../../utils/patternColor';
 import { theme } from '../../styles/theme';
-import { TERRAIN_ICON } from '../../assets/icons/terrain';
 import type { CustomTerrainType, PatternKey } from '../../types/domain';
 
 const BUILTIN_IDS = ['grass', 'farm', 'forest', 'mountain', 'lake', 'ocean'] as const;
@@ -38,8 +37,12 @@ const PATTERN_OPTIONS: PatternKey[] = [
 const ModalBackdrop = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 200;
+  background: ${({ theme: t }) => {
+    return t.surface.overlayHeavy;
+  }};
+  z-index: ${({ theme: t }) => {
+    return t.zIndex.modal;
+  }};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -109,7 +112,9 @@ const TerrainRow = styled.div`
     ${({ theme: t }) => {
       return t.panelBorder;
     }};
-  background: rgba(255, 255, 255, 0.03);
+  background: ${({ theme: t }) => {
+    return t.surface.subtle;
+  }};
 `;
 
 const ColorSwatch = styled.div<{ $color: string }>`
@@ -119,7 +124,10 @@ const ColorSwatch = styled.div<{ $color: string }>`
   background: ${({ $color }) => {
     return $color;
   }};
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid
+    ${({ theme: t }) => {
+      return t.surface.borderMedium;
+    }};
   flex-shrink: 0;
 `;
 
@@ -156,11 +164,11 @@ const SmallBtn = styled.button<{ $variant?: 'danger' | 'default' }>`
   border-radius: 4px;
   border: 1px solid
     ${({ $variant, theme: t }) => {
-      return $variant === 'danger' ? '#c0392b' : t.panelBorder;
+      return $variant === 'danger' ? t.ui.danger : t.panelBorder;
     }};
   background: transparent;
-  color: ${({ $variant }) => {
-    return $variant === 'danger' ? '#e74c3c' : '#aaa';
+  color: ${({ $variant, theme: t }) => {
+    return $variant === 'danger' ? t.ui.dangerLight : t.textMuted;
   }};
   font-size: 0.75rem;
   cursor: pointer;
@@ -180,8 +188,8 @@ const ToggleTrack = styled.button<{ $enabled: boolean }>`
   height: 20px;
   border-radius: 10px;
   border: none;
-  background: ${({ $enabled }) => {
-    return $enabled ? '#27ae60' : 'rgba(255,255,255,0.15)';
+  background: ${({ $enabled, theme: t }) => {
+    return $enabled ? t.ui.success : t.surface.border;
   }};
   cursor: pointer;
   flex-shrink: 0;
@@ -255,14 +263,18 @@ const FormInput = styled.input`
     ${({ theme: t }) => {
       return t.panelBorder;
     }};
-  background: rgba(0, 0, 0, 0.3);
+  background: ${({ theme: t }) => {
+    return t.surface.overlayLight;
+  }};
   color: ${({ theme: t }) => {
     return t.text;
   }};
   font-size: 0.85rem;
   outline: none;
   &:focus {
-    border-color: rgba(255, 255, 255, 0.4);
+    border-color: ${({ theme: t }) => {
+      return t.surface.borderFocus;
+    }};
   }
 `;
 
@@ -301,12 +313,14 @@ const SwatchBtn = styled.button<{ $selected: boolean }>`
     ${({ $selected, theme: t }) => {
       return $selected ? t.selectedStroke : 'transparent';
     }};
-  background: ${({ $selected }) => {
-    return $selected ? 'rgba(255,255,255,0.08)' : 'transparent';
+  background: ${({ $selected, theme: t }) => {
+    return $selected ? t.surface.hover : 'transparent';
   }};
   cursor: pointer;
   &:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: ${({ theme: t }) => {
+      return t.surface.hoverWeak;
+    }};
   }
 `;
 
@@ -321,15 +335,22 @@ const SwatchLabel = styled.span`
 const SaveBtn = styled.button`
   padding: 8px 0;
   border-radius: 8px;
-  border: 1.5px solid #27ae60;
+  border: 1.5px solid
+    ${({ theme: t }) => {
+      return t.ui.success;
+    }};
   background: transparent;
-  color: #2ecc71;
+  color: ${({ theme: t }) => {
+    return t.ui.successLight;
+  }};
   font-size: 0.875rem;
   cursor: pointer;
   width: 100%;
   margin-top: 4px;
   &:hover {
-    background: rgba(46, 204, 113, 0.1);
+    background: ${({ theme: t }) => {
+      return `${t.ui.successLight}1a`;
+    }};
   }
 `;
 
@@ -645,7 +666,7 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
         return {
           id,
           color: td.color,
-          Icon: TERRAIN_ICON[builtin] ?? null,
+          Icon: theme.icons.terrain[builtin] ?? null,
           iconUrl: '',
           name: builtin,
           isCustom: false,
@@ -675,7 +696,7 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
       orderedList.push({
         id: bid,
         color: td.color,
-        Icon: TERRAIN_ICON[bid] ?? null,
+        Icon: theme.icons.terrain[bid] ?? null,
         iconUrl: '',
         name: bid,
         isCustom: false,
@@ -950,7 +971,7 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
                       objectFit: 'contain',
                       filter: 'brightness(0) invert(1)',
                       opacity: 0.85,
-                      border: '1px solid rgba(255,255,255,0.15)',
+                      border: `1px solid ${theme.surface.border}`,
                       borderRadius: 4,
                       padding: 2,
                     }}

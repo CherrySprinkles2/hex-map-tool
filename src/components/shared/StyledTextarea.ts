@@ -7,8 +7,13 @@ export const StyledTextarea = styled.textarea<{ $minHeight?: string }>`
   }};
   padding: 10px 12px;
   border-radius: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid
+    ${({ theme }) => {
+      return theme.surface.active;
+    }};
+  background: ${({ theme }) => {
+    return theme.surface.card;
+  }};
   color: ${({ theme }) => {
     return theme.text;
   }};
@@ -21,7 +26,9 @@ export const StyledTextarea = styled.textarea<{ $minHeight?: string }>`
   transition: border-color 0.15s;
 
   &:focus {
-    border-color: rgba(255, 255, 255, 0.35);
+    border-color: ${({ theme }) => {
+      return theme.surface.borderFocus;
+    }};
   }
 
   &::placeholder {

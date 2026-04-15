@@ -18,7 +18,9 @@ const FactionList = styled.div`
 `;
 
 const FactionCard = styled.div<{ $color: string }>`
-  background: rgba(255, 255, 255, 0.04);
+  background: ${({ theme }) => {
+    return theme.surface.card;
+  }};
   border: 1px solid
     ${({ theme }) => {
       return theme.panelBorder;
@@ -100,7 +102,9 @@ const Swatch = styled.button<{ $active: boolean; $color: string }>`
   flex-shrink: 0;
   outline: none;
   &:hover {
-    border-color: rgba(255, 255, 255, 0.6);
+    border-color: ${({ theme }) => {
+      return theme.surface.borderFocus;
+    }};
   }
 `;
 
@@ -111,7 +115,9 @@ const DescInput = styled.textarea`
   color: ${({ theme }) => {
     return theme.text;
   }};
-  background: rgba(0, 0, 0, 0.2);
+  background: ${({ theme }) => {
+    return theme.surface.overlayLight;
+  }};
   border: 1px solid
     ${({ theme }) => {
       return theme.panelBorder;

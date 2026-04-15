@@ -1,21 +1,27 @@
 import React from 'react';
+import { useTheme } from 'styled-components';
 import type { TownSize } from '../../types/domain';
-import villageUrl from './assets/village.svg';
-import townUrl from './assets/town.svg';
-import cityUrl from './assets/city.svg';
-
-const ASSET: Record<TownSize, string> = {
-  village: villageUrl,
-  town: townUrl,
-  city: cityUrl,
-};
+import { VillageIcon, TownIcon, CityIcon } from '../../assets/icons/town';
+import type { AppTheme } from '../../types/theme';
 
 interface Props {
   townSize: TownSize;
 }
 
 const TownSizePreview = ({ townSize }: Props): React.ReactElement => {
-  return <img src={ASSET[townSize]} width="60" height="60" alt="" />;
+  const theme = useTheme() as AppTheme;
+  const commonProps = {
+    width: 60,
+    height: 60,
+    groundColor: theme.town.groundColor,
+    buildingColor: theme.town.buildingColor,
+    streetColor: theme.town.streetColor,
+  };
+
+  if (townSize === 'village') return <VillageIcon {...commonProps} />;
+  if (townSize === 'city')
+    return <CityIcon {...commonProps} courtyardColor={theme.town.courtyardColor} />;
+  return <TownIcon {...commonProps} />;
 };
 
 export default TownSizePreview;

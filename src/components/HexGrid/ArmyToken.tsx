@@ -4,7 +4,6 @@ import { axialToPixel, toKey, DEEP_WATER } from '../../utils/hexUtils';
 import { deleteArmy } from '../../features/armies/armiesSlice';
 import { selectArmy, deselectArmy } from '../../features/ui/uiSlice';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { LandIcon, NavalIcon } from '../../assets/icons/army';
 import type { Army } from '../../types/domain';
 
 interface ArmyTokenProps {
@@ -39,7 +38,7 @@ const ArmyToken = React.memo(({ army, tileIndex, total }: ArmyTokenProps): React
     );
   });
 
-  const ArmyIcon = DEEP_WATER.has(terrain) ? NavalIcon : LandIcon;
+  const ArmyIcon = DEEP_WATER.has(terrain) ? theme.icons.army.naval : theme.icons.army.land;
   const iconSize = theme.army.tokenRadius * 1.1;
 
   const { x: baseX, y: baseY } = useMemo(() => {

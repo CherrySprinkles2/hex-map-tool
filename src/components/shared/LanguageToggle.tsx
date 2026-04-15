@@ -41,7 +41,7 @@ const LangBtn = styled.button<{ $active: boolean }>`
       return theme.text;
     }};
     background: ${({ $active, theme }) => {
-      return $active ? theme.panelBorder : 'rgba(255,255,255,0.06)';
+      return $active ? theme.panelBorder : theme.surface.hoverWeak;
     }};
   }
 `;

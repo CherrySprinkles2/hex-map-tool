@@ -1,18 +1,6 @@
-import React from 'react';
-import GrassIcon from './GrassIcon';
-import FarmIcon from './FarmIcon';
-import ForestIcon from './ForestIcon';
-import MountainIcon from './MountainIcon';
-import LakeIcon from './LakeIcon';
-import OceanIcon from './OceanIcon';
-
-export { GrassIcon, FarmIcon, ForestIcon, MountainIcon, LakeIcon, OceanIcon };
-
-export const TERRAIN_ICON: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
-  grass: GrassIcon,
-  farm: FarmIcon,
-  forest: ForestIcon,
-  mountain: MountainIcon,
-  lake: LakeIcon,
-  ocean: OceanIcon,
-};
+export { default as GrassIcon } from './GrassIcon';
+export { default as FarmIcon } from './FarmIcon';
+export { default as ForestIcon } from './ForestIcon';
+export { default as MountainIcon } from './MountainIcon';
+export { default as LakeIcon } from './LakeIcon';
+export { default as OceanIcon } from './OceanIcon';

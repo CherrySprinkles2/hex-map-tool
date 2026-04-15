@@ -1,14 +1,71 @@
+import type React from 'react';
+import type { TownIconProps } from '../assets/icons/town';
+
+type SvgIcon = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+type TownIcon = React.ComponentType<TownIconProps>;
+
+export interface IconsMap {
+  terrain: Record<string, SvgIcon>;
+  features: {
+    river: SvgIcon;
+    road: SvgIcon;
+    port: SvgIcon;
+  };
+  army: {
+    land: SvgIcon;
+    naval: SvgIcon;
+  };
+  town: {
+    village: TownIcon;
+    town: TownIcon;
+    city: TownIcon;
+  };
+}
+
 export interface TerrainEntry {
   color: string;
   label: string;
+}
+
+export interface SurfaceScale {
+  // Backgrounds
+  base: string;
+  subtle: string;
+  card: string;
+  hoverWeak: string;
+  hover: string;
+  activeWeak: string;
+  active: string;
+  // Borders
+  borderFaint: string;
+  border: string;
+  borderMedium: string;
+  borderStrong: string;
+  borderFocus: string;
+  // Dark overlays
+  overlayLight: string;
+  overlayMedium: string;
+  overlayHeavy: string;
+}
+
+export interface UiColors {
+  success: string;
+  successLight: string;
+  successImport: string;
+  danger: string;
+  dangerLight: string;
+  paintMode: string;
 }
 
 export interface ZIndexScale {
   toggle: number;
   toolbar: number;
   panel: number;
+  dropdown: number;
   backdrop: number;
   sheet: number;
+  langModal: number;
+  modal: number;
 }
 
 export interface AppTheme {
@@ -18,6 +75,9 @@ export interface AppTheme {
   text: string;
   textMuted: string;
   accent: string;
+
+  surface: SurfaceScale;
+  ui: UiColors;
 
   terrain: Record<string, TerrainEntry>;
 
@@ -54,6 +114,8 @@ export interface AppTheme {
     labelShadow: string;
     groundColor: string;
     buildingColor: string;
+    streetColor: string;
+    courtyardColor: string;
     fortification: {
       none: {
         groundColor: string;
@@ -127,4 +189,5 @@ export interface AppTheme {
   };
 
   zIndex: ZIndexScale;
+  icons: IconsMap;
 }

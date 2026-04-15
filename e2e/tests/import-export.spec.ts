@@ -28,66 +28,43 @@ test.describe('Import / Export', () => {
     expect(Object.keys(json.tiles).length).toBeGreaterThan(0);
   });
 
-  test('importing a valid JSON file loads the map', async ({ appPage }) => {
+  test('importing a valid JSON file adds a new map card on the home screen', async ({
+    appPage,
+    isMobile,
+  }) => {
     const editor = new EditorPage(appPage);
 
-    // First export so we have a valid file
+    // Export the example map to get a valid JSON payload
     const { bodyText } = await editor.exportMap();
-
-    // Modify name to check import
     const importData = JSON.parse(bodyText) as Record<string, unknown>;
     importData.name = 'Imported Map';
     const importJson = JSON.stringify(importData);
 
-    // Navigate to a fresh map
+    // Go back to the home screen and import
     await editor.goBack();
     const home = new HomeScreenPage(appPage);
-    await home.createMap();
+    await home.importMap(importJson, isMobile);
 
-    // Trigger import via file input
-    await editor.openSettings();
-    const [fileChooser] = await Promise.all([
-      appPage.waitForEvent('filechooser'),
-      appPage.getByTestId('import-json-btn').click(),
-    ]);
-    await fileChooser.setFiles({
-      name: 'import.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(importJson),
-    });
-
-    // Map name input should update
-    await expect(appPage.getByTestId('map-name-input')).toHaveValue('Imported Map');
+    // A card with the imported name should appear in the map list
+    await expect(appPage.getByText('Imported Map')).toBeVisible();
   });
 
-  test('importing with a duplicate name appends (2)', async ({ appPage }) => {
+  test('importing with a duplicate name appends (2)', async ({ appPage, isMobile }) => {
     const editor = new EditorPage(appPage);
     const { bodyText } = await editor.exportMap();
     const importData = JSON.parse(bodyText) as Record<string, unknown>;
 
-    // Go back and create a REAL saved map (with a generated ID) named 'Dupe Test'
+    // Create and save a map named 'Dupe Test'
     await editor.goBack();
     const home = new HomeScreenPage(appPage);
     await home.createMap();
-    // Rename — this map has a real ID so the name is saved to the localStorage index
     await editor.renameMap('Dupe Test');
     await editor.goBack();
 
-    // Create a second map and import a file with the same name
-    await home.createMap();
+    // Import a file with the same name — should become 'Dupe Test (2)'
     importData.name = 'Dupe Test';
+    await home.importMap(JSON.stringify(importData), isMobile);
 
-    await editor.openSettings();
-    const [fileChooser] = await Promise.all([
-      appPage.waitForEvent('filechooser'),
-      appPage.getByTestId('import-json-btn').click(),
-    ]);
-    await fileChooser.setFiles({
-      name: 'import.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(JSON.stringify(importData)),
-    });
-
-    await expect(appPage.getByTestId('map-name-input')).toHaveValue(/\(2\)$/);
+    await expect(appPage.getByText('Dupe Test (2)')).toBeVisible();
   });
 });

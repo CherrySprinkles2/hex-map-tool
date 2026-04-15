@@ -15,10 +15,6 @@ export class EditorPage {
     return this.page.getByTestId('export-json-btn');
   }
 
-  get importBtn() {
-    return this.page.getByTestId('import-json-btn');
-  }
-
   /** Open the settings sheet (gear icon). */
   async openSettings(): Promise<void> {
     await this.page.getByLabel('Settings').click();

@@ -26,11 +26,11 @@ const FactionBtn = styled.button<{ $active: boolean; $color: string | null }>`
   padding: 10px 14px;
   border-radius: 8px;
   border: 2px solid
-    ${({ $active, $color }) => {
-      return $active ? ($color ?? 'rgba(255,255,255,0.4)') : 'transparent';
+    ${({ $active, $color, theme }) => {
+      return $active ? ($color ?? theme.surface.borderFocus) : 'transparent';
     }};
-  background: ${({ $active, $color }) => {
-    return $active ? ($color ? `${$color}22` : 'rgba(255,255,255,0.06)') : 'rgba(255,255,255,0.03)';
+  background: ${({ $active, $color, theme }) => {
+    return $active ? ($color ? `${$color}22` : theme.surface.hoverWeak) : theme.surface.subtle;
   }};
   color: ${({ theme }) => {
     return theme.text;
@@ -46,11 +46,11 @@ const FactionBtn = styled.button<{ $active: boolean; $color: string | null }>`
     background 0.15s;
 
   &:hover {
-    background: ${({ $color }) => {
-      return $color ? `${$color}18` : 'rgba(255,255,255,0.07)';
+    background: ${({ $color, theme }) => {
+      return $color ? `${$color}18` : theme.surface.hoverWeak;
     }};
-    border-color: ${({ $color }) => {
-      return $color ?? 'rgba(255,255,255,0.2)';
+    border-color: ${({ $color, theme }) => {
+      return $color ?? theme.surface.borderMedium;
     }};
   }
 `;
@@ -63,7 +63,10 @@ const Swatch = styled.span<{ $color: string }>`
     return $color;
   }};
   flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid
+    ${({ theme }) => {
+      return theme.surface.border;
+    }};
 `;
 
 const NoFactionDot = styled.span`

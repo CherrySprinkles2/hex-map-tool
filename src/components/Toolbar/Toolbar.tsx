@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { Backdrop, SheetItem, SheetIcon } from '../shared/sheet';
@@ -7,8 +7,6 @@ import { LanguageModal } from '../shared/LanguageModal';
 import { SettingsButton } from '../shared/SettingsButton';
 import { importTiles } from '../../features/tiles/tilesSlice';
 import { importArmies } from '../../features/armies/armiesSlice';
-import { importFactions } from '../../features/factions/factionsSlice';
-import { importTerrainConfig } from '../../features/terrainConfig/terrainConfigSlice';
 import {
   deselectTile,
   deselectArmy,
@@ -18,7 +16,7 @@ import {
   closeShortcuts,
 } from '../../features/ui/uiSlice';
 import { renameCurrentMap, unloadMap } from '../../features/currentMap/currentMapSlice';
-import { renameMap, getAllMaps } from '../../utils/mapsStorage';
+import { renameMap } from '../../utils/mapsStorage';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../app/hooks';
 import TerrainConfigModal from '../TerrainConfigModal/TerrainConfigModal';
 
@@ -263,7 +261,6 @@ const Toolbar = (): React.ReactElement => {
   const selectedArmyId = useAppSelector((state) => {
     return state.ui.selectedArmyId;
   });
-  const fileInput = useRef<HTMLInputElement | null>(null);
   const [localName, setLocalName] = useState('');
   const [editing, setEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -325,51 +322,6 @@ const Toolbar = (): React.ReactElement => {
     a.download = `${mapName || 'hex-map'}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  };
-
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target!.result as string);
-        if (data && typeof data === 'object' && data.tiles) {
-          dispatch(importTiles(data.tiles));
-          dispatch(importArmies(data.armies ?? {}));
-          dispatch(importFactions(data.factions ?? []));
-          if (data.terrainConfig) {
-            dispatch(importTerrainConfig(data.terrainConfig));
-          }
-          const desired = (data.name || '').trim() || 'Untitled Map';
-          const takenNames = new Set(
-            getAllMaps()
-              .filter((m) => {
-                return m.id !== mapId;
-              })
-              .map((m) => {
-                return m.name;
-              })
-          );
-          let finalName = desired;
-          if (takenNames.has(finalName)) {
-            let n = 2;
-            while (takenNames.has(`${desired} (${n})`)) n++;
-            finalName = `${desired} (${n})`;
-          }
-          dispatch(renameCurrentMap(finalName));
-          if (mapId) renameMap(mapId, finalName);
-        } else {
-          dispatch(importTiles(data));
-          dispatch(importArmies({}));
-          dispatch(importFactions([]));
-        }
-      } catch {
-        alert('Invalid JSON file.');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
   };
 
   const handleFactionsClick = () => {
@@ -475,16 +427,6 @@ const Toolbar = (): React.ReactElement => {
           {t('toolbar.exportJSON')}
         </SheetItem>
         <SheetItem
-          data-testid="import-json-btn"
-          onClick={() => {
-            setSettingsOpen(false);
-            fileInput.current?.click();
-          }}
-        >
-          <SheetIcon>⬆</SheetIcon>
-          {t('toolbar.importJSON')}
-        </SheetItem>
-        <SheetItem
           $desktopHide
           onClick={() => {
             setSettingsOpen(false);
@@ -506,13 +448,6 @@ const Toolbar = (): React.ReactElement => {
         }}
       />
 
-      <input
-        ref={fileInput}
-        type="file"
-        accept=".json"
-        style={{ display: 'none' }}
-        onChange={handleImport}
-      />
       {terrainConfigOpen && (
         <TerrainConfigModal
           onClose={() => {

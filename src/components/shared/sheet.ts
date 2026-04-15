@@ -17,8 +17,8 @@ export const SheetItem = styled.button<{ $active?: boolean; $desktopHide?: boole
   gap: 14px;
   width: 100%;
   padding: 14px 24px;
-  background: ${({ $active }) => {
-    return $active ? 'rgba(255,255,255,0.06)' : 'transparent';
+  background: ${({ $active, theme }) => {
+    return $active ? theme.surface.hoverWeak : 'transparent';
   }};
   border: none;
   color: ${({ theme }) => {
@@ -31,7 +31,9 @@ export const SheetItem = styled.button<{ $active?: boolean; $desktopHide?: boole
   letter-spacing: 0.02em;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: ${({ theme }) => {
+      return theme.surface.hover;
+    }};
   }
 
   @media (min-width: 601px) {

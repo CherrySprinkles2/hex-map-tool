@@ -23,9 +23,6 @@ import { theme } from '../../styles/theme';
 import { NEIGHBOR_DIRS, toKey, DEEP_WATER } from '../../utils/hexUtils';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import useTerrainList from '../../hooks/useTerrainList';
-import { TERRAIN_ICON } from '../../assets/icons/terrain';
-import { RiverIcon, RoadIcon, PortIcon } from '../../assets/icons/features';
-import { LandIcon } from '../../assets/icons/army';
 import type { RootState } from '../../app/store';
 import type { TileFlag, TerrainType } from '../../types/domain';
 import { SidePanel } from '../shared/SidePanel';
@@ -184,11 +181,11 @@ const FlagBtn = styled.button<{ $active: boolean; $color: string }>`
   padding: 10px 14px;
   border: 2px solid
     ${({ $active, $color }) => {
-      return $active ? $color : 'rgba(255,255,255,0.1)';
+      return $active ? $color : theme.surface.borderFaint;
     }};
   border-radius: 0;
   background: ${({ $active, $color }) => {
-    return $active ? `${$color}22` : 'rgba(255,255,255,0.03)';
+    return $active ? `${$color}22` : theme.surface.subtle;
   }};
   color: ${({ theme }) => {
     return theme.text;
@@ -259,8 +256,13 @@ const ArmyRow = styled.button`
   gap: 10px;
   padding: 8px 10px;
   border-radius: 8px;
-  border: 1.5px solid rgba(212, 160, 23, 0.35);
-  background: rgba(212, 160, 23, 0.06);
+  border: 1.5px solid
+    ${({ theme }) => {
+      return theme.garrison.nameColor;
+    }}59;
+  background: ${({ theme }) => {
+    return theme.garrison.nameColor;
+  }}0f;
   color: ${({ theme }) => {
     return theme.text;
   }};
@@ -272,8 +274,12 @@ const ArmyRow = styled.button`
     background 0.15s,
     border-color 0.15s;
   &:hover {
-    background: rgba(212, 160, 23, 0.15);
-    border-color: rgba(212, 160, 23, 0.6);
+    background: ${({ theme }) => {
+      return theme.garrison.nameColor;
+    }}26;
+    border-color: ${({ theme }) => {
+      return theme.garrison.nameColor;
+    }}99;
   }
 `;
 
@@ -287,8 +293,13 @@ const ArmyRowName = styled.span`
 const AddArmyBtn = styled.button`
   padding: 10px;
   border-radius: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid
+    ${({ theme }) => {
+      return theme.surface.borderMedium;
+    }};
+  background: ${({ theme }) => {
+    return theme.surface.subtle;
+  }};
   color: ${({ theme }) => {
     return theme.text;
   }};
@@ -300,8 +311,12 @@ const AddArmyBtn = styled.button`
     background 0.15s,
     border-color 0.15s;
   &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.4);
+    background: ${({ theme }) => {
+      return theme.surface.hover;
+    }};
+    border-color: ${({ theme }) => {
+      return theme.surface.borderFocus;
+    }};
   }
 `;
 
@@ -312,7 +327,9 @@ const EditTownBtn = styled.button`
     ${({ theme }) => {
       return theme.town.color;
     }}66;
-  background: rgba(255, 255, 255, 0.03);
+  background: ${({ theme }) => {
+    return theme.surface.subtle;
+  }};
   color: ${({ theme }) => {
     return theme.text;
   }};
@@ -381,7 +398,7 @@ const ConnectionBtn = styled.button<{ $blocked: boolean; $color: string }>`
   border-radius: 5px;
   border: 1px solid
     ${({ $blocked, $color }) => {
-      return $blocked ? 'rgba(255,255,255,0.15)' : `${$color}66`;
+      return $blocked ? theme.surface.border : `${$color}66`;
     }};
   background: transparent;
   color: ${({ $blocked, theme }) => {
@@ -414,8 +431,13 @@ const ExitPaintBtn = styled.button`
   transform: translateY(-50%);
   padding: 6px 12px;
   border-radius: 6px;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid
+    ${({ theme }) => {
+      return theme.surface.borderMedium;
+    }};
+  background: ${({ theme }) => {
+    return theme.surface.card;
+  }};
   color: ${({ theme }) => {
     return theme.textMuted;
   }};
@@ -427,8 +449,12 @@ const ExitPaintBtn = styled.button`
     color 0.15s,
     border-color 0.15s;
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.4);
+    background: ${({ theme }) => {
+      return theme.surface.borderFaint;
+    }};
+    border-color: ${({ theme }) => {
+      return theme.surface.borderFocus;
+    }};
     color: ${({ theme }) => {
       return theme.text;
     }};
@@ -461,10 +487,10 @@ const FeatureBrushBtn = styled.button<{ $active: boolean; $color: string }>`
   border-radius: 7px;
   border: 2px solid
     ${({ $active, $color }) => {
-      return $active ? $color : 'rgba(255,255,255,0.1)';
+      return $active ? $color : theme.surface.borderFaint;
     }};
   background: ${({ $active, $color }) => {
-    return $active ? `${$color}22` : 'rgba(255,255,255,0.02)';
+    return $active ? `${$color}22` : theme.surface.base;
   }};
   color: ${({ theme }) => {
     return theme.text;
@@ -493,8 +519,13 @@ const FeatureBrushBtn = styled.button<{ $active: boolean; $color: string }>`
 const PaintModeBtn = styled.button`
   padding: 10px;
   border-radius: 8px;
-  border: 2px solid rgba(147, 112, 219, 0.4);
-  background: rgba(147, 112, 219, 0.06);
+  border: 2px solid
+    ${({ theme }) => {
+      return theme.ui.paintMode;
+    }}66;
+  background: ${({ theme }) => {
+    return theme.ui.paintMode;
+  }}0f;
   color: ${({ theme }) => {
     return theme.text;
   }};
@@ -506,8 +537,12 @@ const PaintModeBtn = styled.button`
     background 0.15s,
     border-color 0.15s;
   &:hover {
-    background: rgba(147, 112, 219, 0.15);
-    border-color: rgba(147, 112, 219, 0.7);
+    background: ${({ theme }) => {
+      return theme.ui.paintMode;
+    }}26;
+    border-color: ${({ theme }) => {
+      return theme.ui.paintMode;
+    }}b3;
   }
 `;
 
@@ -542,9 +577,24 @@ const FLAGS: Array<{
   Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   color: string;
 }> = [
-  { key: 'hasRiver', labelKey: 'features.river', Icon: RiverIcon, color: theme.river.color },
-  { key: 'hasRoad', labelKey: 'features.road', Icon: RoadIcon, color: theme.road.color },
-  { key: 'hasTown', labelKey: 'features.town', Icon: PortIcon, color: theme.town.color },
+  {
+    key: 'hasRiver',
+    labelKey: 'features.river',
+    Icon: theme.icons.features.river,
+    color: theme.river.color,
+  },
+  {
+    key: 'hasRoad',
+    labelKey: 'features.road',
+    Icon: theme.icons.features.road,
+    color: theme.road.color,
+  },
+  {
+    key: 'hasTown',
+    labelKey: 'features.town',
+    Icon: theme.icons.features.port,
+    color: theme.town.color,
+  },
 ];
 
 const TileEditPanel = (): React.ReactElement => {
@@ -691,7 +741,7 @@ const TileEditPanel = (): React.ReactElement => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <FeatureBrushRow>
                 <FeatureBrushLabel>
-                  <RiverIcon
+                  <theme.icons.features.river
                     style={{
                       width: '1rem',
                       height: '1rem',
@@ -714,7 +764,7 @@ const TileEditPanel = (): React.ReactElement => {
                   </FeatureBrushBtn>
                   <FeatureBrushBtn
                     $active={activePaintBrush === 'river-off'}
-                    $color="#888888"
+                    $color={theme.textMuted}
                     onClick={() => {
                       return dispatch(setActivePaintBrush('river-off'));
                     }}
@@ -725,7 +775,7 @@ const TileEditPanel = (): React.ReactElement => {
               </FeatureBrushRow>
               <FeatureBrushRow>
                 <FeatureBrushLabel>
-                  <RoadIcon
+                  <theme.icons.features.road
                     style={{
                       width: '1rem',
                       height: '1rem',
@@ -748,7 +798,7 @@ const TileEditPanel = (): React.ReactElement => {
                   </FeatureBrushBtn>
                   <FeatureBrushBtn
                     $active={activePaintBrush === 'road-off'}
-                    $color="#888888"
+                    $color={theme.textMuted}
                     onClick={() => {
                       return dispatch(setActivePaintBrush('road-off'));
                     }}
@@ -898,7 +948,8 @@ const TileEditPanel = (): React.ReactElement => {
                                 const entry = terrainList.find((e) => {
                                   return e.id === terrain;
                                 });
-                                const TerrainIcon = entry?.Icon ?? TERRAIN_ICON[terrain] ?? null;
+                                const TerrainIcon =
+                                  entry?.Icon ?? theme.icons.terrain[terrain] ?? null;
                                 const terrainIconUrl = entry?.iconUrl ?? '';
                                 if (TerrainIcon) {
                                   return (
@@ -1001,7 +1052,7 @@ const TileEditPanel = (): React.ReactElement => {
                             return dispatch(selectArmy(army.id));
                           }}
                         >
-                          <LandIcon
+                          <theme.icons.army.land
                             style={{
                               width: '1rem',
                               height: '1rem',

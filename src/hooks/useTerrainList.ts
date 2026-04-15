@@ -2,7 +2,6 @@ import React from 'react';
 import { createSelector } from '@reduxjs/toolkit';
 import { useAppSelector } from '../app/hooks';
 import { theme } from '../styles/theme';
-import { TERRAIN_ICON } from '../assets/icons/terrain';
 import type { RootState } from '../app/store';
 import type { CustomTerrainType, TerrainConfig } from '../types/domain';
 
@@ -31,7 +30,7 @@ const selectTerrainList = createSelector(
         builtinEntries[id] = {
           id,
           color: theme.terrain[id].color,
-          Icon: TERRAIN_ICON[id] ?? null,
+          Icon: theme.icons.terrain[id] ?? null,
           iconUrl: '',
           name: id,
           isCustom: false,
