@@ -42,7 +42,7 @@ const selectTerrainList = createSelector(
     custom.forEach((ct: CustomTerrainType) => {
       customEntries[ct.id] = {
         id: ct.id,
-        color: ct.color,
+        color: ct.color.trim(),
         Icon: null,
         iconUrl: ct.icon ?? '',
         name: ct.name,

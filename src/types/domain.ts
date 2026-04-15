@@ -58,6 +58,7 @@ export interface Army {
   r: number;
   name: string;
   composition: string;
+  notes?: string;
   factionId: string | null;
 }
 

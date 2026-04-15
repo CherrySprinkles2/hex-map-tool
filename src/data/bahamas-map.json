@@ -76408,7 +76408,7 @@
       {
         "id": "shallow",
         "name": "Shallow Water",
-        "color": "#006994 ",
+        "color": "#006994",
         "patternKey": "ocean",
         "isDeepWater": true,
         "icon": "🐚"

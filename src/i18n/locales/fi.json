@@ -92,9 +92,12 @@
     "compositionPlaceholder": "esim.\n500 jalkaväkeä\n120 ratsuväkeä\n20 tykkiä",
     "faction": "Ryhmittymä",
     "factionNone": "Ei mitään",
+    "notes": "Muistiinpanot",
+    "notesPlaceholder": "Muistiinpanoja tästä armeijasta…",
     "moveArmy": "↪ Siirrä armeija",
     "cancelMove": "✕ Peruuta siirto",
     "deleteArmy": "✕ Poista armeija",
+    "deleteConfirm": "Poistetaanko tämä armeija? Toimintoa ei voi kumota.",
     "moveHint": "Napauta kartan mitä tahansa ruutua siirtääksesi armeijan sinne. Panorointi ja zoomaus toimivat normaalisti."
   },
   "toolbar": {

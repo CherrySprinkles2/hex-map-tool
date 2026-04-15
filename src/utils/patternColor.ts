@@ -1,5 +1,5 @@
 export const patternMarkColor = (baseColor: string, opacity = 0.25): string => {
-  const hex = baseColor.replace('#', '');
+  const hex = baseColor.trim().replace('#', '');
   const r = parseInt(hex.slice(0, 2), 16);
   const g = parseInt(hex.slice(2, 4), 16);
   const b = parseInt(hex.slice(4, 6), 16);

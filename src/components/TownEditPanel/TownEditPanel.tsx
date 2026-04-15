@@ -82,33 +82,46 @@ const NameInput = styled.input`
   }
 `;
 
-const PickerGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-`;
-
-const PickerCard = styled.button<{ $active: boolean }>`
+const OptionGroup = styled.div`
   display: flex;
   flex-direction: column;
+`;
+
+const OptionBtn = styled.button<{ $active: boolean }>`
+  position: relative;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 6px;
-  border-radius: 8px;
+  gap: 12px;
+  padding: 10px 12px;
   border: 2px solid
     ${({ $active, theme }) => {
       return $active ? theme.town.color : 'rgba(255,255,255,0.1)';
     }};
+  border-radius: 0;
   background: ${({ $active, theme }) => {
     return $active ? `${theme.town.color}18` : 'rgba(255,255,255,0.02)';
   }};
   cursor: pointer;
-  text-align: center;
+  text-align: left;
+  width: 100%;
   transition:
     border-color 0.15s,
     background 0.15s;
 
+  &:first-child {
+    border-radius: 8px 8px 0 0;
+  }
+  &:last-child {
+    border-radius: 0 0 8px 8px;
+  }
+  &:first-child:last-child {
+    border-radius: 8px;
+  }
+  & + & {
+    margin-top: -2px;
+  }
   &:hover {
+    z-index: 1;
     border-color: ${({ $active, theme }) => {
       return $active ? theme.town.color : 'rgba(255,255,255,0.3)';
     }};
@@ -118,8 +131,15 @@ const PickerCard = styled.button<{ $active: boolean }>`
   }
 `;
 
-const CardLabel = styled.span`
-  font-size: 0.75rem;
+const OptionTextCol = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+`;
+
+const OptionLabel = styled.span`
+  font-size: 0.85rem;
   font-weight: 600;
   color: ${({ theme }) => {
     return theme.text;
@@ -127,8 +147,8 @@ const CardLabel = styled.span`
   letter-spacing: 0.04em;
 `;
 
-const CardDesc = styled.span`
-  font-size: 0.65rem;
+const OptionDesc = styled.span`
+  font-size: 0.7rem;
   color: ${({ theme }) => {
     return theme.textMuted;
   }};
@@ -196,46 +216,52 @@ const TownEditPanel = (): React.ReactElement => {
 
       <div>
         <SectionLabel>{t('townPanel.fortification')}</SectionLabel>
-        <PickerGrid>
+        <OptionGroup>
           {FORTIFICATION_OPTIONS.map((level) => {
             return (
-              <PickerCard
+              <OptionBtn
                 key={level}
                 data-testid={`fortification-${level}`}
+                data-active={currentFortification === level}
                 $active={currentFortification === level}
                 onClick={() => {
                   return handleFortificationChange(level);
                 }}
               >
                 <FortificationPreview fortification={level} />
-                <CardLabel>{t(`townPanel.fortification_${level}`)}</CardLabel>
-                <CardDesc>{t(`townPanel.fortification_${level}_desc`)}</CardDesc>
-              </PickerCard>
+                <OptionTextCol>
+                  <OptionLabel>{t(`townPanel.fortification_${level}`)}</OptionLabel>
+                  <OptionDesc>{t(`townPanel.fortification_${level}_desc`)}</OptionDesc>
+                </OptionTextCol>
+              </OptionBtn>
             );
           })}
-        </PickerGrid>
+        </OptionGroup>
       </div>
 
       <div>
         <SectionLabel>{t('townPanel.sizeLabel')}</SectionLabel>
-        <PickerGrid>
+        <OptionGroup>
           {SIZE_OPTIONS.map((size) => {
             return (
-              <PickerCard
+              <OptionBtn
                 key={size}
                 data-testid={`size-${size}`}
+                data-active={currentSize === size}
                 $active={currentSize === size}
                 onClick={() => {
                   return handleSizeChange(size);
                 }}
               >
                 <TownSizePreview townSize={size} />
-                <CardLabel>{t(`townPanel.size_${size}`)}</CardLabel>
-                <CardDesc>{t(`townPanel.size_${size}_desc`)}</CardDesc>
-              </PickerCard>
+                <OptionTextCol>
+                  <OptionLabel>{t(`townPanel.size_${size}`)}</OptionLabel>
+                  <OptionDesc>{t(`townPanel.size_${size}_desc`)}</OptionDesc>
+                </OptionTextCol>
+              </OptionBtn>
             );
           })}
-        </PickerGrid>
+        </OptionGroup>
       </div>
     </SidePanel>
   );

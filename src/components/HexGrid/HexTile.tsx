@@ -64,7 +64,7 @@ const HexTile = React.memo(({ q, r }: HexTileProps): React.ReactElement => {
   });
 
   const terrainData = theme.terrain[terrain as keyof typeof theme.terrain] ?? theme.terrain.grass;
-  const fillColor = customTerrainColor ?? terrainData.color;
+  const fillColor = (customTerrainColor ?? terrainData.color).trim();
 
   const { x, y } = useMemo(() => {
     return axialToPixel(q, r);

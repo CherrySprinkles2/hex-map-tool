@@ -126,11 +126,11 @@ test.describe('Tile Editing', () => {
     expect(await panel.isFlagActive('hasRoad')).toBe(false);
   });
 
-  test('toggling town ON shows the town name input', async ({ appPage }) => {
+  test('toggling town ON shows the Edit Town button', async ({ appPage }) => {
     const panel = new TileEditPanelPage(appPage);
     await panel.waitForPanel();
     await panel.toggleFlag('hasTown');
-    await expect(appPage.getByTestId('town-name-input')).toBeVisible();
+    await expect(appPage.getByTestId('edit-town-btn')).toBeVisible();
   });
 
   test('setting a town name is reflected in the input', async ({ appPage }) => {
@@ -138,7 +138,7 @@ test.describe('Tile Editing', () => {
     await panel.waitForPanel();
     await panel.toggleFlag('hasTown');
     await panel.setTownName('Riverdale');
-    const val = await appPage.getByTestId('town-name-input').inputValue();
+    const val = await appPage.getByTestId('town-edit-name-input').inputValue();
     expect(val).toBe('Riverdale');
   });
 

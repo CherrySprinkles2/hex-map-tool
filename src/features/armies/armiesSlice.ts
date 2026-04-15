@@ -11,7 +11,7 @@ const armiesSlice = createSlice({
     addArmy: (state, action: PayloadAction<{ q: number; r: number }>) => {
       const { q, r } = action.payload;
       const id = generateId('army');
-      state[id] = { id, q, r, name: 'New Army', composition: '', factionId: null };
+      state[id] = { id, q, r, name: 'New Army', composition: '', notes: '', factionId: null };
     },
     deleteArmy: (state, action: PayloadAction<string>) => {
       delete state[action.payload];
@@ -26,13 +26,14 @@ const armiesSlice = createSlice({
     updateArmy: (
       state,
       action: PayloadAction<
-        Partial<Pick<Army, 'name' | 'composition' | 'factionId'>> & { id: string }
+        Partial<Pick<Army, 'name' | 'composition' | 'factionId'>> & { id: string; notes?: string }
       >
     ) => {
-      const { id, name, composition, factionId } = action.payload;
+      const { id, name, composition, notes, factionId } = action.payload;
       if (state[id]) {
         if (name !== undefined) state[id].name = name;
         if (composition !== undefined) state[id].composition = composition;
+        if (notes !== undefined) state[id].notes = notes;
         if (factionId !== undefined) state[id].factionId = factionId;
       }
     },

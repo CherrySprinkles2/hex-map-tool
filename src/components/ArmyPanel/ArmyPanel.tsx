@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { updateArmy, deleteArmy, setArmyFaction } from '../../features/armies/armiesSlice';
 import { deselectArmy, startMovingArmy, stopMovingArmy } from '../../features/ui/uiSlice';
@@ -9,6 +9,8 @@ import { PanelHeader } from '../shared/PanelHeader';
 import { SectionLabel } from '../shared/SectionLabel';
 import { StyledTextarea } from '../shared/StyledTextarea';
 import styled from 'styled-components';
+
+// ── Styled components ──────────────────────────────────────────────────────────
 
 const NameInput = styled.input`
   width: 100%;
@@ -35,9 +37,15 @@ const NameInput = styled.input`
   }
 `;
 
+const ButtonGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
 const MoveBtn = styled.button<{ $active: boolean }>`
+  position: relative;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 8px 8px 0 0;
   border: 2px solid
     ${({ $active }) => {
       return $active ? '#ffaa00' : 'rgba(255,255,255,0.2)';
@@ -52,6 +60,9 @@ const MoveBtn = styled.button<{ $active: boolean }>`
   font-size: 0.85rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  z-index: ${({ $active }) => {
+    return $active ? 1 : 0;
+  }};
   transition:
     background 0.15s,
     border-color 0.15s;
@@ -63,9 +74,10 @@ const MoveBtn = styled.button<{ $active: boolean }>`
 `;
 
 const DeleteBtn = styled.button`
-  margin-top: auto;
+  position: relative;
+  margin-top: -2px;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 0 0 8px 8px;
   border: 2px solid
     ${({ theme }) => {
       return theme.accent;
@@ -80,39 +92,10 @@ const DeleteBtn = styled.button`
   text-transform: uppercase;
   transition: background 0.15s;
   &:hover {
+    z-index: 1;
     background: ${({ theme }) => {
       return theme.accent;
     }}22;
-  }
-`;
-
-const FactionSelect = styled.select`
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.05);
-  color: ${({ theme }) => {
-    return theme.text;
-  }};
-  font-size: 0.9rem;
-  box-sizing: border-box;
-  outline: none;
-  cursor: pointer;
-  transition: border-color 0.15s;
-  appearance: none;
-
-  &:focus {
-    border-color: rgba(255, 255, 255, 0.4);
-  }
-
-  option {
-    background: ${({ theme }) => {
-      return theme.panelBackground;
-    }};
-    color: ${({ theme }) => {
-      return theme.text;
-    }};
   }
 `;
 
@@ -127,6 +110,178 @@ const Hint = styled.div`
   padding: 8px 10px;
   line-height: 1.5;
 `;
+
+// ── Custom dropdown ────────────────────────────────────────────────────────────
+
+const DropdownWrapper = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+const DropdownTrigger = styled.button<{ $open: boolean }>`
+  width: 100%;
+  padding: 8px 36px 8px 12px;
+  border-radius: 8px;
+  border: 2px solid
+    ${({ $open }) => {
+      return $open ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)';
+    }};
+  background: rgba(255, 255, 255, 0.05);
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  outline: none;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s;
+  position: relative;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%)
+      ${({ $open }) => {
+        return $open ? 'rotate(180deg)' : 'rotate(0deg)';
+      }};
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid rgba(255, 255, 255, 0.5);
+    transition: transform 0.15s;
+  }
+`;
+
+const DropdownList = styled.ul`
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: ${({ theme }) => {
+    return theme.panelBackground;
+  }};
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+`;
+
+const DropdownOption = styled.li<{ $selected: boolean }>`
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  color: ${({ $selected, theme }) => {
+    return $selected ? theme.text : theme.textMuted;
+  }};
+  background: ${({ $selected }) => {
+    return $selected ? 'rgba(255,255,255,0.08)' : 'transparent';
+  }};
+  cursor: pointer;
+  transition: background 0.1s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: ${({ theme }) => {
+      return theme.text;
+    }};
+  }
+`;
+
+interface FactionDropdownProps {
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  onChange: (value: string) => void;
+}
+
+const FactionDropdown = ({
+  value,
+  options,
+  onChange,
+}: FactionDropdownProps): React.ReactElement => {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const selectedLabel =
+    options.find((o) => {
+      return o.value === value;
+    })?.label ??
+    options[0]?.label ??
+    '';
+
+  useEffect(() => {
+    if (!open) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      return document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [open]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') setOpen(false);
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setOpen((prev) => {
+        return !prev;
+      });
+    }
+  };
+
+  return (
+    <DropdownWrapper ref={wrapperRef}>
+      <DropdownTrigger
+        type="button"
+        $open={open}
+        onClick={() => {
+          setOpen((prev) => {
+            return !prev;
+          });
+        }}
+        onKeyDown={handleKeyDown}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        {selectedLabel}
+      </DropdownTrigger>
+      {open && (
+        <DropdownList role="listbox">
+          {options.map((opt) => {
+            return (
+              <DropdownOption
+                key={opt.value}
+                $selected={opt.value === value}
+                role="option"
+                aria-selected={opt.value === value}
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+              >
+                {opt.label}
+              </DropdownOption>
+            );
+          })}
+        </DropdownList>
+      )}
+    </DropdownWrapper>
+  );
+};
+
+// ── Panel ──────────────────────────────────────────────────────────────────────
 
 const ArmyPanel = (): React.ReactElement => {
   const dispatch = useAppDispatch();
@@ -150,11 +305,13 @@ const ArmyPanel = (): React.ReactElement => {
 
   const [localName, setLocalName] = useState('');
   const [localComposition, setLocalComposition] = useState('');
+  const [localNotes, setLocalNotes] = useState('');
 
   useEffect(() => {
     if (army) {
       setLocalName(army.name);
       setLocalComposition(army.composition);
+      setLocalNotes(army.notes ?? '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedArmyId]); // intentional: sync only when army identity changes
@@ -188,10 +345,14 @@ const ArmyPanel = (): React.ReactElement => {
     dispatch(updateArmy({ id: army.id, composition: localComposition }));
   }, [army, localComposition, dispatch]);
 
+  const handleNotesBlur = useCallback(() => {
+    if (!army) return;
+    dispatch(updateArmy({ id: army.id, notes: localNotes }));
+  }, [army, localNotes, dispatch]);
+
   const handleFactionChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
+    (value: string) => {
       if (!army) return;
-      const value = e.target.value;
       dispatch(setArmyFaction({ id: army.id, factionId: value === '' ? null : value }));
     },
     [army, dispatch]
@@ -205,14 +366,23 @@ const ArmyPanel = (): React.ReactElement => {
 
   const handleDelete = useCallback(() => {
     if (!army) return;
+    const hasContent = localComposition.trim().length > 0 || localNotes.trim().length > 0;
+    if (hasContent && !window.confirm(t('armyPanel.deleteConfirm'))) return;
     dispatch(deleteArmy(army.id));
     dispatch(deselectArmy());
-  }, [army, dispatch]);
+  }, [army, localComposition, localNotes, t, dispatch]);
 
   const handleClose = useCallback(() => {
     if (isMoving) dispatch(stopMovingArmy());
     dispatch(deselectArmy());
   }, [isMoving, dispatch]);
+
+  const factionOptions = [
+    { value: '', label: t('armyPanel.factionNone') },
+    ...factions.map((f) => {
+      return { value: f.id, label: f.name };
+    }),
+  ];
 
   return (
     <SidePanel $open={isOpen} $gap="20px">
@@ -236,6 +406,28 @@ const ArmyPanel = (): React.ReactElement => {
             />
           </div>
 
+          {factions.length > 0 && (
+            <div>
+              <SectionLabel>{t('armyPanel.faction')}</SectionLabel>
+              <FactionDropdown
+                value={army.factionId ?? ''}
+                options={factionOptions}
+                onChange={handleFactionChange}
+              />
+            </div>
+          )}
+
+          <ButtonGroup>
+            <MoveBtn data-testid="move-army-btn" $active={isMoving} onClick={handleMoveToggle}>
+              {isMoving ? t('armyPanel.cancelMove') : t('armyPanel.moveArmy')}
+            </MoveBtn>
+            <DeleteBtn data-testid="delete-army-btn" onClick={handleDelete}>
+              {t('armyPanel.deleteArmy')}
+            </DeleteBtn>
+          </ButtonGroup>
+
+          {isMoving && <Hint>{t('armyPanel.moveHint')}</Hint>}
+
           <div>
             <SectionLabel>{t('armyPanel.composition')}</SectionLabel>
             <StyledTextarea
@@ -248,31 +440,17 @@ const ArmyPanel = (): React.ReactElement => {
             />
           </div>
 
-          {factions.length > 0 && (
-            <div>
-              <SectionLabel>{t('armyPanel.faction')}</SectionLabel>
-              <FactionSelect value={army.factionId ?? ''} onChange={handleFactionChange}>
-                <option value="">{t('armyPanel.factionNone')}</option>
-                {factions.map((f) => {
-                  return (
-                    <option key={f.id} value={f.id}>
-                      {f.name}
-                    </option>
-                  );
-                })}
-              </FactionSelect>
-            </div>
-          )}
-
-          <MoveBtn data-testid="move-army-btn" $active={isMoving} onClick={handleMoveToggle}>
-            {isMoving ? t('armyPanel.cancelMove') : t('armyPanel.moveArmy')}
-          </MoveBtn>
-
-          {isMoving && <Hint>{t('armyPanel.moveHint')}</Hint>}
-
-          <DeleteBtn data-testid="delete-army-btn" onClick={handleDelete}>
-            {t('armyPanel.deleteArmy')}
-          </DeleteBtn>
+          <div>
+            <SectionLabel>{t('armyPanel.notes')}</SectionLabel>
+            <StyledTextarea
+              value={localNotes}
+              onChange={(e) => {
+                return setLocalNotes(e.target.value);
+              }}
+              onBlur={handleNotesBlur}
+              placeholder={t('armyPanel.notesPlaceholder')}
+            />
+          </div>
         </>
       )}
     </SidePanel>

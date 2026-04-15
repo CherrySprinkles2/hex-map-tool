@@ -765,10 +765,11 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
   };
 
   const handleSave = (): void => {
+    const sanitised = { ...form, color: form.color.trim() };
     if (formMode === 'edit' && editingId) {
-      dispatch(updateCustomTerrain({ id: editingId, ...form }));
+      dispatch(updateCustomTerrain({ id: editingId, ...sanitised }));
     } else {
-      dispatch(addCustomTerrain({ id: generateId('terrain'), ...form }));
+      dispatch(addCustomTerrain({ id: generateId('terrain'), ...sanitised }));
     }
     setView('list');
   };

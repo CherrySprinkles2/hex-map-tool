@@ -54,9 +54,16 @@ export class TileEditPanelPage {
     await this.page.getByTestId('delete-tile-btn').click();
   }
 
-  /** Type a town name into the town name input. */
+  /** Open the town edit sub-panel (requires hasTown to already be toggled on). */
+  async openTownEdit(): Promise<void> {
+    await this.page.getByTestId('edit-town-btn').click();
+    await this.page.waitForSelector('[data-testid="town-edit-back-btn"]');
+  }
+
+  /** Type a town name into the town name input (opens town edit panel first). */
   async setTownName(name: string): Promise<void> {
-    const input = this.page.getByTestId('town-name-input');
+    await this.openTownEdit();
+    const input = this.page.getByTestId('town-edit-name-input');
     await input.fill(name);
     await input.press('Tab');
   }

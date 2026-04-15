@@ -92,9 +92,12 @@
     "compositionPlaceholder": "e.g.\n500 Infantry\n120 Cavalry\n20 Cannon",
     "faction": "Faction",
     "factionNone": "None",
+    "notes": "Notes",
+    "notesPlaceholder": "Notes about this army…",
     "moveArmy": "↪ Move Army",
     "cancelMove": "✕ Cancel Move",
     "deleteArmy": "✕ Delete Army",
+    "deleteConfirm": "Delete this army? This cannot be undone.",
     "moveHint": "Tap any tile on the map to move this army there. Pan and zoom work normally."
   },
   "toolbar": {

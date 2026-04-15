@@ -171,22 +171,22 @@ const TerrainBtn = styled.button<{ $active: boolean; $color: string }>`
   }
 `;
 
-const FlagList = styled.div`
+const FlagBtnGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
 `;
 
-const FlagToggle = styled.button<{ $active: boolean; $color: string }>`
+const FlagBtn = styled.button<{ $active: boolean; $color: string }>`
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  border-radius: 8px;
   border: 2px solid
     ${({ $active, $color }) => {
       return $active ? $color : 'rgba(255,255,255,0.1)';
     }};
+  border-radius: 0;
   background: ${({ $active, $color }) => {
     return $active ? `${$color}22` : 'rgba(255,255,255,0.03)';
   }};
@@ -194,13 +194,26 @@ const FlagToggle = styled.button<{ $active: boolean; $color: string }>`
     return theme.text;
   }};
   cursor: pointer;
+  text-align: left;
+  width: 100%;
   transition:
     border-color 0.15s,
     background 0.15s;
-  text-align: left;
-  width: 100%;
 
+  &:first-child {
+    border-radius: 8px 8px 0 0;
+  }
+  &:last-child {
+    border-radius: 0 0 8px 8px;
+  }
+  &:first-child:last-child {
+    border-radius: 8px;
+  }
+  & + & {
+    margin-top: -2px;
+  }
   &:hover {
+    z-index: 1;
     border-color: ${({ $color }) => {
       return $color;
     }}77;
@@ -675,7 +688,7 @@ const TileEditPanel = (): React.ReactElement => {
 
           <div>
             <SectionLabel>{t('tilePanel.features')}</SectionLabel>
-            <FlagList>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <FeatureBrushRow>
                 <FeatureBrushLabel>
                   <RiverIcon
@@ -744,7 +757,7 @@ const TileEditPanel = (): React.ReactElement => {
                   </FeatureBrushBtn>
                 </FeatureBrushBtnGroup>
               </FeatureBrushRow>
-            </FlagList>
+            </div>
           </div>
 
           <PaintHint>{t('tilePanel.paintHint')}</PaintHint>
@@ -813,144 +826,142 @@ const TileEditPanel = (): React.ReactElement => {
 
               <div>
                 <SectionLabel>{t('tilePanel.features')}</SectionLabel>
-                <FlagList>
+                <FlagBtnGroup>
                   {FLAGS.map(({ key, labelKey, Icon: FlagIcon, color }) => {
                     const active = !!tile?.[key];
-                    const blockedKey = FLAG_BLOCKED_KEY[key];
-                    const isPort = key === 'hasTown';
-                    const flagNeighbors =
-                      active && blockedKey
-                        ? NEIGHBOR_DIRS.map((dir, i) => {
-                            const nk = toKey((tile?.q ?? 0) + dir.q, (tile?.r ?? 0) + dir.r);
-                            const neighbor = allTiles[nk];
-                            if (isPort) {
-                              if (!DEEP_WATER.has(neighbor?.terrain)) return null;
-                              const isBlocked = (tile?.[blockedKey] ?? []).includes(nk);
-                              return {
-                                nk,
-                                dirLabel: t(`dir.${DIR_LABELS[i]}`),
-                                terrain: neighbor.terrain,
-                                isBlocked,
-                              };
-                            } else {
-                              if (!neighbor?.[key]) return null;
-                              const isBlocked =
-                                (tile?.[blockedKey] ?? []).includes(nk) ||
-                                ((neighbor[blockedKey] ?? []) as string[]).includes(
-                                  selectedKey ?? ''
-                                );
-                              return {
-                                nk,
-                                dirLabel: t(`dir.${DIR_LABELS[i]}`),
-                                terrain: neighbor.terrain,
-                                isBlocked,
-                              };
-                            }
-                          }).filter(
-                            (
-                              x
-                            ): x is {
-                              nk: string;
-                              dirLabel: string;
-                              terrain: TerrainType;
-                              isBlocked: boolean;
-                            } => {
-                              return x !== null;
-                            }
-                          )
-                        : [];
                     return (
-                      <div key={key}>
-                        <FlagToggle
-                          data-testid={`flag-toggle-${key}`}
-                          $active={active}
-                          $color={color}
-                          onClick={() => {
-                            return handleFlagToggle(key);
-                          }}
-                        >
-                          <FlagIcon className="flag-icon" />
-                          <span className="flag-label">{t(labelKey)}</span>
-                          <span className="flag-state">{active ? 'on' : 'off'}</span>
-                        </FlagToggle>
-                        {flagNeighbors.length > 0 && (
-                          <ConnectionList>
-                            {flagNeighbors.map(({ nk, dirLabel, terrain, isBlocked }) => {
-                              return (
-                                <ConnectionRow key={nk}>
-                                  <span>
-                                    {(() => {
-                                      const entry = terrainList.find((e) => {
-                                        return e.id === terrain;
-                                      });
-                                      const TerrainIcon =
-                                        entry?.Icon ?? TERRAIN_ICON[terrain] ?? null;
-                                      const terrainIconUrl = entry?.iconUrl ?? '';
-                                      if (TerrainIcon) {
-                                        return (
-                                          <TerrainIcon
-                                            style={{
-                                              width: '1rem',
-                                              height: '1rem',
-                                              verticalAlign: 'middle',
-                                              filter: 'brightness(0) invert(1)',
-                                              opacity: 0.75,
-                                            }}
-                                          />
-                                        );
-                                      }
-                                      if (terrainIconUrl) {
-                                        return (
-                                          <img
-                                            src={terrainIconUrl}
-                                            alt={terrain}
-                                            style={{
-                                              width: '1rem',
-                                              height: '1rem',
-                                              verticalAlign: 'middle',
-                                              filter: 'brightness(0) invert(1)',
-                                              opacity: 0.75,
-                                            }}
-                                          />
-                                        );
-                                      }
-                                      return (
-                                        <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
-                                          {terrain}
-                                        </span>
-                                      );
-                                    })()}
-                                  </span>
-                                  <span>{dirLabel}</span>
-                                  {isBlocked && (
-                                    <span style={{ opacity: 0.45 }}>
-                                      {isPort ? t('connection.noPort') : t('connection.blocked')}
-                                    </span>
-                                  )}
-                                  <ConnectionBtn
-                                    $blocked={isBlocked}
-                                    $color={color}
-                                    onClick={() => {
-                                      return handleConnectionToggle(key, nk, isBlocked);
-                                    }}
-                                  >
-                                    {isPort
-                                      ? isBlocked
-                                        ? t('connection.addPort')
-                                        : t('connection.removePort')
-                                      : isBlocked
-                                        ? t('connection.restore')
-                                        : t('connection.disconnect')}
-                                  </ConnectionBtn>
-                                </ConnectionRow>
-                              );
-                            })}
-                          </ConnectionList>
-                        )}
-                      </div>
+                      <FlagBtn
+                        key={key}
+                        data-testid={`flag-toggle-${key}`}
+                        $active={active}
+                        $color={color}
+                        onClick={() => {
+                          return handleFlagToggle(key);
+                        }}
+                      >
+                        <FlagIcon className="flag-icon" />
+                        <span className="flag-label">{t(labelKey)}</span>
+                        <span className="flag-state">{active ? 'on' : 'off'}</span>
+                      </FlagBtn>
                     );
                   })}
-                </FlagList>
+                </FlagBtnGroup>
+                {FLAGS.map(({ key, labelKey: _labelKey, color }) => {
+                  const active = !!tile?.[key];
+                  const blockedKey = FLAG_BLOCKED_KEY[key];
+                  const isPort = key === 'hasTown';
+                  if (!active || !blockedKey) return null;
+                  const flagNeighbors = NEIGHBOR_DIRS.map((dir, i) => {
+                    const nk = toKey((tile?.q ?? 0) + dir.q, (tile?.r ?? 0) + dir.r);
+                    const neighbor = allTiles[nk];
+                    if (isPort) {
+                      if (!DEEP_WATER.has(neighbor?.terrain)) return null;
+                      const isBlocked = (tile?.[blockedKey] ?? []).includes(nk);
+                      return {
+                        nk,
+                        dirLabel: t(`dir.${DIR_LABELS[i]}`),
+                        terrain: neighbor.terrain,
+                        isBlocked,
+                      };
+                    } else {
+                      if (!neighbor?.[key]) return null;
+                      const isBlocked =
+                        (tile?.[blockedKey] ?? []).includes(nk) ||
+                        ((neighbor[blockedKey] ?? []) as string[]).includes(selectedKey ?? '');
+                      return {
+                        nk,
+                        dirLabel: t(`dir.${DIR_LABELS[i]}`),
+                        terrain: neighbor.terrain,
+                        isBlocked,
+                      };
+                    }
+                  }).filter(
+                    (
+                      x
+                    ): x is {
+                      nk: string;
+                      dirLabel: string;
+                      terrain: TerrainType;
+                      isBlocked: boolean;
+                    } => {
+                      return x !== null;
+                    }
+                  );
+                  if (flagNeighbors.length === 0) return null;
+                  return (
+                    <ConnectionList key={key}>
+                      {flagNeighbors.map(({ nk, dirLabel, terrain, isBlocked }) => {
+                        return (
+                          <ConnectionRow key={nk}>
+                            <span>
+                              {(() => {
+                                const entry = terrainList.find((e) => {
+                                  return e.id === terrain;
+                                });
+                                const TerrainIcon = entry?.Icon ?? TERRAIN_ICON[terrain] ?? null;
+                                const terrainIconUrl = entry?.iconUrl ?? '';
+                                if (TerrainIcon) {
+                                  return (
+                                    <TerrainIcon
+                                      style={{
+                                        width: '1rem',
+                                        height: '1rem',
+                                        verticalAlign: 'middle',
+                                        filter: 'brightness(0) invert(1)',
+                                        opacity: 0.75,
+                                      }}
+                                    />
+                                  );
+                                }
+                                if (terrainIconUrl) {
+                                  return (
+                                    <img
+                                      src={terrainIconUrl}
+                                      alt={terrain}
+                                      style={{
+                                        width: '1rem',
+                                        height: '1rem',
+                                        verticalAlign: 'middle',
+                                        filter: 'brightness(0) invert(1)',
+                                        opacity: 0.75,
+                                      }}
+                                    />
+                                  );
+                                }
+                                return (
+                                  <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
+                                    {terrain}
+                                  </span>
+                                );
+                              })()}
+                            </span>
+                            <span>{dirLabel}</span>
+                            {isBlocked && (
+                              <span style={{ opacity: 0.45 }}>
+                                {isPort ? t('connection.noPort') : t('connection.blocked')}
+                              </span>
+                            )}
+                            <ConnectionBtn
+                              $blocked={isBlocked}
+                              $color={color}
+                              onClick={() => {
+                                return handleConnectionToggle(key, nk, isBlocked);
+                              }}
+                            >
+                              {isPort
+                                ? isBlocked
+                                  ? t('connection.addPort')
+                                  : t('connection.removePort')
+                                : isBlocked
+                                  ? t('connection.restore')
+                                  : t('connection.disconnect')}
+                            </ConnectionBtn>
+                          </ConnectionRow>
+                        );
+                      })}
+                    </ConnectionList>
+                  );
+                })}
                 {tile?.hasTown && (
                   <EditTownBtn
                     data-testid="edit-town-btn"
