@@ -1,13 +1,16 @@
 {
   "files": {
     "main.css": "/hex-map-tool/static/css/main.e6c13ad2.css",
-    "main.js": "/hex-map-tool/static/js/main.9fe702f2.js",
+    "main.js": "/hex-map-tool/static/js/main.89d48dd9.js",
+    "static/media/city.svg": "/hex-map-tool/static/media/city.c17dd8d5c55811aff46e59a9d889590a.svg",
+    "static/media/town.svg": "/hex-map-tool/static/media/town.879ba63bc0d810901100d083c3fc03c7.svg",
     "index.html": "/hex-map-tool/index.html",
+    "static/media/village.svg": "/hex-map-tool/static/media/village.2f798d883b0affcf94537c74849e9828.svg",
     "main.e6c13ad2.css.map": "/hex-map-tool/static/css/main.e6c13ad2.css.map",
-    "main.9fe702f2.js.map": "/hex-map-tool/static/js/main.9fe702f2.js.map"
+    "main.89d48dd9.js.map": "/hex-map-tool/static/js/main.89d48dd9.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.9fe702f2.js"
+    "static/js/main.89d48dd9.js"
   ]
 }
