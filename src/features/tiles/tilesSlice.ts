@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { toKey } from '../../utils/hexUtils';
 import { deleteFaction } from '../factions/factionsSlice';
 import { restoreSnapshot } from '../history/historyActions';
-import type { Tile, TileFlag } from '../../types/domain';
+import type { Tile, TileFlag, Fortification, TownSize } from '../../types/domain';
 import type { TilesState } from '../../types/state';
 
 type BlockedFlagKey = 'hasRiver' | 'hasRoad' | 'hasTown';
@@ -27,6 +27,7 @@ const initialState: TilesState = {
     roadBlocked: [],
     hasTown: false,
     townName: '',
+    fortification: 'none',
     portBlocked: [],
     notes: '',
     factionId: null,
@@ -46,6 +47,7 @@ const tilesSlice = createSlice({
         hasRoad = false,
         hasTown = false,
         townName = '',
+        fortification = 'none',
         notes = '',
         factionId = null,
       } = action.payload;
@@ -61,6 +63,7 @@ const tilesSlice = createSlice({
           roadBlocked: [],
           hasTown,
           townName,
+          fortification,
           portBlocked: [],
           notes,
           factionId,
@@ -137,6 +140,23 @@ const tilesSlice = createSlice({
         state[neighborKey][blockedKey] = state[neighborKey][blockedKey].filter((k) => {
           return k !== myKey;
         });
+      }
+    },
+    setFortification: (
+      state,
+      action: PayloadAction<{ q: number; r: number; fortification: Fortification }>
+    ) => {
+      const { q, r, fortification } = action.payload;
+      const key = toKey(q, r);
+      if (state[key]) {
+        state[key].fortification = fortification;
+      }
+    },
+    setTownSize: (state, action: PayloadAction<{ q: number; r: number; townSize: TownSize }>) => {
+      const { q, r, townSize } = action.payload;
+      const key = toKey(q, r);
+      if (state[key]) {
+        state[key].townSize = townSize;
       }
     },
     setTownName: (state, action: PayloadAction<{ q: number; r: number; name: string }>) => {
@@ -220,6 +240,8 @@ export const {
   toggleTileFlag,
   blockConnection,
   unblockConnection,
+  setFortification,
+  setTownSize,
   setTownName,
   setTileNotes,
   setTileFaction,

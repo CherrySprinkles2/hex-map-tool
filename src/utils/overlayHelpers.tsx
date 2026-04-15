@@ -1,4 +1,7 @@
 import React from 'react';
+import villageUrl from '../components/TownEditPanel/assets/village.svg';
+import townUrl from '../components/TownEditPanel/assets/town.svg';
+import cityUrl from '../components/TownEditPanel/assets/city.svg';
 import {
   axialToPixel,
   hexCorners,
@@ -18,6 +21,7 @@ import { resolveCausewayPaths } from './routeLookup';
 import { theme } from '../styles/theme';
 import type { TilesState } from '../types/state';
 import type { Army } from '../types/domain';
+import type { TownSize } from '../types/domain';
 
 interface PathStyle {
   color: string;
@@ -247,21 +251,92 @@ export const renderCausewayPaths = (
   });
 };
 
-// Layout constants for town icon rendering — shared between icon and label passes.
-const TOWN_WALL_R = 33;
-
-const townLayout = (garrisoned: boolean) => {
-  const wallW = theme.town.wallWidth;
-  const garrisonBorderR = TOWN_WALL_R + wallW / 2 - 6; // flush outside the wall outer edge
-  const outerR = garrisoned
-    ? garrisonBorderR + theme.garrison.borderWidth / 2
-    : TOWN_WALL_R + wallW / 2;
-  return { wallW, garrisonBorderR, outerR };
+const TOWN_SIZE_URL: Record<TownSize, string> = {
+  village: villageUrl,
+  town: townUrl,
+  city: cityUrl,
 };
+
+const townLayout = (radius: number, wallW: number) => {
+  const outerR = radius + wallW / 2;
+  return { outerR };
+};
+
+// Renders a kite shield inline (so faction color can be applied dynamically).
+// Centered on (cx, cy), sized relative to the town radius.
+function renderKiteShield(
+  cx: number,
+  cy: number,
+  radius: number,
+  factionColor: string | null
+): React.ReactElement {
+  const h = radius * 1.5;
+  const w = h * (20 / 28); // fixed kite-shield aspect ratio from the SVG asset
+  const fill = factionColor ?? '#3a3a6a';
+  const sw = Math.max(1, radius * 0.055); // stroke width scales with size
+
+  const l = cx - w / 2;
+  const r = cx + w / 2;
+  const t = cy - h / 2;
+  const b = cy + h / 2;
+  const ym = t + h * 0.625; // latitude where the sides start curving to the tip
+
+  // Kite shield outline: flat top, straight sides down to ~62%, then quadratic curves to bottom tip
+  const bodyPath = `M${l},${t} L${r},${t} L${r},${ym} Q${r},${b} ${cx},${b} Q${l},${b} ${l},${ym} Z`;
+
+  // Boss position
+  const bossCy = t + h * 0.45;
+  const bossR = w * 0.12;
+
+  // Horizontal crossbar and spine
+  const crossY = t + h * 0.4;
+
+  return (
+    <g style={{ pointerEvents: 'none' }}>
+      {/* Drop shadow */}
+      <path d={bodyPath} fill="rgba(0,0,0,0.3)" transform="translate(0.8,1.2)" />
+      {/* Shield body */}
+      <path d={bodyPath} fill={fill} stroke="rgba(0,0,0,0.7)" strokeWidth={sw} />
+      {/* Top-left highlight for depth */}
+      <path
+        d={`M${l + sw},${t + sw} L${cx - 1},${t + sw} L${cx - 1},${t + h * 0.38} L${l + sw},${t + h * 0.52} Z`}
+        fill="rgba(255,255,255,0.15)"
+      />
+      {/* Central spine */}
+      <line
+        x1={cx}
+        y1={t + sw}
+        x2={cx}
+        y2={b - sw * 2}
+        stroke="rgba(0,0,0,0.28)"
+        strokeWidth={sw * 0.5}
+      />
+      {/* Horizontal crossbar */}
+      <line
+        x1={l + sw}
+        y1={crossY}
+        x2={r - sw}
+        y2={crossY}
+        stroke="rgba(0,0,0,0.28)"
+        strokeWidth={sw * 0.5}
+      />
+      {/* Shield boss */}
+      <circle
+        cx={cx}
+        cy={bossCy}
+        r={bossR}
+        fill="rgba(255,255,255,0.22)"
+        stroke="rgba(0,0,0,0.3)"
+        strokeWidth={sw * 0.4}
+      />
+    </g>
+  );
+}
 
 export const renderTownIcons = (
   tiles: TilesState,
   armiesByTile: Record<string, Army[]> = {},
+  factionColorMap: Record<string, string> = {},
   deepWaterSet: Set<string> = DEEP_WATER
 ): React.ReactElement[] => {
   return Object.values(tiles).flatMap((tile) => {
@@ -273,52 +348,57 @@ export const renderTownIcons = (
     const armies = armiesByTile[key] ?? [];
     const garrisoned = armies.length > 0;
 
-    const { wallW, garrisonBorderR } = townLayout(garrisoned);
-    const wallColor = garrisoned ? theme.town.wallColor : theme.town.palisadeColor;
-    const markColor = garrisoned ? theme.town.brickColor : theme.town.palisadeMarkColor;
+    const fortification = tile.fortification ?? 'none';
+    const fortConfig = fortification === 'none' ? null : theme.town.fortification[fortification];
 
-    const wallMarks = Array.from({ length: theme.town.brickCount }, (_, i) => {
-      const angle = (i / theme.town.brickCount) * 2 * Math.PI;
-      const inner = TOWN_WALL_R - 1.5;
-      const outer = TOWN_WALL_R + 1.5;
-      return (
-        <line
-          key={i}
-          x1={cx + inner * Math.cos(angle)}
-          y1={cy + inner * Math.sin(angle)}
-          x2={cx + outer * Math.cos(angle)}
-          y2={cy + outer * Math.sin(angle)}
-          stroke={markColor}
-          strokeWidth={1.5}
-        />
-      );
-    });
+    const townSize = tile.townSize ?? 'town';
+    const radius = theme.town.size[townSize].radius;
+
+    const wallMarks = fortConfig
+      ? Array.from({ length: fortConfig.markCount }, (_, i) => {
+          const angle = (i / fortConfig.markCount) * 2 * Math.PI;
+          const inner = radius - 1.5;
+          const outer = radius + 1.5;
+          return (
+            <line
+              key={i}
+              x1={cx + inner * Math.cos(angle)}
+              y1={cy + inner * Math.sin(angle)}
+              x2={cx + outer * Math.cos(angle)}
+              y2={cy + outer * Math.sin(angle)}
+              stroke={fortConfig.markColor}
+              strokeWidth={1.5}
+            />
+          );
+        })
+      : [];
+
+    // Resolve faction color from the first garrisoned army
+    const factionId = armies[0]?.factionId ?? null;
+    const factionColor = factionId ? (factionColorMap[factionId] ?? null) : null;
 
     return [
       <g key={`town-${key}`} style={{ pointerEvents: 'none' }}>
-        <circle cx={cx} cy={cy} r={TOWN_WALL_R} fill={theme.town.groundColor} />
-        {garrisoned && (
+        {/* SVG asset: ground fill + buildings for this town size */}
+        <image
+          href={TOWN_SIZE_URL[townSize]}
+          x={cx - radius}
+          y={cy - radius}
+          width={radius * 2}
+          height={radius * 2}
+        />
+        {fortConfig && (
           <circle
             cx={cx}
             cy={cy}
-            r={garrisonBorderR}
+            r={radius}
             fill="none"
-            stroke={theme.garrison.borderColor}
-            strokeWidth={theme.garrison.borderWidth}
+            stroke={fortConfig.wallColor}
+            strokeWidth={fortConfig.wallWidth}
           />
         )}
-        <circle
-          cx={cx}
-          cy={cy}
-          r={TOWN_WALL_R}
-          fill="none"
-          stroke={wallColor}
-          strokeWidth={wallW}
-        />
         {wallMarks}
-        <rect x={cx - 14} y={cy - 14} width={10} height={8} fill={theme.town.buildingColor} />
-        <rect x={cx + 4} y={cy - 12} width={9} height={8} fill={theme.town.buildingColor} />
-        <rect x={cx - 6} y={cy + 5} width={12} height={8} fill={theme.town.buildingColor} />
+        {garrisoned && renderKiteShield(cx, cy, radius, factionColor)}
       </g>,
     ];
   });
@@ -337,7 +417,10 @@ export const renderTownLabels = (
     const key = toKey(q, r);
     const armies = armiesByTile[key] ?? [];
     const garrisoned = armies.length > 0;
-    const { outerR } = townLayout(garrisoned);
+    const fortification = tile.fortification ?? 'none';
+    const wallW = fortification === 'none' ? 0 : theme.town.fortification[fortification].wallWidth;
+    const radius = theme.town.size[tile.townSize ?? 'town'].radius;
+    const { outerR } = townLayout(radius, wallW);
 
     const labels: React.ReactElement[] = [];
 

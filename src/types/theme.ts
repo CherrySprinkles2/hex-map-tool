@@ -1,7 +1,6 @@
 export interface TerrainEntry {
   color: string;
   label: string;
-  icon: string;
 }
 
 export interface ZIndexScale {
@@ -53,14 +52,30 @@ export interface AppTheme {
     color: string;
     labelColor: string;
     labelShadow: string;
-    wallColor: string;
-    wallWidth: number;
-    palisadeColor: string;
     groundColor: string;
     buildingColor: string;
-    brickColor: string;
-    palisadeMarkColor: string;
-    brickCount: number;
+    fortification: {
+      none: {
+        groundColor: string;
+      };
+      palisade: {
+        wallColor: string;
+        wallWidth: number;
+        markColor: string;
+        markCount: number;
+      };
+      stone: {
+        wallColor: string;
+        wallWidth: number;
+        markColor: string;
+        markCount: number;
+      };
+    };
+    size: {
+      village: { radius: number; buildingCount: number };
+      town: { radius: number; buildingCount: number };
+      city: { radius: number; buildingCount: number };
+    };
   };
 
   garrison: {

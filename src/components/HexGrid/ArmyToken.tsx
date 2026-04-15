@@ -4,6 +4,7 @@ import { axialToPixel, toKey, DEEP_WATER } from '../../utils/hexUtils';
 import { deleteArmy } from '../../features/armies/armiesSlice';
 import { selectArmy, deselectArmy } from '../../features/ui/uiSlice';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { LandIcon, NavalIcon } from '../../assets/icons/army';
 import type { Army } from '../../types/domain';
 
 interface ArmyTokenProps {
@@ -38,7 +39,8 @@ const ArmyToken = React.memo(({ army, tileIndex, total }: ArmyTokenProps): React
     );
   });
 
-  const icon = DEEP_WATER.has(terrain) ? '⛵' : '⚔️';
+  const ArmyIcon = DEEP_WATER.has(terrain) ? NavalIcon : LandIcon;
+  const iconSize = theme.army.tokenRadius * 1.1;
 
   const { x: baseX, y: baseY } = useMemo(() => {
     return axialToPixel(q, r);
@@ -106,15 +108,13 @@ const ArmyToken = React.memo(({ army, tileIndex, total }: ArmyTokenProps): React
         />
       )}
 
-      <text
-        x={cx}
-        y={cy + 5}
-        textAnchor="middle"
-        fontSize={13}
-        style={{ pointerEvents: 'none', userSelect: 'none' }}
-      >
-        {icon}
-      </text>
+      <ArmyIcon
+        x={cx - iconSize / 2}
+        y={cy - iconSize / 2}
+        width={iconSize}
+        height={iconSize}
+        style={{ pointerEvents: 'none', filter: 'brightness(0) invert(1)', opacity: 0.85 }}
+      />
 
       {name && (
         <text

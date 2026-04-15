@@ -1,13 +1,18 @@
+import React from 'react';
 import { createSelector } from '@reduxjs/toolkit';
 import { useAppSelector } from '../app/hooks';
 import { theme } from '../styles/theme';
+import { TERRAIN_ICON } from '../assets/icons/terrain';
 import type { RootState } from '../app/store';
 import type { CustomTerrainType, TerrainConfig } from '../types/domain';
 
 export interface TerrainEntry {
   id: string;
   color: string;
-  icon: string;
+  /** React SVG component for built-in terrains; null for custom. */
+  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>> | null;
+  /** Data-URL for user-uploaded custom terrain icons; empty string if none. */
+  iconUrl: string;
   name: string;
   isCustom: boolean;
 }
@@ -26,7 +31,8 @@ const selectTerrainList = createSelector(
         builtinEntries[id] = {
           id,
           color: theme.terrain[id].color,
-          icon: theme.terrain[id].icon,
+          Icon: TERRAIN_ICON[id] ?? null,
+          iconUrl: '',
           name: id,
           isCustom: false,
         };
@@ -37,7 +43,8 @@ const selectTerrainList = createSelector(
       customEntries[ct.id] = {
         id: ct.id,
         color: ct.color,
-        icon: ct.icon,
+        Icon: null,
+        iconUrl: ct.icon ?? '',
         name: ct.name,
         isCustom: true,
       };

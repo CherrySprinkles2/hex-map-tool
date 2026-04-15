@@ -14,6 +14,7 @@ import { deleteTilesByTerrain } from '../../features/tiles/tilesSlice';
 import { generateId } from '../../utils/generateId';
 import { patternMarkColor } from '../../utils/patternColor';
 import { theme } from '../../styles/theme';
+import { TERRAIN_ICON } from '../../assets/icons/terrain';
 import type { CustomTerrainType, PatternKey } from '../../types/domain';
 
 const BUILTIN_IDS = ['grass', 'farm', 'forest', 'mountain', 'lake', 'ocean'] as const;
@@ -122,11 +123,24 @@ const ColorSwatch = styled.div<{ $color: string }>`
   flex-shrink: 0;
 `;
 
-const TerrainIcon = styled.span`
-  font-size: 1.1rem;
+const TerrainIconImg = styled.img`
   width: 22px;
-  text-align: center;
+  height: 22px;
+  object-fit: contain;
   flex-shrink: 0;
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
+`;
+
+const TerrainIconSwatch = styled.span<{ $color: string }>`
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  background: ${({ $color }) => {
+    return $color;
+  }};
+  flex-shrink: 0;
+  opacity: 0.5;
 `;
 
 const TerrainName = styled.span<{ $muted?: boolean }>`
@@ -593,7 +607,7 @@ const DEFAULT_FORM: CustomFormState = {
   color: '#8B6914',
   patternKey: 'grass',
   isDeepWater: false,
-  icon: '🏔',
+  icon: '',
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -628,13 +642,27 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
       });
       if (builtin) {
         const td = theme.terrain[builtin];
-        return { id, color: td.color, icon: td.icon, name: builtin, isCustom: false };
+        return {
+          id,
+          color: td.color,
+          Icon: TERRAIN_ICON[builtin] ?? null,
+          iconUrl: '',
+          name: builtin,
+          isCustom: false,
+        };
       }
       const ct = custom.find((c) => {
         return c.id === id;
       });
       if (ct) {
-        return { id: ct.id, color: ct.color, icon: ct.icon, name: ct.name, isCustom: true };
+        return {
+          id: ct.id,
+          color: ct.color,
+          Icon: null,
+          iconUrl: ct.icon ?? '',
+          name: ct.name,
+          isCustom: true,
+        };
       }
       return null;
     })
@@ -644,7 +672,14 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
   BUILTIN_IDS.forEach((bid) => {
     if (!order.includes(bid)) {
       const td = theme.terrain[bid];
-      orderedList.push({ id: bid, color: td.color, icon: td.icon, name: bid, isCustom: false });
+      orderedList.push({
+        id: bid,
+        color: td.color,
+        Icon: TERRAIN_ICON[bid] ?? null,
+        iconUrl: '',
+        name: bid,
+        isCustom: false,
+      });
     }
   });
   custom.forEach((ct) => {
@@ -652,7 +687,8 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
       orderedList.push({
         id: ct.id,
         color: ct.color,
-        icon: ct.icon,
+        Icon: null,
+        iconUrl: ct.icon ?? '',
         name: ct.name,
         isCustom: true,
       });
@@ -776,7 +812,21 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
                     ↓
                   </SmallBtn>
                   <ColorSwatch $color={entry.color} />
-                  <TerrainIcon>{entry.icon}</TerrainIcon>
+                  {entry.Icon ? (
+                    <entry.Icon
+                      style={{
+                        width: '22px',
+                        height: '22px',
+                        flexShrink: 0,
+                        filter: 'brightness(0) invert(1)',
+                        opacity: 0.8,
+                      }}
+                    />
+                  ) : entry.iconUrl ? (
+                    <TerrainIconImg src={entry.iconUrl} alt="" aria-hidden />
+                  ) : (
+                    <TerrainIconSwatch $color={entry.color} />
+                  )}
                   <TerrainName $muted={!isEnabled && !entry.isCustom}>
                     {entry.isCustom ? entry.name : String(t(`terrain.${entry.id}` as any))}
                   </TerrainName>
@@ -888,22 +938,53 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
 
             <FormRow>
               <FormLabel>{t('terrainConfig.fieldIcon')}</FormLabel>
-              <FormInput
-                value={form.icon}
-                onChange={(e) => {
-                  setForm((f) => {
-                    return { ...f, icon: e.target.value };
-                  });
-                }}
-                style={{ maxWidth: 80 }}
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {form.icon && (
+                  <img
+                    src={form.icon}
+                    alt=""
+                    style={{
+                      width: 32,
+                      height: 32,
+                      objectFit: 'contain',
+                      filter: 'brightness(0) invert(1)',
+                      opacity: 0.85,
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      borderRadius: 4,
+                      padding: 2,
+                    }}
+                  />
+                )}
+                <FormInput
+                  type="file"
+                  accept=".svg,image/svg+xml"
+                  style={{ maxWidth: 220, padding: '4px' }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      setForm((f) => {
+                        return { ...f, icon: reader.result as string };
+                      });
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                />
+                {form.icon && (
+                  <SmallBtn
+                    onClick={() => {
+                      setForm((f) => {
+                        return { ...f, icon: '' };
+                      });
+                    }}
+                  >
+                    ✕
+                  </SmallBtn>
+                )}
+              </div>
             </FormRow>
-            <FieldHint>
-              {t('terrainConfig.iconHint')}{' '}
-              <a href="https://emojiterra.com/flowers/" target="_blank" rel="noreferrer">
-                {t('terrainConfig.iconHintLink')}
-              </a>
-            </FieldHint>
+            <FieldHint>{t('terrainConfig.iconHint')}</FieldHint>
 
             <FormRow>
               <FormLabel>{t('terrainConfig.fieldDeepWater')}</FormLabel>

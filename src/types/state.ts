@@ -25,6 +25,7 @@ export interface UiState {
   activeFactionId: string | null;
   activePaintBrush: string | null;
   showShortcuts: boolean;
+  editingTownTile: string | null;
 }
 
 export interface CurrentMapState {

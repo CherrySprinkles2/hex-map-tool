@@ -6,7 +6,6 @@ import {
   updateTile,
   deleteTile,
   toggleTileFlag,
-  setTownName,
   setTileNotes,
   blockConnection,
   unblockConnection,
@@ -18,11 +17,15 @@ import {
   enterTerrainPaint,
   exitTerrainPaint,
   setActivePaintBrush,
+  enterTownEdit,
 } from '../../features/ui/uiSlice';
 import { theme } from '../../styles/theme';
 import { NEIGHBOR_DIRS, toKey, DEEP_WATER } from '../../utils/hexUtils';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import useTerrainList from '../../hooks/useTerrainList';
+import { TERRAIN_ICON } from '../../assets/icons/terrain';
+import { RiverIcon, RoadIcon, PortIcon } from '../../assets/icons/features';
+import { LandIcon } from '../../assets/icons/army';
 import type { RootState } from '../../app/store';
 import type { TileFlag, TerrainType } from '../../types/domain';
 import { SidePanel } from '../shared/SidePanel';
@@ -154,8 +157,12 @@ const TerrainBtn = styled.button<{ $active: boolean; $color: string }>`
     outline-offset: 2px;
   }
 
-  span.icon {
-    font-size: 1.5rem;
+  .icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: block;
+    filter: brightness(0) invert(1);
+    opacity: 0.85;
   }
   span.label {
     font-size: 0.75rem;
@@ -200,7 +207,11 @@ const FlagToggle = styled.button<{ $active: boolean; $color: string }>`
   }
 
   .flag-icon {
-    font-size: 1.2rem;
+    width: 1.2rem;
+    height: 1.2rem;
+    display: block;
+    filter: brightness(0) invert(1);
+    opacity: 0.85;
   }
   .flag-label {
     font-size: 0.85rem;
@@ -281,6 +292,34 @@ const AddArmyBtn = styled.button`
   }
 `;
 
+const EditTownBtn = styled.button`
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px solid
+    ${({ theme }) => {
+      return theme.town.color;
+    }}66;
+  background: rgba(255, 255, 255, 0.03);
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
+  cursor: pointer;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+  &:hover {
+    background: ${({ theme }) => {
+      return theme.town.color;
+    }}22;
+    border-color: ${({ theme }) => {
+      return theme.town.color;
+    }};
+  }
+`;
+
 const DeleteBtn = styled.button`
   margin-top: auto;
   padding: 10px;
@@ -302,36 +341,6 @@ const DeleteBtn = styled.button`
     background: ${({ theme }) => {
       return theme.accent;
     }}22;
-  }
-`;
-
-const TownNameInput = styled.input`
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 2px solid
-    ${({ theme }) => {
-      return theme.town.color;
-    }}66;
-  background: rgba(255, 255, 255, 0.05);
-  color: ${({ theme }) => {
-    return theme.text;
-  }};
-  font-size: 0.9rem;
-  box-sizing: border-box;
-  outline: none;
-  transition: border-color 0.15s;
-
-  &:focus {
-    border-color: ${({ theme }) => {
-      return theme.town.color;
-    }};
-  }
-
-  &::placeholder {
-    color: ${({ theme }) => {
-      return theme.textMuted;
-    }};
   }
 `;
 
@@ -517,12 +526,12 @@ const FLAG_BLOCKED_KEY: Record<
 const FLAGS: Array<{
   key: 'hasRiver' | 'hasRoad' | 'hasTown';
   labelKey: 'features.river' | 'features.road' | 'features.town';
-  icon: string;
+  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   color: string;
 }> = [
-  { key: 'hasRiver', labelKey: 'features.river', icon: '🌊', color: theme.river.color },
-  { key: 'hasRoad', labelKey: 'features.road', icon: '🛤️', color: theme.road.color },
-  { key: 'hasTown', labelKey: 'features.town', icon: '🏘️', color: theme.town.color },
+  { key: 'hasRiver', labelKey: 'features.river', Icon: RiverIcon, color: theme.river.color },
+  { key: 'hasRoad', labelKey: 'features.road', Icon: RoadIcon, color: theme.road.color },
+  { key: 'hasTown', labelKey: 'features.town', Icon: PortIcon, color: theme.town.color },
 ];
 
 const TileEditPanel = (): React.ReactElement => {
@@ -543,6 +552,9 @@ const TileEditPanel = (): React.ReactElement => {
   });
   const activePaintBrush = useAppSelector((state) => {
     return state.ui.activePaintBrush;
+  });
+  const editingTownTile = useAppSelector((state) => {
+    return state.ui.editingTownTile;
   });
   const tile = useAppSelector((state) => {
     return selectedKey ? (state.tiles[selectedKey] ?? null) : null;
@@ -573,11 +585,6 @@ const TileEditPanel = (): React.ReactElement => {
     }
   };
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!tile) return;
-    dispatch(setTownName({ q: tile.q, r: tile.r, name: e.target.value }));
-  };
-
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!tile) return;
     dispatch(setTileNotes({ q: tile.q, r: tile.r, notes: e.target.value }));
@@ -595,9 +602,17 @@ const TileEditPanel = (): React.ReactElement => {
 
   return (
     <SidePanel
-      $open={(!!selectedKey || mapMode === 'terrain-paint') && !showShortcuts && !selectedArmyId}
+      $open={
+        (!!selectedKey || mapMode === 'terrain-paint') &&
+        !showShortcuts &&
+        !selectedArmyId &&
+        !editingTownTile
+      }
       $desktopVisible={
-        (mapMode === 'terrain' || mapMode === 'terrain-paint') && !showShortcuts && !selectedArmyId
+        (mapMode === 'terrain' || mapMode === 'terrain-paint') &&
+        !showShortcuts &&
+        !selectedArmyId &&
+        !editingTownTile
       }
       $gap="20px"
     >
@@ -620,7 +635,7 @@ const TileEditPanel = (): React.ReactElement => {
           <div>
             <SectionLabel>{t('tilePanel.terrain')}</SectionLabel>
             <TerrainGrid>
-              {terrainList.map(({ id, color, icon, name }) => {
+              {terrainList.map(({ id, color, Icon: TerrainIcon, iconUrl, name }) => {
                 return (
                   <TerrainBtn
                     key={id}
@@ -631,7 +646,22 @@ const TileEditPanel = (): React.ReactElement => {
                       return dispatch(setActivePaintBrush(id));
                     }}
                   >
-                    <span className="icon">{icon}</span>
+                    {TerrainIcon ? (
+                      <TerrainIcon className="icon" />
+                    ) : iconUrl ? (
+                      <img className="icon" src={iconUrl} alt="" aria-hidden />
+                    ) : (
+                      <span
+                        className="icon"
+                        style={{
+                          width: '1.5rem',
+                          height: '1.5rem',
+                          background: color,
+                          borderRadius: '3px',
+                          display: 'block',
+                        }}
+                      />
+                    )}
                     <span className="label">
                       {t(`terrain.${id}` as `terrain.${TerrainType}`, { defaultValue: name })}
                     </span>
@@ -647,7 +677,18 @@ const TileEditPanel = (): React.ReactElement => {
             <SectionLabel>{t('tilePanel.features')}</SectionLabel>
             <FlagList>
               <FeatureBrushRow>
-                <FeatureBrushLabel>🌊 {t('features.river')}</FeatureBrushLabel>
+                <FeatureBrushLabel>
+                  <RiverIcon
+                    style={{
+                      width: '1rem',
+                      height: '1rem',
+                      verticalAlign: 'middle',
+                      filter: 'brightness(0) invert(1)',
+                      opacity: 0.85,
+                    }}
+                  />{' '}
+                  {t('features.river')}
+                </FeatureBrushLabel>
                 <FeatureBrushBtnGroup>
                   <FeatureBrushBtn
                     $active={activePaintBrush === 'river-on'}
@@ -670,7 +711,18 @@ const TileEditPanel = (): React.ReactElement => {
                 </FeatureBrushBtnGroup>
               </FeatureBrushRow>
               <FeatureBrushRow>
-                <FeatureBrushLabel>🛤️ {t('features.road')}</FeatureBrushLabel>
+                <FeatureBrushLabel>
+                  <RoadIcon
+                    style={{
+                      width: '1rem',
+                      height: '1rem',
+                      verticalAlign: 'middle',
+                      filter: 'brightness(0) invert(1)',
+                      opacity: 0.85,
+                    }}
+                  />{' '}
+                  {t('features.road')}
+                </FeatureBrushLabel>
                 <FeatureBrushBtnGroup>
                   <FeatureBrushBtn
                     $active={activePaintBrush === 'road-on'}
@@ -712,7 +764,7 @@ const TileEditPanel = (): React.ReactElement => {
               <div>
                 <SectionLabel>{t('tilePanel.terrain')}</SectionLabel>
                 <TerrainGrid>
-                  {terrainList.map(({ id, color, icon, name }) => {
+                  {terrainList.map(({ id, color, Icon: TerrainIcon, iconUrl, name }) => {
                     return (
                       <TerrainBtn
                         key={id}
@@ -723,7 +775,22 @@ const TileEditPanel = (): React.ReactElement => {
                           return handleTerrainChange(id as TerrainType);
                         }}
                       >
-                        <span className="icon">{icon}</span>
+                        {TerrainIcon ? (
+                          <TerrainIcon className="icon" />
+                        ) : iconUrl ? (
+                          <img className="icon" src={iconUrl} alt="" aria-hidden />
+                        ) : (
+                          <span
+                            className="icon"
+                            style={{
+                              width: '1.5rem',
+                              height: '1.5rem',
+                              background: color,
+                              borderRadius: '3px',
+                              display: 'block',
+                            }}
+                          />
+                        )}
                         <span className="label">
                           {t(`terrain.${id}` as `terrain.${TerrainType}`, { defaultValue: name })}
                         </span>
@@ -747,7 +814,7 @@ const TileEditPanel = (): React.ReactElement => {
               <div>
                 <SectionLabel>{t('tilePanel.features')}</SectionLabel>
                 <FlagList>
-                  {FLAGS.map(({ key, labelKey, icon, color }) => {
+                  {FLAGS.map(({ key, labelKey, Icon: FlagIcon, color }) => {
                     const active = !!tile?.[key];
                     const blockedKey = FLAG_BLOCKED_KEY[key];
                     const isPort = key === 'hasTown';
@@ -802,7 +869,7 @@ const TileEditPanel = (): React.ReactElement => {
                             return handleFlagToggle(key);
                           }}
                         >
-                          <span className="flag-icon">{icon}</span>
+                          <FlagIcon className="flag-icon" />
                           <span className="flag-label">{t(labelKey)}</span>
                           <span className="flag-state">{active ? 'on' : 'off'}</span>
                         </FlagToggle>
@@ -812,11 +879,47 @@ const TileEditPanel = (): React.ReactElement => {
                               return (
                                 <ConnectionRow key={nk}>
                                   <span>
-                                    {terrainList.find((e) => {
-                                      return e.id === terrain;
-                                    })?.icon ??
-                                      theme.terrain[terrain as TerrainType]?.icon ??
-                                      terrain}
+                                    {(() => {
+                                      const entry = terrainList.find((e) => {
+                                        return e.id === terrain;
+                                      });
+                                      const TerrainIcon =
+                                        entry?.Icon ?? TERRAIN_ICON[terrain] ?? null;
+                                      const terrainIconUrl = entry?.iconUrl ?? '';
+                                      if (TerrainIcon) {
+                                        return (
+                                          <TerrainIcon
+                                            style={{
+                                              width: '1rem',
+                                              height: '1rem',
+                                              verticalAlign: 'middle',
+                                              filter: 'brightness(0) invert(1)',
+                                              opacity: 0.75,
+                                            }}
+                                          />
+                                        );
+                                      }
+                                      if (terrainIconUrl) {
+                                        return (
+                                          <img
+                                            src={terrainIconUrl}
+                                            alt={terrain}
+                                            style={{
+                                              width: '1rem',
+                                              height: '1rem',
+                                              verticalAlign: 'middle',
+                                              filter: 'brightness(0) invert(1)',
+                                              opacity: 0.75,
+                                            }}
+                                          />
+                                        );
+                                      }
+                                      return (
+                                        <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
+                                          {terrain}
+                                        </span>
+                                      );
+                                    })()}
                                   </span>
                                   <span>{dirLabel}</span>
                                   {isBlocked && (
@@ -849,14 +952,15 @@ const TileEditPanel = (): React.ReactElement => {
                   })}
                 </FlagList>
                 {tile?.hasTown && (
-                  <TownNameInput
-                    data-testid="town-name-input"
-                    value={tile.townName ?? ''}
-                    onChange={handleNameChange}
-                    placeholder={t('tilePanel.townNamePlaceholder')}
-                    maxLength={32}
-                    style={{ marginTop: '8px' }}
-                  />
+                  <EditTownBtn
+                    data-testid="edit-town-btn"
+                    style={{ marginTop: '8px', width: '100%' }}
+                    onClick={() => {
+                      return selectedKey && dispatch(enterTownEdit(selectedKey));
+                    }}
+                  >
+                    {t('tilePanel.editTown')}
+                  </EditTownBtn>
                 )}
               </div>
 
@@ -886,7 +990,14 @@ const TileEditPanel = (): React.ReactElement => {
                             return dispatch(selectArmy(army.id));
                           }}
                         >
-                          <span>⚔️</span>
+                          <LandIcon
+                            style={{
+                              width: '1rem',
+                              height: '1rem',
+                              filter: 'brightness(0) invert(1)',
+                              opacity: 0.75,
+                            }}
+                          />
                           <ArmyRowName>{army.name || 'Unnamed Army'}</ArmyRowName>
                           <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>Select →</span>
                         </ArmyRow>

@@ -21,7 +21,15 @@ import {
   setTileFeature,
   setTileFaction,
 } from '../../features/tiles/tilesSlice';
-import { getNeighbors, toKey, pixelToAxial, hexLine } from '../../utils/hexUtils';
+import {
+  getNeighbors,
+  toKey,
+  pixelToAxial,
+  hexLine,
+  hexPointsString,
+  axialToPixel,
+  HEX_SIZE,
+} from '../../utils/hexUtils';
 import { theme } from '../../styles/theme';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../app/hooks';
 import useViewportCulling from '../../hooks/useViewportCulling';
@@ -62,6 +70,10 @@ const HexGrid = (): React.ReactElement => {
   });
   const customTerrains = useAppSelector((state) => {
     return state.terrainConfig.custom;
+  });
+
+  const selectedTile = useAppSelector((state) => {
+    return state.ui.selectedTile;
   });
 
   const armiesByTile = useMemo(() => {
@@ -392,6 +404,26 @@ const HexGrid = (): React.ReactElement => {
             })}
 
           <WaterOverlay tiles={deferredTiles} armiesByTile={armiesByTile} />
+
+          {(() => {
+            if (!selectedTile) return null;
+            const [sqStr, srStr] = selectedTile.split(',');
+            const sq = Number(sqStr);
+            const sr = Number(srStr);
+            const { x: sx, y: sy } = axialToPixel(sq, sr);
+            const selPts = hexPointsString(sx, sy, HEX_SIZE - 5);
+            return (
+              <polygon
+                points={selPts}
+                fill="none"
+                stroke={theme.selectedStroke}
+                strokeWidth={2.5}
+                strokeDasharray="6 3"
+                strokeLinecap="round"
+                style={{ animation: 'marchingAnts 1s linear infinite', pointerEvents: 'none' }}
+              />
+            );
+          })()}
 
           {Object.entries(armiesByTile)
             .filter(([tileKey]) => {

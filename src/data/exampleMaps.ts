@@ -37,6 +37,8 @@ const normalizeTile = (t: RawTile): Tile => {
     roadBlocked: t.roadBlocked ?? [],
     hasTown: t.hasTown ?? false,
     townName: t.townName ?? '',
+    townSize: t.townSize,
+    fortification: t.fortification,
     portBlocked: t.portBlocked ?? [],
     notes: t.notes ?? '',
     factionId: t.factionId ?? null,

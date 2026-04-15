@@ -97,7 +97,7 @@ const GhostTile = React.memo(({ q, r }: GhostTileProps): React.ReactElement => {
         } else {
           const terrain = inferTerrain(q, r, tiles);
           dispatch(addTile({ q, r, terrain }));
-          dispatch(selectTile(toKey(q, r)));
+          dispatch(selectTile({ key: toKey(q, r), hasTown: false }));
         }
         return;
       }
@@ -111,7 +111,7 @@ const GhostTile = React.memo(({ q, r }: GhostTileProps): React.ReactElement => {
 
       const terrain = inferTerrain(q, r, tiles);
       dispatch(addTile({ q, r, terrain }));
-      dispatch(selectTile(toKey(q, r)));
+      dispatch(selectTile({ key: toKey(q, r), hasTown: false }));
     },
     [q, r, store, dispatch]
   );

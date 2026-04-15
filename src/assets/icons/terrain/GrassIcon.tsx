@@ -1,0 +1,91 @@
+import React from 'react';
+
+const GrassIcon = (props: React.SVGProps<SVGSVGElement>): React.ReactElement => {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" {...props}>
+      <line
+        x1="5"
+        y1="20"
+        x2="5"
+        y2="11"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <line
+        x1="5"
+        y1="14"
+        x2="3"
+        y2="10"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="5"
+        y1="14"
+        x2="7"
+        y2="10"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="12"
+        y1="20"
+        x2="12"
+        y2="9"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <line
+        x1="12"
+        y1="13"
+        x2="9"
+        y2="8"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="12"
+        y1="13"
+        x2="15"
+        y2="8"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="19"
+        y1="20"
+        x2="19"
+        y2="12"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <line
+        x1="19"
+        y1="15"
+        x2="17"
+        y2="11"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="19"
+        y1="15"
+        x2="21"
+        y2="11"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+};
+
+export default GrassIcon;

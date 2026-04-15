@@ -11,12 +11,12 @@ export const theme: AppTheme = {
 
   // ── Terrain tiles ─────────────────────────────────────────────────────────────
   terrain: {
-    grass: { color: '#7ec850', label: 'Grass', icon: '🌿' },
-    farm: { color: '#c8a96e', label: 'Farm', icon: '🌾' },
-    forest: { color: '#2d6a4f', label: 'Forest', icon: '🌲' },
-    mountain: { color: '#6b6b6b', label: 'Mountain', icon: '⛰️' },
-    lake: { color: '#1a78c2', label: 'Lake', icon: '🏞️' },
-    ocean: { color: '#0d3d6e', label: 'Ocean', icon: '🌊' },
+    grass: { color: '#7ec850', label: 'Grass' },
+    farm: { color: '#c8a96e', label: 'Farm' },
+    forest: { color: '#2d6a4f', label: 'Forest' },
+    mountain: { color: '#6b6b6b', label: 'Mountain' },
+    lake: { color: '#1a78c2', label: 'Lake' },
+    ocean: { color: '#0d3d6e', label: 'Ocean' },
   },
 
   // ── Tile chrome ───────────────────────────────────────────────────────────────
@@ -55,14 +55,30 @@ export const theme: AppTheme = {
     color: '#f5a623',
     labelColor: '#f5a623',
     labelShadow: 'rgba(0,0,0,0.7)',
-    wallColor: '#8a8a8a',
-    wallWidth: 5,
-    palisadeColor: '#8B5E3C',
     groundColor: '#7ec850',
     buildingColor: '#012731',
-    brickColor: '#555555',
-    palisadeMarkColor: '#5a3a1a',
-    brickCount: 16,
+    fortification: {
+      none: {
+        groundColor: '#7ec850',
+      },
+      palisade: {
+        wallColor: '#8B5E3C',
+        wallWidth: 4,
+        markColor: '#5a3a1a',
+        markCount: 20,
+      },
+      stone: {
+        wallColor: '#8a8a8a',
+        wallWidth: 6,
+        markColor: '#555555',
+        markCount: 16,
+      },
+    },
+    size: {
+      village: { radius: 20, buildingCount: 2 },
+      town: { radius: 28, buildingCount: 3 },
+      city: { radius: 38, buildingCount: 5 },
+    },
   },
 
   // ── Garrison (town with armies) ───────────────────────────────────────────────

@@ -24,9 +24,20 @@ const WaterOverlay = React.memo(
     const customTerrains = useAppSelector((state) => {
       return state.terrainConfig.custom;
     });
+    const factions = useAppSelector((state) => {
+      return state.factions;
+    });
     const deepWaterSet = useMemo(() => {
       return buildDeepWaterSet(customTerrains);
     }, [customTerrains]);
+
+    const factionColorMap = useMemo(() => {
+      const map: Record<string, string> = {};
+      factions.forEach((f) => {
+        map[f.id] = f.color;
+      });
+      return map;
+    }, [factions]);
 
     const riverPaths = useMemo(() => {
       return renderFlagPaths(tiles, 'hasRiver', theme.river, deepWaterSet);
@@ -41,8 +52,8 @@ const WaterOverlay = React.memo(
       return renderCausewayPaths(tiles, theme.causeway, deepWaterSet);
     }, [tiles, deepWaterSet]);
     const townIcons = useMemo(() => {
-      return renderTownIcons(tiles, armiesByTile ?? {}, deepWaterSet);
-    }, [tiles, armiesByTile, deepWaterSet]);
+      return renderTownIcons(tiles, armiesByTile ?? {}, factionColorMap, deepWaterSet);
+    }, [tiles, armiesByTile, factionColorMap, deepWaterSet]);
     const townLabels = useMemo(() => {
       return renderTownLabels(tiles, armiesByTile ?? {}, deepWaterSet);
     }, [tiles, armiesByTile, deepWaterSet]);

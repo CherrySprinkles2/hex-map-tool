@@ -12,20 +12,26 @@ const initialState: UiState = {
   activeFactionId: null,
   showShortcuts: false,
   activePaintBrush: null,
+  editingTownTile: null,
 };
 
 const uiSlice = createSlice({
   name: 'ui',
   initialState,
   reducers: {
-    selectTile: (state, action: PayloadAction<string>) => {
-      state.selectedTile = action.payload;
+    selectTile: (state, action: PayloadAction<{ key: string; hasTown: boolean }>) => {
+      state.selectedTile = action.payload.key;
       state.selectedArmyId = null;
       state.movingArmyId = null;
       state.factionsOpen = false;
+      if (state.editingTownTile !== null) {
+        // Keep the town panel open only if the newly selected tile also has a town.
+        state.editingTownTile = action.payload.hasTown ? action.payload.key : null;
+      }
     },
     deselectTile: (state) => {
       state.selectedTile = null;
+      state.editingTownTile = null;
     },
     setScreen: (state, action: PayloadAction<Screen>) => {
       state.screen = action.payload;
@@ -88,6 +94,12 @@ const uiSlice = createSlice({
     closeShortcuts: (state) => {
       state.showShortcuts = false;
     },
+    enterTownEdit: (state, action: PayloadAction<string>) => {
+      state.editingTownTile = action.payload;
+    },
+    exitTownEdit: (state) => {
+      state.editingTownTile = null;
+    },
   },
 });
 
@@ -109,5 +121,7 @@ export const {
   setActivePaintBrush,
   openShortcuts,
   closeShortcuts,
+  enterTownEdit,
+  exitTownEdit,
 } = uiSlice.actions;
 export default uiSlice.reducer;

@@ -1,0 +1,31 @@
+import React from 'react';
+
+const OceanIcon = (props: React.SVGProps<SVGSVGElement>): React.ReactElement => {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" {...props}>
+      <path
+        d="M1,7  C4,5   7,9   10,7  C13,5  16,9  19,7  C21,6  22.5,5.5 24,7"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d="M1,13 C4,11  7,15  10,13 C13,11 16,15 19,13 C21,12 22.5,11.5 24,13"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d="M1,19 C4,17  7,21  10,19 C13,17 16,21 19,19 C21,18 22.5,17.5 24,19"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinecap="round"
+        fill="none"
+      />
+    </svg>
+  );
+};
+
+export default OceanIcon;

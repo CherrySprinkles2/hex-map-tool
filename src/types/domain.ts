@@ -31,6 +31,10 @@ export interface TerrainConfig {
 
 export type TileFlag = 'hasRiver' | 'hasRoad' | 'hasTown';
 
+export type Fortification = 'none' | 'palisade' | 'stone';
+
+export type TownSize = 'village' | 'town' | 'city';
+
 export interface Tile {
   q: number;
   r: number;
@@ -41,6 +45,8 @@ export interface Tile {
   roadBlocked: string[];
   hasTown: boolean;
   townName: string;
+  fortification?: Fortification;
+  townSize?: TownSize;
   portBlocked: string[];
   notes: string;
   factionId: string | null;

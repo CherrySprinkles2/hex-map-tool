@@ -129,7 +129,10 @@ const HexTile = React.memo(({ q, r }: HexTileProps): React.ReactElement => {
       }
 
       if (isSelected) dispatch(deselectTile());
-      else dispatch(selectTile(key));
+      else {
+        const hasTown = store.getState().tiles[key]?.hasTown ?? false;
+        dispatch(selectTile({ key, hasTown }));
+      }
     },
     [isSelected, dispatch, key, q, r, store, applyBrush]
   );
@@ -202,17 +205,6 @@ const HexTile = React.memo(({ q, r }: HexTileProps): React.ReactElement => {
           stroke={factionColor}
           strokeWidth={5}
           style={{ pointerEvents: 'none' }}
-        />
-      )}
-      {isSelected && (
-        <polygon
-          points={selectionPoints}
-          fill="none"
-          stroke={theme.selectedStroke}
-          strokeWidth={2.5}
-          strokeDasharray="6 3"
-          strokeLinecap="round"
-          style={{ animation: 'marchingAnts 1s linear infinite', pointerEvents: 'none' }}
         />
       )}
       {hovered && (

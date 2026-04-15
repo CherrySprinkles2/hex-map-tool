@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import HexGrid from '../HexGrid/HexGrid';
 import TileEditPanel from '../TileEditPanel/TileEditPanel';
+import TownEditPanel from '../TownEditPanel/TownEditPanel';
 import ArmyPanel from '../ArmyPanel/ArmyPanel';
 import Toolbar from '../Toolbar/Toolbar';
 import FactionsPanel from '../FactionsPanel/FactionsPanel';
@@ -40,6 +41,7 @@ const Editor = (): React.ReactElement => {
         <HexGrid />
         <MapModeToggle />
         <TileEditPanel />
+        <TownEditPanel />
         <FactionPaintPanel suppressed={selectedArmyId !== null} />
         <FactionsPanel />
         <KeyboardShortcutsPanel />
