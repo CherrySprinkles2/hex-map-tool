@@ -9,13 +9,13 @@ import {
   DEEP_WATER,
 } from './hexUtils';
 import {
-  computeBitmask,
   computeConnectedDirs,
   buildFeaturePaths,
   buildRoadPaths,
+  getFeatureAnchor,
+  getInwardNormal,
 } from './pathGenerator';
 import type { CubicBezier } from './pathGenerator';
-import { resolveCausewayPaths } from './routeLookup';
 import { theme } from '../styles/theme';
 import type { TilesState } from '../types/state';
 import type { Army } from '../types/domain';
@@ -172,8 +172,9 @@ interface CausewayStyle {
 }
 
 // Renders causeways: roads passing through deep-water tiles.
-// Draws the road embankment (same path as road) plus short perpendicular notch
-// lines to suggest water channels flowing beneath the raised structure.
+// Draws the road embankment using the same programmatic path generator as roads
+// so edge anchors align perfectly at tile boundaries. Also draws short perpendicular
+// notch lines at each connected edge to suggest water channels beneath the structure.
 export const renderCausewayPaths = (
   tiles: TilesState,
   style: CausewayStyle,
@@ -186,9 +187,9 @@ export const renderCausewayPaths = (
     const { q, r } = tile;
     const key = toKey(q, r);
     const { x: cx, y: cy } = axialToPixel(q, r);
-    const bitmask = computeBitmask(tiles, q, r, 'hasRoad');
+    const connectedDirs = computeConnectedDirs(tiles, q, r, 'hasRoad');
 
-    if (bitmask === 0) {
+    if (connectedDirs.length === 0) {
       return [
         <circle
           key={`causeway-pool-${key}`}
@@ -202,18 +203,14 @@ export const renderCausewayPaths = (
       ];
     }
 
-    const { paths, notches } = resolveCausewayPaths(bitmask);
+    // Use the same path generation as land roads — no river curves on water tiles.
+    const svgPaths = buildRoadPaths(cx, cy, connectedDirs, [], false);
 
-    const embankment = paths.map(({ d, transform }, i) => {
+    const embankment = svgPaths.map((svgPath, i) => {
       return (
-        <g
-          key={`causeway-emb-${key}-${i}`}
-          transform={`translate(${cx},${cy})`}
-          style={{ pointerEvents: 'none' }}
-        >
+        <g key={`causeway-emb-${key}-${i}`} style={{ pointerEvents: 'none' }}>
           <path
-            d={d}
-            transform={transform || undefined}
+            d={svgPath}
             fill="none"
             stroke={style.color}
             strokeWidth={style.width}
@@ -224,16 +221,22 @@ export const renderCausewayPaths = (
       );
     });
 
-    const channels = notches.map(({ d, transform }, i) => {
+    // Place a perpendicular notch at each connected edge anchor to suggest water
+    // channels flowing beneath the raised causeway.
+    const NOTCH_HALF = 6;
+    const channels = connectedDirs.map((dirIndex, i) => {
+      const anchor = getFeatureAnchor(cx, cy, dirIndex, 'road');
+      const normal = getInwardNormal(cx, cy, dirIndex);
+      // Tangent along the edge = 90° rotation of the inward normal
+      const tx = -normal.y;
+      const ty = normal.x;
+      const d =
+        `M ${(anchor.x + tx * NOTCH_HALF).toFixed(2)},${(anchor.y + ty * NOTCH_HALF).toFixed(2)} ` +
+        `L ${(anchor.x - tx * NOTCH_HALF).toFixed(2)},${(anchor.y - ty * NOTCH_HALF).toFixed(2)}`;
       return (
-        <g
-          key={`causeway-notch-${key}-${i}`}
-          transform={`translate(${cx},${cy})`}
-          style={{ pointerEvents: 'none' }}
-        >
+        <g key={`causeway-notch-${key}-${i}`} style={{ pointerEvents: 'none' }}>
           <path
             d={d}
-            transform={transform || undefined}
             fill="none"
             stroke={style.notchColor}
             strokeWidth={style.notchWidth}
