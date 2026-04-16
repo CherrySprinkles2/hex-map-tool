@@ -4,6 +4,7 @@ import type { UiState, MapMode, Screen } from '../../types/state';
 const initialState: UiState = {
   selectedTile: null,
   screen: 'home',
+  helpReturnScreen: 'home',
   selectedArmyId: null,
   placingArmy: false,
   movingArmyId: null,
@@ -100,6 +101,13 @@ const uiSlice = createSlice({
     exitTownEdit: (state) => {
       state.editingTownTile = null;
     },
+    navigateToHelp: (state) => {
+      state.helpReturnScreen = state.screen;
+      state.screen = 'help';
+    },
+    navigateBackFromHelp: (state) => {
+      state.screen = state.helpReturnScreen;
+    },
   },
 });
 
@@ -123,5 +131,7 @@ export const {
   closeShortcuts,
   enterTownEdit,
   exitTownEdit,
+  navigateToHelp,
+  navigateBackFromHelp,
 } = uiSlice.actions;
 export default uiSlice.reducer;

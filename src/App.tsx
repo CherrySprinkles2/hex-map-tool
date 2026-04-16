@@ -4,6 +4,7 @@ import { theme } from './styles/theme';
 import GlobalStyles from './styles/GlobalStyles';
 import Editor from './components/Editor/Editor';
 import HomeScreen from './components/HomeScreen/HomeScreen';
+import HelpScreen from './components/HelpScreen/HelpScreen';
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
 import { migrateFromLegacy } from './utils/mapsStorage';
 import { useAppSelector } from './app/hooks';
@@ -34,6 +35,10 @@ const App = (): React.ReactElement => {
       {screen === 'editor' ? (
         <ErrorBoundary>
           <Editor />
+        </ErrorBoundary>
+      ) : screen === 'help' ? (
+        <ErrorBoundary>
+          <HelpScreen />
         </ErrorBoundary>
       ) : (
         <ErrorBoundary>

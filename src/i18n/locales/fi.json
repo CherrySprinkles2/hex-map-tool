@@ -160,6 +160,118 @@
     "disableWarning": "{{count}} ruutu(a) käyttää tätä maastotyyppiä. Poistaminen käytöstä piilottaa sen valitsimesta muttei poista ruutuja. Jatketaanko?",
     "deleteWarning": "{{count}} ruutu(a) käyttää tätä maastotyyppiä. Poistetaanko nämä ruudutkin?"
   },
+  "help": {
+    "pageTitle": "Ohje",
+    "back": "← Takaisin",
+    "helpButtonLabel": "Ohje",
+    "previous": "← Edellinen",
+    "next": "Seuraava →",
+    "imageAlt": "Kuvakaappaus osiosta {{section}}",
+    "sections": {
+      "overview": {
+        "title": "Yleiskatsaus",
+        "summary": "Johdanto Hex Map Tooliin ja sen käyttötarkoituksiin.",
+        "para1": "Hex Map Tool on selainpohjainen kartanluontityökalu maailmojen rakentamiseen kuusikulmaruudukolla.",
+        "para2": "Se soveltuu pöytäroolipelien kampanjasuunnitteluun, sotapeliskenaarioiden suunnitteluun, fantasiamaailmojen luomiseen ja strategiseen suunnitteluun.",
+        "para3": "Asennus tai käyttäjätili ei ole tarpeen. Kartat tallennetaan automaattisesti selaimeen, ja ne voidaan viedä JSON-tiedostoina varmuuskopiointia tai laitteiden välistä siirtoa varten."
+      },
+      "canvas": {
+        "title": "Karttanäkymä",
+        "summary": "Ruutujen lisääminen ja poistaminen, kartalla navigointi ja ruudun valinta.",
+        "heading1": "Ruutujen lisääminen ja poistaminen",
+        "para1": "Kartta koostuu yksittäisistä kuusikulmaruuduista. Kun kartta avataan ensimmäistä kertaa, pienen ruutujoukon ympärillä näkyy haaleita aaveruutuja reunoilla. Lisää ruutu napsauttamalla mitä tahansa aaveruutua. Uudet ruudut omaksuvat automaattisesti yleisimmän maaston naapureiltaan.",
+        "para2": "Poista ruutu napsauttamalla sitä hiiren kakkospainikkeella tai valitsemalla se ja painamalla Delete tai Backspace.",
+        "heading2": "Kartalla navigointi",
+        "para3": "Panoroi näkymää napsauttamalla ja vetämällä karttanäkymässä. Lähennä ja loitonna vierittämällä — zoomaus keskittyy kursorin sijaintiin. Palauta näkymä alkupisteeseen painamalla R.",
+        "heading3": "Ruudun valitseminen",
+        "para4": "Valitse ruutu napsauttamalla mitä tahansa kiinteää ruutua. Ruudun muokkauspaneeli avautuu oikealle, näyttäen maastotyypin, ominaisuudet, armeijat ja muistiinpanot. Kaikki muutokset astuvat voimaan välittömästi."
+      },
+      "terrain": {
+        "title": "Maasto",
+        "summary": "Maaston lajit, niiden vaihtaminen ja mukautetut maastotyypit.",
+        "heading1": "Sisäänrakennetut maastotyypit",
+        "para1": "Oletuksena käytettävissä on kuusi maastotyyppiä: Niitty, Pelto, Metsä, Vuori, Järvi ja Meri. Kullakin on oma täytetekstuuri.",
+        "para2": "Järvi ja Meri ovat syvän veden tyyppejä. Nämä ruudut yhdistävät reunansa viereisten vesiruutujen kanssa, piilottavat joki- ja tievisualisoinnit sekä mahdollistavat satamat viereisten kaupunkien ruuduissa.",
+        "heading2": "Maaston vaihtaminen",
+        "para3": "Avaa ruudun muokkauspaneeli valitsemalla ruutu. Paneelin yläosassa oleva maastovalitsin listaa kaikki käytettävissä olevat maastotyypit. Napsauta mitä tahansa tyyppiä soveltaaksesi sen valittuun ruutuun.",
+        "heading3": "Mukautetut maastotyypit",
+        "para4": "Lisää maastotyyppejä voidaan määritellä Maastotyypit-paneelissa, johon pääsee työkalupalkin asetusvalikosta. Kullakin mukautetulla tyypillä on nimi, väri, täytekuvio ja valinnainen kuvake. Mukautetut tyypit voidaan tarvittaessa merkitä syvän veden tyypeiksi."
+      },
+      "riversroads": {
+        "title": "Joet ja tiet",
+        "summary": "Jokien ja teiden lisääminen, yhteyksien katkaiseminen ja kulkutiet.",
+        "heading1": "Jokien ja teiden lisääminen",
+        "para1": "Avaa ruudun muokkauspaneeli jollekin ei-vesiruudulle. Ominaisuudet-osiossa on joki- ja tiekytkimet. Jommankumman ominaisuuden ottaminen käyttöön ruudulle piirtää automaattisesti yhteyden kaikkiin naapuriruutuihin, joilla on sama ominaisuus.",
+        "heading2": "Yhteyksien katkaiseminen",
+        "para2": "Jos yhteyttä kahden ruudun välille ei pidä piirtää — esimerkiksi joki, joka ei ylitä tiettyä reunaa — se voidaan katkaista erikseen. Käytä ruudun muokkauspaneelin Katkaise-painiketta asianomaisen naapurisuunnan kohdalla.",
+        "heading3": "Kulkutiet",
+        "para3": "Vesiruudulle sijoitettu tie piirretään kulkutienä — korotettuna penkereena, joka ylittää vesimassan. Visuaalinen esitys sisältää lyhyet kohtisuorat viivat, jotka viittaavat rakenteen alla kulkeviin vesikaistaleisiin."
+      },
+      "towns": {
+        "title": "Kaupungit",
+        "summary": "Kaupunkien perustaminen, koot, linnoitukset, satamat ja muistiinpanot.",
+        "heading1": "Kaupungin perustaminen",
+        "para1": "Valitse mikä tahansa ei-vesiruutu ja napsauta Muokkaa kaupunkia ruudun muokkauspaneelissa. Kaupunkipaneeli avautuu, jossa voidaan määrittää kaupungin nimi, koko ja linnoitustaso.",
+        "heading2": "Kaupunkikoot",
+        "para2": "Käytettävissä on kolme kokoa: Kylä, Kaupunki ja Suurkaupunki. Kukin piirtää kasvavasti suuremman asutuskuvakkeen karttanäkymään.",
+        "heading3": "Linnoitukset",
+        "para3": "Linnoitustasoja on kolme: Ei muuria, Palisadi ja Kivimuri. Linnoitetun kaupungin ympärille piirretään rengas ja tikitysmerkit asutuskuvakkeen ympärille.",
+        "heading4": "Satamat",
+        "para4": "Kun kaupunkitiili jakaa reunan vesiruudun kanssa, satamakuvake piirretään automaattisesti kyseiselle reunalle. Yksittäisiä satamia voidaan poistaa ruudun muokkauspaneelin yhteyshallinnan avulla.",
+        "heading5": "Ruudun muistiinpanot",
+        "para5": "Ruudun muokkauspaneelissa on vapaamuotoinen muistiinpanokenttä. Muistiinpanot tallennetaan ruudun tietoihin ja ovat näkyvissä vain editorissa — ne eivät näy karttanäkymässä."
+      },
+      "armies": {
+        "title": "Armeijat",
+        "summary": "Armeijoiden lisääminen, siirtäminen, poistaminen ja linnoitukset.",
+        "heading1": "Armeijan lisääminen",
+        "para1": "Valitse ruutu ja napsauta Lisää armeija ruudulle ruudun muokkauspaneelissa. Uusi armeija luodaan kyseiselle ruudulle.",
+        "heading2": "Armeijapaneeli",
+        "para2": "Valitse armeija napsauttamalla mitä tahansa armeijatunnusta karttanäkymässä. Armeijapaneeli avautuu vasemmalle, näyttäen kentät armeijan nimeä, kokoonpanoa, ryhmittymää ja muistiinpanoja varten.",
+        "heading3": "Armeijan siirtäminen",
+        "para3": "Napsauta armeijapaneelissa Siirrä armeija. Kartta siirtyy siirtotilaan — napsauta mitä tahansa ruutua, mukaan lukien aaveruutu, siirtääksesi armeijan sinne. Panorointi ja zoomaus toimivat normaalisti siirtotilassa. Peruuta siirto napsauttamalla Peruuta siirto.",
+        "heading4": "Armeijan poistaminen",
+        "para4": "Poista armeija napsauttamalla sen tunnusta hiiren kakkospainikkeella tai käyttämällä armeijapaneelin Poista armeija -painiketta.",
+        "heading5": "Linnoitus",
+        "para5": "Kun armeija miehittää kaupunkitiilen, kaupunkikuvake muuttuu näyttämään linnoitusvisuaalin. Jos paikalla on vain yksi armeija, sen nimi näytetään kuvakkeen yläpuolella."
+      },
+      "factions": {
+        "title": "Ryhmittymät",
+        "summary": "Ryhmittymien luominen, alueiden maalaaminen ja armeijoiden kohdentaminen.",
+        "heading1": "Ryhmittymien luominen",
+        "para1": "Vaihda Ryhmittymä-tilaan napsauttamalla tilavaihtopainiketta työkalupalkissa. Ryhmittymäpaneeli avautuu. Luo uusi ryhmittymä napsauttamalla Lisää ryhmittymä ja anna sille nimi ja väri.",
+        "heading2": "Alueiden maalaaminen",
+        "para2": "Valitse ryhmittymä ryhmittymämaalauksen paneelista ja napsauta tai vedä ruutuja karttanäkymässä kohdentaaksesi ne ryhmittymälle. Ryhmittymien värit näkyvät sävytyksenä maaston tekstuurin päällä.",
+        "heading3": "Armeijoiden kohdentaminen ryhmittymille",
+        "para3": "Avaa minkä tahansa armeijan armeijapaneeli ja valitse ryhmittymä Ryhmittymä-pudotusvalikosta. Armeijan tunnus karttanäkymässä heijastaa kohdennettua ryhmittymäväriä."
+      },
+      "saving": {
+        "title": "Tallennus ja vienti",
+        "summary": "Automaattitallennus, JSON-vienti ja -tuonti sekä varmuuskopiointisuositukset.",
+        "heading1": "Automaattitallennus",
+        "para1": "Kaikki muutokset tallennetaan automaattisesti selaimen paikalliseen tallennustilaan. Manuaalista tallennustoimintoa ei tarvita.",
+        "para2": "Selaimen paikallinen tallennustila on sidottu kyseiseen selaimeen ja laitteeseen. Selaintietojen tyhjentäminen poistaa kaikki sinne tallennetut kartat pysyvästi. Suositellaan viemään kartat säännöllisesti ulkoisena varmuuskopiona.",
+        "heading2": "Vienti ja tuonti",
+        "para3": "Lataa nykyinen kartta .json-tiedostona käyttämällä Vie kartta -toimintoa työkalupalkin asetuksissa. Palauta aiemmin viety tiedosto käyttämällä Tuo kartta -toimintoa. Vietyjä tiedostoja voidaan käyttää karttojen siirtämiseen selainten ja laitteiden välillä."
+      },
+      "shortcuts": {
+        "title": "Näppäinoikotiet",
+        "summary": "Kaikkien editorissa käytettävissä olevien näppäinoikoteiden hakemisto.",
+        "colAction": "Näppäin",
+        "colDescription": "Toiminto"
+      },
+      "maps": {
+        "title": "Useita karttoja",
+        "summary": "Aloitusnäyttö, karttojen hallinta ja sisäänrakennetut esimerkkikartat.",
+        "heading1": "Aloitusnäyttö",
+        "para1": "Aloitusnäyttö listaa kaikki selaimeen tallennetut kartat. Täältä voidaan luoda uusi tyhjä kartta, nimetä tai poistaa olemassa olevia karttoja tai avata editori mille tahansa kartalle.",
+        "heading2": "Sisäänrakennetut esimerkkikartat",
+        "para2": "Mukana on kaksi sisäänrakennettua esimerkkikarttaa. Esimerkin avaaminen luo muokattavan kopion karttaluetteloon alkuperäisen pysyessä muuttumattomana.",
+        "heading3": "Karttojen siirtäminen laitteiden välillä",
+        "para3": "Siirrä kartta toiseen selaimeen tai laitteeseen viemällä se JSON-tiedostona ja tuomalla se kohteessa. Tuonti luo uuden karttatietueen paikalliseen karttaluetteloon."
+      }
+    }
+  },
   "errorBoundary": {
     "title": "⚠ Jokin meni pieleen",
     "body": "Odottamaton virhe tapahtui. Kokeile ladata sivu uudelleen. Jos ongelma jatkuu, karttadatasi saattaa olla vioittunut.",

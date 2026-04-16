@@ -1,0 +1,10 @@
+export { default as HelpOverviewIcon } from './HelpOverviewIcon';
+export { default as HelpCanvasIcon } from './HelpCanvasIcon';
+export { default as HelpTerrainIcon } from './HelpTerrainIcon';
+export { default as HelpRiversRoadsIcon } from './HelpRiversRoadsIcon';
+export { default as HelpTownsIcon } from './HelpTownsIcon';
+export { default as HelpArmiesIcon } from './HelpArmiesIcon';
+export { default as HelpFactionsIcon } from './HelpFactionsIcon';
+export { default as HelpSavingIcon } from './HelpSavingIcon';
+export { default as HelpShortcutsIcon } from './HelpShortcutsIcon';
+export { default as HelpMapsIcon } from './HelpMapsIcon';

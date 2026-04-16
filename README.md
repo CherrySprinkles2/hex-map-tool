@@ -1,120 +1,87 @@
 # Hex Map Tool
 
----
-
-# PART 1 — FOR NON-TECHNICAL USERS
-
-## What is Hex Map Tool?
-
-Hex Map Tool is a free, browser-based map editor for creating worlds on a hexagonal grid. Whether you're planning a tabletop RPG campaign, designing a wargame scenario, building a fantasy world, or just sketching out a fictional continent — this tool gives you an intuitive visual canvas to work with.
-
-There is nothing to install and no account to create. Your maps save automatically inside your browser, and you can export them as files to back them up or share them with others.
+Hex Map Tool is a browser-based map editor for building worlds on a hexagonal grid. It is suited for tabletop RPG campaign planning, wargame scenario design, fantasy world-building, and strategic planning. No installation or account is required. Maps are saved automatically in the browser and can be exported as JSON files for backup or cross-device transfer.
 
 ---
 
-## What can you do with it?
+## Features
 
-**Switch language.** The app supports English and Finnish. On desktop, use the **EN / FI** toggle in the toolbar. On mobile, open the Settings menu and tap **Language / Kieli** to choose your preferred language. The choice is remembered in your browser.
+**Terrain.** Each tile can be assigned one of six built-in terrain types — Grass, Farm, Forest, Mountain, Lake, and Ocean — each rendered with a distinct fill texture. Lake and Ocean are deep-water types: their edges merge visually with adjacent water tiles, river and road paths are suppressed, and port icons are enabled on neighbouring town tiles. Additional terrain types can be defined with custom names, colours, fill patterns, and optional icons.
 
-**Paint terrain.** Every tile on the map can be set to one of six terrain types — Grass, Farm, Forest, Mountain, Lake, or Ocean — each rendered with its own distinct texture.
+**Rivers and roads.** A river or road can be toggled on any non-water tile. The feature automatically connects with neighbouring tiles that share the same flag, forming smooth curved paths across the landscape. Individual connections between specific tiles can be blocked. Roads placed on water tiles render as causeways.
 
-**Draw rivers and roads.** Toggle a river or road on any tile and it will automatically connect with neighbouring tiles that share the same flag, forming smooth curved paths across your landscape. You can even block individual connections if a river shouldn't flow between two specific tiles.
+**Towns.** Any non-water tile can be designated as a town with a name, a size (village, town, or city), and an optional fortification level (no wall, palisade, or stone wall). When a town tile borders a water tile, a port icon is rendered automatically on that edge; individual ports can be removed from the tile edit panel. Each tile also has a free-text notes field for annotations that appear only in the editor.
 
-**Found towns.** Mark any non-water tile as a town, give it a name, and a settlement icon appears on the canvas with the name below it. If the town sits on the coast, a dock (port) automatically appears on the water's edge beside it. You can remove individual ports from the tile edit panel if needed.
+**Armies.** Named armies can be placed on any tile. Each army has a name, a composition field, and optional notes. Armies can be moved to any tile. When an army occupies a town tile, the town displays a garrison visual; if a single army is present, its name is shown above the icon.
 
-**Place armies.** Select any tile and add a named army to it. Each army has a name and a composition field where you can note its units (e.g. "3 infantry, 1 cavalry"). Armies appear as ⚔ tokens on land tiles and ⛵ on water tiles.
+**Factions.** Tiles can be painted to show territorial control by named factions, each assigned a colour. Armies can be assigned to factions. Faction colours appear as a tint over terrain textures.
 
-**Assign factions.** Use Faction mode (the mode toggle in the toolbar) to create coloured political groups — kingdoms, empires, warbands, whatever suits your world. Paint tiles to show which faction controls that territory, and assign each army to a faction so you can see at a glance who controls what.
+**Multiple maps.** The home screen manages any number of named maps, each stored independently in the browser.
 
-**Garrison towns.** When an army occupies a town tile, the house icon automatically upgrades to a castle with a gold garrison ring around it. If there's only one army there, its name is shown above the castle.
-
-**Manage multiple maps.** The home screen lets you create as many named maps as you like, switch between them, rename them, and delete them. All maps are stored separately in your browser.
-
-**Export and import.** You can save any map to a JSON file on your computer and reload it later — useful for backups, sharing with others, or moving maps between browsers.
-
-**Explore built-in examples.** The home screen includes example maps you can open right away to explore the features before building your own.
+**Export and import.** Maps can be exported as JSON files and reimported, enabling backups and cross-device transfer.
 
 ---
 
-## How to use it
+## Getting started
 
-1. **Open the app.** You'll land on the home screen. From here you can create a new blank map, open an existing one, or load a built-in example.
+Open the application in a browser. No installation is required.
 
-2. **The canvas.** When you open a map you'll see a small cluster of tiles in the centre of the screen. Around the edges of that cluster you'll notice faded, semi-transparent tiles — these are "ghost" tiles. **Left-click any ghost tile to add it to your map.** New tiles will automatically take on the most common terrain type from their neighbours, so painting spreads naturally.
-
-3. **Selecting and editing a tile.** Left-click any solid tile to select it. The panel on the right will open showing that tile's properties — terrain picker, river toggle, road toggle, town name field, and a list of armies on the tile. Make changes there and they take effect immediately.
-
-4. **Deleting a tile.** Right-click any tile to delete it instantly. You can also select the tile first and then press **Delete** or **Backspace** on your keyboard.
-
-5. **Working with armies.** Select a tile, then click "⚔ Add Army to Tile" in the right panel. A new army appears on the tile. Left-click its token on the canvas to select the army and open the army panel on the left, where you can edit its name, composition, and faction. To move the army, click "↪ Move Army" in the left panel, then click any tile on the canvas (including a ghost tile) as the destination.
-
-6. **Navigating the map.** Click and drag anywhere on the canvas to pan. Use the scroll wheel to zoom in and out (it zooms toward wherever your cursor is). Press **R** to snap the view back to the centre.
-
-7. **Factions.** Click the map mode toggle in the toolbar to switch to Faction mode. From there you can create factions, give them names and colours, and paint tiles to show territorial control. Switch back to Terrain mode to continue editing the landscape.
-
-8. **Saving.** Everything saves automatically to your browser as you work. No save button needed. To make a backup or share the map, use the Export JSON button in the toolbar.
+From the home screen, create a new blank map, open a built-in example, or import a previously exported JSON file.
 
 ---
 
 ## Controls
 
-| Action                | How                                                                                   |
-| --------------------- | ------------------------------------------------------------------------------------- |
-| Add a tile            | Left-click a faded (ghost) tile at the map edge                                       |
-| Select / edit a tile  | Left-click an existing tile                                                           |
-| Delete a tile         | Right-click a tile, or select it and press Delete / Backspace                         |
-| Pan the map           | Click and drag on the canvas                                                          |
-| Zoom                  | Scroll wheel (zooms toward cursor)                                                    |
-| Reset view            | Press R                                                                               |
-| Add an army to a tile | Select tile → "⚔ Add Army to Tile" in the right panel                                 |
-| Select an army        | Left-click an army token (⚔ or ⛵)                                                    |
-| Move an army          | Select army → "↪ Move Army" in the left panel → click destination                     |
-| Delete an army        | Right-click an army token, or use the Delete button in the left panel                 |
-| Undo                  | Ctrl+Z (Cmd+Z on Mac)                                                                 |
-| Redo                  | Ctrl+Y or Ctrl+Shift+Z                                                                |
-| Deselect / cancel     | Escape                                                                                |
-| Switch language       | **EN / FI** toggle in the toolbar (desktop) or Settings → Language (mobile)           |
-| See all shortcuts     | Click the ⌨ button in the toolbar (desktop) or Settings → Keyboard Shortcuts (mobile) |
-| Back to home          | ← Maps button in the toolbar                                                          |
+| Action                      | How                                                                         |
+| --------------------------- | --------------------------------------------------------------------------- |
+| Add a tile                  | Left-click a ghost (faded border) tile                                      |
+| Select / edit a tile        | Left-click a solid tile                                                     |
+| Delete a tile               | Right-click a tile, or select it and press Delete / Backspace               |
+| Pan                         | Click and drag on the canvas                                                |
+| Zoom                        | Scroll wheel (centres on cursor)                                            |
+| Reset view                  | R                                                                           |
+| Add an army                 | Select tile → Add Army to Tile in the right panel                           |
+| Select an army              | Left-click an army token                                                    |
+| Move an army                | Select army → Move Army → click destination tile                            |
+| Delete an army              | Right-click army token, or Delete Army in the left panel                    |
+| Undo                        | Ctrl+Z (Cmd+Z on Mac)                                                       |
+| Redo                        | Ctrl+Y or Ctrl+Shift+Z                                                      |
+| Deselect / cancel           | Escape                                                                      |
+| Switch language             | EN / FI toggle in the toolbar (desktop) or Settings → Language (mobile)     |
+| Keyboard shortcut reference | ⌨ button in the toolbar (desktop) or Settings → Keyboard Shortcuts (mobile) |
+| Help                        | ? button in the toolbar (desktop) or Settings → Help (mobile)               |
+| Return to home screen       | ← Maps button in the toolbar                                                |
 
 ---
 
 ## Keyboard shortcuts
 
-The toolbar includes a **⌨** button (on desktop) that opens a slide-in reference panel listing every keyboard shortcut in one place. On mobile, the same panel is accessible via the Settings menu. It's always there if you forget a shortcut.
-
----
-
-## Factions
-
-Factions are political groups — kingdoms, factions, warbands, or any other power you want to represent on the map. Switch to Faction mode using the map mode toggle in the toolbar, then create factions and give each one a name and colour. You can paint individual tiles to show territorial control, and assign each army to a faction via the army panel. Faction colours appear as a tint on controlled tiles so you can see the political landscape at a glance alongside the terrain.
-
----
-
-## Saving and exporting
-
-Your maps save automatically to your browser's local storage every time you make a change — no manual save needed. This storage stays on your device; clearing your browser data will erase your maps.
-
-To keep a permanent backup or share a map with someone else, use the **Export JSON** button in the toolbar. This downloads the map as a `.json` file you can store anywhere. To restore it later, use **Import JSON** and select the file. You can also use exported files to move a map to a different browser or computer.
+| Key                   | Action                                  |
+| --------------------- | --------------------------------------- |
+| Ctrl+Z (Cmd+Z)        | Undo                                    |
+| Ctrl+Y / Ctrl+Shift+Z | Redo                                    |
+| Escape                | Deselect tile or army; cancel move mode |
+| Delete / Backspace    | Delete the selected tile                |
+| R                     | Reset viewport to origin                |
 
 ---
 
 ---
 
-# PART 2 — FOR DEVELOPERS
+# Developer guide
 
-## Getting started
+## Requirements and setup
 
 ```bash
 npm install
-npm start              # dev server at http://localhost:3000
+npm start              # development server at http://localhost:3000
 npm run build          # production build
 npm run deploy         # deploy to GitHub Pages
 npm run test:e2e       # run Playwright integration tests (headless)
 npm run test:e2e:ui    # run Playwright tests in interactive UI mode
 ```
 
-Validate source changes with `npm run build`. Playwright runs against a live dev server (auto-started); see the **Integration Testing** section of `.github/copilot-instructions.md` for the test architecture.
+Validate source changes with `npm run build`. Playwright runs against a live development server started automatically; see `.github/copilot-instructions.md` for the test architecture.
 
 ---
 
@@ -143,25 +110,37 @@ playwright.config.ts             Playwright config: baseURL, webServer, chromium
 
 src/
   app/                    Redux store + typed hooks (useAppDispatch, useAppSelector, useAppStore)
+  assets/
+    icons/
+      help/               SVG icon components for the help screen cards (one per section)
+      features/           River, road, port icon components
+      terrain/            Terrain type icon components
+      town/               Village, town, city icon components
   components/
     ArmyPanel/            Panel for editing a selected army (name, composition, faction, move/delete)
+    Editor/               Top-level editor layout — composes Toolbar, HexGrid, all side panels
+    ErrorBoundary/        React error boundary with localised fallback UI
     FactionPaintPanel/    Right-side panel for painting faction territories
     FactionsPanel/        Faction management (create, edit, delete factions)
+    HelpScreen/           Standalone help page — card grid landing and per-section views
     HexGrid/              SVG canvas — hex math, tiles, ghost tiles, water overlay,
                           terrain patterns, water caps, army tokens
     HomeScreen/           Home screen (map cards, example maps, import)
     KeyboardShortcutsPanel/ Slide-in reference panel listing all keyboard shortcuts
     MapModeToggle/        Fixed toggle button (bottom-right) to switch Terrain / Faction mode
+    TerrainConfigModal/   Modal for managing custom terrain type definitions
     TileEditPanel/        Right-side panel for editing the selected tile
     Toolbar/              Map name (inline-editable), back, export/import, ⌨ shortcuts button,
-                          EN/FI language toggle (desktop), language modal (mobile)
+                          ? help button, EN/FI language toggle (desktop), settings sheet (mobile)
+    TownEditPanel/        Sub-panel for town name, size, and fortification configuration
     shared/               UI primitives: SidePanel, DragHandle, PanelHeader, SectionLabel,
                           StyledTextarea, CloseButton, SettingsButton, sheet.ts, modal.ts,
                           LanguageToggle, LanguageModal
   data/
     example-map.json      Small bundled example map
     large-map.json        3 000-tile performance test map
-    exampleMaps.ts        Loads, normalises, and exports both example maps
+    bahamas-map.json      Bahamas archipelago example map
+    exampleMaps.ts        Loads, normalises, and exports all bundled example maps
   features/
     armies/               armiesSlice — addArmy, deleteArmy, moveArmy, updateArmy, setArmyFaction, importArmies
     currentMap/           currentMapSlice — id + name of the open map
@@ -171,7 +150,7 @@ src/
     viewport/             viewportSlice — setViewport, resetViewport (scale range 0.2–4)
     ui/                   uiSlice — selectedTile, selectedArmyId, movingArmyId, screen, mapMode,
                           factionsOpen, activeFactionId, showShortcuts, activePaintBrush,
-                          enterTerrainPaint, exitTerrainPaint, startMovingArmy, stopMovingArmy, …
+                          navigateToHelp, navigateBackFromHelp, …
     history/              historyActions — restoreSnapshot (used by undo/redo across all data slices)
   hooks/
     useKeyboardShortcuts  Ctrl+Z/Y undo/redo, Escape deselect/cancel, Delete tile, R reset viewport
@@ -179,7 +158,7 @@ src/
     useLocalStorageSync   Auto-saves tiles, armies, factions on every change; lazy for examples
   i18n/
     index.ts              i18next init — LanguageDetector, EN + FI resources, localStorage cache
-    locales/en.json       English translation strings (100+ keys)
+    locales/en.json       English translation strings (includes help.* section content)
     locales/fi.json       Finnish translation strings
   styles/                 theme.ts (all visual properties), GlobalStyles.ts (resets + body)
   types/
@@ -192,8 +171,9 @@ src/
     hexUtils.ts           Axial coordinate math, toKey/fromKey, NEIGHBOR_DIRS, DEEP_WATER
     historyManager.ts     Snapshot-based undo/redo (past/future stacks)
     mapsStorage.ts        localStorage CRUD for maps, tiles, armies, factions + legacy migration
-    overlayHelpers.tsx    SVG rendering helpers for water edges, town icons, ports, river pools
-    routeLookup.ts        Maps road/river bitmasks to canonical SVG path data for bezier curves
+    overlayHelpers.tsx    SVG rendering helpers: rivers, roads, causeways, town icons, ports
+    pathGenerator.ts      Programmatic bezier path generator for rivers and roads
+    routeLookup.ts        Legacy bitmask/canonical-path system (retained for reference; causeways migrated)
 ```
 
 ---
@@ -208,16 +188,17 @@ src/
   factions:   [ { id, name, color, description } ],
   viewport:   { x, y, scale },
   ui: {
-    selectedTile:     "q,r" | null,
-    selectedArmyId:   string | null,
-    placingArmy:      boolean,          // unused entry; army placement is via TileEditPanel
-    movingArmyId:     string | null,    // army currently in move-mode
-    screen:           'home' | 'editor',
-    mapMode:          'terrain' | 'faction' | 'terrain-paint',
-    factionsOpen:     boolean,
-    activeFactionId:  string | null,
-    activePaintBrush: string | null,    // terrain key, or 'river-on/off', 'road-on/off'
-    showShortcuts:    boolean,
+    selectedTile:       "q,r" | null,
+    selectedArmyId:     string | null,
+    movingArmyId:       string | null,
+    screen:             'home' | 'editor' | 'help',
+    helpReturnScreen:   'home' | 'editor' | 'help',
+    mapMode:            'terrain' | 'faction' | 'terrain-paint',
+    factionsOpen:       boolean,
+    activeFactionId:    string | null,
+    activePaintBrush:   string | null,
+    showShortcuts:      boolean,
+    editingTownTile:    "q,r" | null,
   },
   currentMap: { id: string | null, name: string },
 }
@@ -243,7 +224,7 @@ Inside HexGrid's SVG `<g transform>` group, components render in this order:
 
 1. `GhostTile` components (bottom layer)
 2. `HexTile` components
-3. `WaterOverlay` — water edge merge → rivers → roads → towns/garrisons → water caps → ports
+3. `WaterOverlay` — water edge merge → rivers → roads → causeways → towns/garrisons → water caps → ports
 4. `ArmyToken` components — suppressed on town tiles (garrison visual is used instead)
 
 `<TerrainPatterns />` must be rendered **outside** the `<g transform>` group — placing it inside causes patterns to scale with pan/zoom and break.
@@ -256,6 +237,7 @@ Inside HexGrid's SVG `<g transform>` group, components render in this order:
 - **Ref-based viewport**: pan and zoom write directly to the DOM via `groupRef.current.setAttribute('transform', …)` — zero React re-renders per frame. Redux viewport state is only updated at drag-end and after each zoom tick, for persistence.
 - Tile-specific `isSelected` selectors (`state.ui.selectedTile === key`) mean only the affected tile re-renders on selection change.
 - `createSelector` is used for any selector that returns a new array or object, to prevent spurious downstream re-renders.
+- Viewport hex culling: tiles outside the visible viewport bounds are skipped during render.
 
 ---
 
@@ -284,6 +266,8 @@ All visual properties are centralised in `src/styles/theme.ts`. `GlobalStyles.ts
 3. For water types (edge merging, river/road suppression, port eligibility, ⛵ army icon): add the terrain name to `DEEP_WATER` in `src/utils/hexUtils.ts`.
 
 The terrain picker in `TileEditPanel` is derived automatically from `theme.terrain` — no component changes needed.
+
+Custom terrain types can also be added at runtime via the Terrain Types panel in the editor; these are stored in the `terrainConfig` Redux slice and persisted with the map.
 
 ---
 
@@ -351,7 +335,7 @@ export default withTranslation()(MyClass);
 
 **Adding a new string:** Add the key to both `en.json` and `fi.json`, then use `t('your.key')` in the component.
 
-**Adding a new language:** Add a new locale JSON file in `src/i18n/locales/`, register it in `src/i18n/index.ts` under `resources`, and add a button to the `LangOption` list in `Toolbar.tsx`.
+**Adding a new language:** Add a new locale JSON file in `src/i18n/locales/`, register it in `src/i18n/index.ts` under `resources`, and add a button to the language switcher in `Toolbar.tsx`.
 
 ---
 

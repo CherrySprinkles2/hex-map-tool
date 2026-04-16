@@ -22,7 +22,7 @@ import {
   importTerrainConfig,
   DEFAULT_TERRAIN_CONFIG,
 } from '../../features/terrainConfig/terrainConfigSlice';
-import { setScreen } from '../../features/ui/uiSlice';
+import { setScreen, navigateToHelp } from '../../features/ui/uiSlice';
 import { resetViewport } from '../../features/viewport/viewportSlice';
 import MapThumbnail from './MapThumbnail';
 import { exampleMaps } from '../../data/exampleMaps';
@@ -371,6 +371,48 @@ const ImportBtn = styled.button`
   }
 `;
 
+const PageContent = styled.div`
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+`;
+
+const HomeHelpBtn = styled.button`
+  display: none;
+
+  @media (min-width: 601px) {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1.5px solid
+      ${({ theme }) => {
+        return theme.panelBorder;
+      }};
+    background: transparent;
+    color: ${({ theme }) => {
+      return theme.textMuted;
+    }};
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      background 0.15s,
+      color 0.15s;
+    &:hover {
+      background: ${({ theme }) => {
+        return theme.panelBorder;
+      }};
+      color: ${({ theme }) => {
+        return theme.text;
+      }};
+    }
+  }
+`;
+
 const ImportedBadge = styled.div`
   position: absolute;
   top: 8px;
@@ -478,6 +520,11 @@ const HomeScreen = (): React.ReactElement => {
     dispatch(setScreen('editor'));
   };
 
+  const handleHelpClick = () => {
+    setSettingsOpen(false);
+    dispatch(navigateToHelp());
+  };
+
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (!window.confirm(t('home.deleteConfirm'))) return;
@@ -549,106 +596,109 @@ const HomeScreen = (): React.ReactElement => {
         </SettingsButton>
       </MobileBar>
 
-      <Header>
-        <HeaderTop>
-          <HeaderLeft>
-            <Title>{t('home.title')}</Title>
-            <Subtitle>{t('home.subtitle')}</Subtitle>
-          </HeaderLeft>
-          <HeaderRight>
-            <ImportBtn
-              data-testid="home-import-btn"
-              onClick={() => {
-                return fileInput.current?.click();
-              }}
-            >
-              ⬆ {t('toolbar.importJSON')}
-            </ImportBtn>
-            <LanguageToggle
-              onAfterSelect={() => {
-                return setSettingsOpen(false);
-              }}
-            />
-          </HeaderRight>
-        </HeaderTop>
-        <Description>{t('home.description')}</Description>
-        <Notice>
-          <span>⚠️</span>
-          <span>
-            <strong>{t('home.noticeStorageTitle')}</strong>{' '}
-            <Trans
-              i18nKey="home.noticeStorageBody"
-              values={{
-                export: t('home.noticeExport'),
-                import: t('home.noticeImport'),
-              }}
-              components={{ bold: <strong /> }}
-            />
-          </span>
-        </Notice>
-      </Header>
-      <Grid>
-        <NewCard onClick={handleNew} data-testid="new-map-card">
-          <span>＋</span>
-          <NewLabel>{t('home.newMap')}</NewLabel>
-        </NewCard>
-        {[...maps]
-          .sort((a, b) => {
-            return new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime();
-          })
-          .map((map) => {
-            const isNew = map.id === newlyImportedId;
+      <PageContent>
+        <Header>
+          <HeaderTop>
+            <HeaderLeft>
+              <Title>{t('home.title')}</Title>
+              <Subtitle>{t('home.subtitle')}</Subtitle>
+            </HeaderLeft>
+            <HeaderRight>
+              <ImportBtn
+                data-testid="home-import-btn"
+                onClick={() => {
+                  return fileInput.current?.click();
+                }}
+              >
+                ⬆ {t('toolbar.importJSON')}
+              </ImportBtn>
+              <HomeHelpBtn onClick={handleHelpClick}>? {t('help.helpButtonLabel')}</HomeHelpBtn>
+              <LanguageToggle
+                onAfterSelect={() => {
+                  return setSettingsOpen(false);
+                }}
+              />
+            </HeaderRight>
+          </HeaderTop>
+          <Description>{t('home.description')}</Description>
+          <Notice>
+            <span>⚠️</span>
+            <span>
+              <strong>{t('home.noticeStorageTitle')}</strong>{' '}
+              <Trans
+                i18nKey="home.noticeStorageBody"
+                values={{
+                  export: t('home.noticeExport'),
+                  import: t('home.noticeImport'),
+                }}
+                components={{ bold: <strong /> }}
+              />
+            </span>
+          </Notice>
+        </Header>
+        <Grid>
+          <NewCard onClick={handleNew} data-testid="new-map-card">
+            <span>＋</span>
+            <NewLabel>{t('home.newMap')}</NewLabel>
+          </NewCard>
+          {[...maps]
+            .sort((a, b) => {
+              return new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime();
+            })
+            .map((map) => {
+              const isNew = map.id === newlyImportedId;
+              return (
+                <Card
+                  key={map.id}
+                  data-testid={`map-card-${map.id}`}
+                  $highlighted={isNew}
+                  onClick={() => {
+                    return handleOpen(map);
+                  }}
+                >
+                  <MapThumbnail
+                    tilesData={tilesCache[map.id] ?? {}}
+                    customTerrains={customTerrainsCache[map.id] ?? []}
+                  />
+                  {isNew && <ImportedBadge>{t('home.imported')}</ImportedBadge>}
+                  <DeleteBtn
+                    data-testid={`delete-map-${map.id}`}
+                    onClick={(e) => {
+                      return handleDelete(e, map.id);
+                    }}
+                  >
+                    ✕
+                  </DeleteBtn>
+                  <CardMeta>
+                    <CardName data-testid={`map-name-${map.id}`}>{map.name}</CardName>
+                    <CardDate>{t('home.edited', { time: formatDate(map.updatedAt, t) })}</CardDate>
+                  </CardMeta>
+                </Card>
+              );
+            })}
+          {exampleMaps.map((example) => {
             return (
               <Card
-                key={map.id}
-                data-testid={`map-card-${map.id}`}
-                $highlighted={isNew}
+                key={example.id}
+                data-testid={`example-card-${example.id}`}
                 onClick={() => {
-                  return handleOpen(map);
+                  return handleOpenExample(example);
                 }}
               >
                 <MapThumbnail
-                  tilesData={tilesCache[map.id] ?? {}}
-                  customTerrains={customTerrainsCache[map.id] ?? []}
+                  tilesData={example.tiles}
+                  customTerrains={example.terrainConfig?.custom ?? []}
                 />
-                {isNew && <ImportedBadge>{t('home.imported')}</ImportedBadge>}
-                <DeleteBtn
-                  data-testid={`delete-map-${map.id}`}
-                  onClick={(e) => {
-                    return handleDelete(e, map.id);
-                  }}
-                >
-                  ✕
-                </DeleteBtn>
+                <ExampleBadge>{t('home.example')}</ExampleBadge>
                 <CardMeta>
-                  <CardName data-testid={`map-name-${map.id}`}>{map.name}</CardName>
-                  <CardDate>{t('home.edited', { time: formatDate(map.updatedAt, t) })}</CardDate>
+                  <CardName>{example.name}</CardName>
+                  <CardDate>{t('home.builtIn')}</CardDate>
                 </CardMeta>
               </Card>
             );
           })}
-        {exampleMaps.map((example) => {
-          return (
-            <Card
-              key={example.id}
-              data-testid={`example-card-${example.id}`}
-              onClick={() => {
-                return handleOpenExample(example);
-              }}
-            >
-              <MapThumbnail
-                tilesData={example.tiles}
-                customTerrains={example.terrainConfig?.custom ?? []}
-              />
-              <ExampleBadge>{t('home.example')}</ExampleBadge>
-              <CardMeta>
-                <CardName>{example.name}</CardName>
-                <CardDate>{t('home.builtIn')}</CardDate>
-              </CardMeta>
-            </Card>
-          );
-        })}
-      </Grid>
+        </Grid>
+      </PageContent>
 
       {/* Mobile settings sheet */}
       <Backdrop
@@ -668,6 +718,10 @@ const HomeScreen = (): React.ReactElement => {
         >
           <SheetIcon>⬆</SheetIcon>
           {t('toolbar.importJSON')}
+        </SheetItem>
+        <SheetItem onClick={handleHelpClick}>
+          <SheetIcon>?</SheetIcon>
+          {t('help.helpButtonLabel')}
         </SheetItem>
         <SheetItem
           onClick={() => {

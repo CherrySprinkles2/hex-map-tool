@@ -6,7 +6,7 @@ export type FactionsState = Faction[];
 export type TerrainConfigState = TerrainConfig;
 
 export type MapMode = 'terrain' | 'faction' | 'terrain-paint';
-export type Screen = 'home' | 'editor';
+export type Screen = 'home' | 'editor' | 'help';
 
 export interface ViewportState {
   x: number;
@@ -20,6 +20,7 @@ export interface UiState {
   placingArmy: boolean;
   movingArmyId: string | null;
   screen: Screen;
+  helpReturnScreen: Screen;
   mapMode: MapMode;
   factionsOpen: boolean;
   activeFactionId: string | null;

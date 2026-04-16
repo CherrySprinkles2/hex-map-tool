@@ -14,6 +14,7 @@ import {
   toggleFactionsPanel,
   openShortcuts,
   closeShortcuts,
+  navigateToHelp,
 } from '../../features/ui/uiSlice';
 import { renameCurrentMap, unloadMap } from '../../features/currentMap/currentMapSlice';
 import { renameMap } from '../../utils/mapsStorage';
@@ -163,6 +164,41 @@ const ShortcutsBtn = styled.button<{ $active: boolean }>`
     &:hover {
       background: ${({ theme }) => {
         return theme.panelBorder;
+      }};
+    }
+  }
+`;
+
+const HelpBtn = styled.button`
+  display: none;
+
+  @media (min-width: 601px) {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1.5px solid
+      ${({ theme }) => {
+        return theme.panelBorder;
+      }};
+    background: transparent;
+    color: ${({ theme }) => {
+      return theme.textMuted;
+    }};
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+      background 0.15s,
+      color 0.15s;
+    line-height: 1;
+    flex-shrink: 0;
+    &:hover {
+      background: ${({ theme }) => {
+        return theme.panelBorder;
+      }};
+      color: ${({ theme }) => {
+        return theme.text;
       }};
     }
   }
@@ -342,6 +378,11 @@ const Toolbar = (): React.ReactElement => {
     dispatch(openShortcuts());
   };
 
+  const handleHelpClick = () => {
+    setSettingsOpen(false);
+    dispatch(navigateToHelp());
+  };
+
   return (
     <>
       <Bar $rightPanelOpen={rightPanelOpen}>
@@ -373,6 +414,9 @@ const Toolbar = (): React.ReactElement => {
         >
           ⌨
         </ShortcutsBtn>
+        <HelpBtn onClick={handleHelpClick} aria-label={t('help.helpButtonLabel')}>
+          ?
+        </HelpBtn>
         <LanguageToggle
           onAfterSelect={() => {
             return setSettingsOpen(false);
@@ -412,6 +456,10 @@ const Toolbar = (): React.ReactElement => {
         <SheetItem $desktopHide onClick={handleShortcutsMobile}>
           <SheetIcon>⌨</SheetIcon>
           {t('toolbar.keyboardShortcuts')}
+        </SheetItem>
+        <SheetItem $desktopHide onClick={handleHelpClick}>
+          <SheetIcon>?</SheetIcon>
+          {t('help.helpButtonLabel')}
         </SheetItem>
         <SheetItem
           onClick={() => {

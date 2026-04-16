@@ -160,6 +160,118 @@
     "disableWarning": "{{count}} tile(s) use this terrain. Disabling will hide it from the picker but won't delete tiles. Continue?",
     "deleteWarning": "{{count}} tile(s) use this terrain. Delete those tiles too?"
   },
+  "help": {
+    "pageTitle": "Help",
+    "back": "← Back",
+    "helpButtonLabel": "Help",
+    "previous": "← Previous",
+    "next": "Next →",
+    "imageAlt": "Screenshot illustrating {{section}}",
+    "sections": {
+      "overview": {
+        "title": "Overview",
+        "summary": "Introduction to Hex Map Tool and its use cases.",
+        "para1": "Hex Map Tool is a browser-based map editor for building worlds on a hexagonal grid.",
+        "para2": "It is suited for tabletop RPG campaign planning, wargame scenario design, fantasy world-building, and strategic planning.",
+        "para3": "No installation or account is required. Maps are saved automatically to the browser and can be exported as JSON files for backup or cross-device transfer."
+      },
+      "canvas": {
+        "title": "The Canvas",
+        "summary": "Adding and removing tiles, navigating the map, and selecting tiles.",
+        "heading1": "Adding and removing tiles",
+        "para1": "The map is composed of individual hexagonal tiles. When a map is first opened, a small cluster of tiles is surrounded by faint ghost tiles at the edges. Left-click any ghost tile to add it to the map. New tiles automatically adopt the most common terrain type among their neighbours.",
+        "para2": "To remove a tile, right-click it on the canvas, or select it and press Delete or Backspace.",
+        "heading2": "Navigating the map",
+        "para3": "Click and drag anywhere on the canvas to pan the view. Use the scroll wheel to zoom — the zoom centres on the current cursor position. Press R to reset the view to the origin.",
+        "heading3": "Selecting a tile",
+        "para4": "Left-click any solid tile to select it. The tile edit panel opens on the right, showing the tile's terrain type, features, armies, and notes. All changes take effect immediately."
+      },
+      "terrain": {
+        "title": "Terrain",
+        "summary": "Terrain types, how to change them, and custom terrain definitions.",
+        "heading1": "Built-in terrain types",
+        "para1": "Six terrain types are available by default: Grass, Farm, Forest, Mountain, Lake, and Ocean. Each is rendered with a distinct fill texture.",
+        "para2": "Lake and Ocean are deep-water types. These tiles merge their edges with adjacent water tiles, suppress river and road visuals, and enable port icons on neighbouring town tiles.",
+        "heading2": "Changing terrain",
+        "para3": "Select a tile to open the tile edit panel. The terrain picker at the top of the panel lists all available terrain types. Click any type to apply it to the selected tile.",
+        "heading3": "Custom terrain types",
+        "para4": "Additional terrain types can be defined via the Terrain Types panel, accessible from the toolbar settings menu. Each custom type has a name, colour, fill pattern, and an optional icon. Custom types can optionally be designated as deep water."
+      },
+      "riversroads": {
+        "title": "Rivers and Roads",
+        "summary": "Adding rivers and roads, blocking connections, and causeways.",
+        "heading1": "Adding rivers and roads",
+        "para1": "Open the tile edit panel for any non-water tile. The Features section contains river and road toggles. Enabling either feature on a tile automatically draws a connection to any neighbouring tile that also has that feature enabled.",
+        "heading2": "Blocking connections",
+        "para2": "If a connection between two specific tiles should not be drawn — for example, a river that does not cross a particular edge — it can be blocked individually. In the tile edit panel, use the Disconnect control next to the relevant neighbour direction.",
+        "heading3": "Causeways",
+        "para3": "A road placed on a water tile is rendered as a causeway — a raised embankment crossing the water body. The visual includes short perpendicular notch lines suggesting water channels beneath the structure."
+      },
+      "towns": {
+        "title": "Towns",
+        "summary": "Founding towns, sizes, fortifications, ports, and notes.",
+        "heading1": "Founding a town",
+        "para1": "Select any non-water tile and click Edit Town in the tile edit panel. The town panel opens, where the town's name, size, and fortification level can be configured.",
+        "heading2": "Town sizes",
+        "para2": "Three sizes are available: Village, Town, and City. Each renders a progressively larger settlement icon on the canvas.",
+        "heading3": "Fortifications",
+        "para3": "Three fortification levels are available: No Wall, Palisade, and Stone Wall. A fortified town displays a ring and tick-marks around the settlement icon.",
+        "heading4": "Ports",
+        "para4": "When a town tile shares an edge with a water tile, a port icon is rendered automatically on that edge. Individual ports can be removed using the connection controls in the tile edit panel.",
+        "heading5": "Tile notes",
+        "para5": "The tile edit panel includes a free-text notes field. Notes are stored with the tile and are visible only within the editor — they do not appear on the canvas."
+      },
+      "armies": {
+        "title": "Armies",
+        "summary": "Adding, moving, and managing armies and garrisons.",
+        "heading1": "Adding an army",
+        "para1": "Select a tile and click Add Army to Tile in the tile edit panel. A new army is created on that tile.",
+        "heading2": "The army panel",
+        "para2": "Left-click any army token on the canvas to select it. The army panel opens on the left, showing fields for the army's name, composition, faction assignment, and notes.",
+        "heading3": "Moving an army",
+        "para3": "In the army panel, click Move Army. The map enters move mode — click any tile on the canvas, including a ghost tile, to move the army there. Pan and zoom work normally during move mode. Click Cancel Move to abort.",
+        "heading4": "Deleting an army",
+        "para4": "Right-click an army token on the canvas to delete it immediately, or use the Delete Army button in the army panel.",
+        "heading5": "Garrison",
+        "para5": "When an army occupies a town tile, the town icon changes to display a garrison visual. If a single army is present, its name is displayed above the icon."
+      },
+      "factions": {
+        "title": "Factions",
+        "summary": "Creating factions, painting territory, and assigning armies.",
+        "heading1": "Creating factions",
+        "para1": "Click the mode toggle in the toolbar to switch to Faction mode. The factions panel opens. Click Add Faction to create a new entry and assign it a name and colour.",
+        "heading2": "Painting territory",
+        "para2": "Select a faction in the faction paint panel, then click or drag tiles on the canvas to assign them to that faction. Faction colours appear as a tint over the terrain texture.",
+        "heading3": "Assigning armies to factions",
+        "para3": "Open the army panel for any army and select a faction from the Faction dropdown. The army's token on the canvas will reflect the assigned faction colour."
+      },
+      "saving": {
+        "title": "Saving and Exporting",
+        "summary": "Auto-save, JSON export and import, and backup recommendations.",
+        "heading1": "Auto-save",
+        "para1": "All changes are saved automatically to the browser's local storage. No manual save action is required.",
+        "para2": "Browser local storage is tied to the specific browser and device. Clearing browser data will permanently erase all maps stored there. It is recommended to export maps regularly as an external backup.",
+        "heading2": "Export and import",
+        "para3": "Use Export Map in the toolbar settings to download the current map as a .json file. Use Import Map to restore a previously exported file. Exported files can be used to transfer maps between browsers or devices."
+      },
+      "shortcuts": {
+        "title": "Keyboard Shortcuts",
+        "summary": "A reference of all keyboard shortcuts available in the editor.",
+        "colAction": "Key",
+        "colDescription": "Action"
+      },
+      "maps": {
+        "title": "Multiple Maps",
+        "summary": "The home screen, managing maps, and built-in examples.",
+        "heading1": "The home screen",
+        "para1": "The home screen lists all maps stored in the browser. From here, a new blank map can be created, existing maps can be renamed or deleted, and the editor can be opened for any map.",
+        "heading2": "Built-in example maps",
+        "para2": "Two built-in example maps are included. Opening an example creates an editable copy in the map list, leaving the original unchanged.",
+        "heading3": "Moving maps between devices",
+        "para3": "To move a map to a different browser or device, export it as a JSON file and import it on the destination. The import creates a new map entry in the local map list."
+      }
+    }
+  },
   "errorBoundary": {
     "title": "⚠ Something went wrong",
     "body": "An unexpected error occurred. Try reloading the page. If the problem persists, your map data may be corrupted.",
