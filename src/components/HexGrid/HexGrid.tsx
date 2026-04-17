@@ -1,12 +1,6 @@
-import React, {
-  useRef,
-  useCallback,
-  useMemo,
-  useLayoutEffect,
-  useEffect,
-  useDeferredValue,
-} from 'react';
+import React, { useRef, useCallback, useMemo, useLayoutEffect, useEffect } from 'react';
 import styled from 'styled-components';
+import { shallowEqual } from 'react-redux';
 import { setViewport, MIN_SCALE, MAX_SCALE } from '../../features/viewport/viewportSlice';
 import {
   deselectTile,
@@ -15,12 +9,7 @@ import {
   stopMovingArmy,
   exitTerrainPaint,
 } from '../../features/ui/uiSlice';
-import {
-  addTile,
-  updateTile,
-  setTileFeature,
-  setTileFaction,
-} from '../../features/tiles/tilesSlice';
+import { addTile, batchUpdateTiles, setTileFaction } from '../../features/tiles/tilesSlice';
 import {
   getNeighbors,
   toKey,
@@ -55,9 +44,13 @@ const SvgCanvas = styled.svg`
 const HexGrid = (): React.ReactElement => {
   const dispatch = useAppDispatch();
   const store = useAppStore();
-  const tiles = useAppSelector((state) => {
-    return state.tiles;
-  });
+
+  // Subscribe only to the set of tile keys — HexTile components subscribe to
+  // their own data independently, so HexGrid only needs to re-render when tiles
+  // are added or removed.
+  const tileKeys = useAppSelector((state) => {
+    return Object.keys(state.tiles);
+  }, shallowEqual);
 
   const armies = useAppSelector((state) => {
     return state.armies;
@@ -86,16 +79,11 @@ const HexGrid = (): React.ReactElement => {
     return grouped;
   }, [armies]);
 
-  // Deferred tiles reference — WaterOverlay and ghostKeys use this so they don't
-  // recompute on every paint tick. HexTile components subscribe to their own slice
-  // of state and still update immediately.
-  const deferredTiles = useDeferredValue(tiles);
-
   const viewportRef = useRef<ViewportState>({ x: 0, y: 0, scale: 1 });
   const groupRef = useRef<SVGGElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  const visibleKeys = useViewportCulling(viewportRef, svgRef, tiles);
+  const visibleKeys = useViewportCulling(viewportRef, svgRef, tileKeys);
 
   const applyTransform = useCallback(() => {
     if (!groupRef.current || !svgRef.current) return;
@@ -163,39 +151,57 @@ const HexGrid = (): React.ReactElement => {
 
       const tilesState = store.getState().tiles;
 
+      if (ui.mapMode === 'faction') {
+        const ops: Array<{ type: 'faction'; q: number; r: number; factionId: string | null }> = [];
+        coords.forEach(({ q, r }) => {
+          if (tilesState[toKey(q, r)]) {
+            ops.push({ type: 'faction', q, r, factionId: ui.activeFactionId });
+          }
+        });
+        if (ops.length > 0) dispatch(batchUpdateTiles(ops));
+        return;
+      }
+
+      // terrain-paint mode
+      const brush = ui.activePaintBrush;
+      if (!brush) return;
+
+      const isTerrainBrush =
+        !!theme.terrain[brush as keyof typeof theme.terrain] ||
+        store.getState().terrainConfig.custom.some((ct) => {
+          return ct.id === brush;
+        });
+
+      type BatchOp =
+        | { type: 'add'; q: number; r: number; terrain: string }
+        | { type: 'update'; q: number; r: number; terrain: string }
+        | { type: 'feature'; q: number; r: number; flag: TileFlag; value: boolean };
+
+      const ops: BatchOp[] = [];
+
       coords.forEach(({ q, r }) => {
         const tileExists = !!tilesState[toKey(q, r)];
 
-        if (ui.mapMode === 'terrain-paint') {
-          const brush = ui.activePaintBrush;
-          if (!brush) return;
-          const isTerrainBrush =
-            !!theme.terrain[brush as keyof typeof theme.terrain] ||
-            store.getState().terrainConfig.custom.some((ct) => {
-              return ct.id === brush;
-            });
-          if (isTerrainBrush) {
-            if (!tileExists) {
-              dispatch(addTile({ q, r, terrain: brush as TerrainType }));
-            } else {
-              dispatch(updateTile({ q, r, terrain: brush }));
-            }
-          } else if (!tileExists) {
-            return;
-          } else if (brush === 'river-on') {
-            dispatch(setTileFeature({ q, r, flag: 'hasRiver' as TileFlag, value: true }));
-          } else if (brush === 'river-off') {
-            dispatch(setTileFeature({ q, r, flag: 'hasRiver' as TileFlag, value: false }));
-          } else if (brush === 'road-on') {
-            dispatch(setTileFeature({ q, r, flag: 'hasRoad' as TileFlag, value: true }));
-          } else if (brush === 'road-off') {
-            dispatch(setTileFeature({ q, r, flag: 'hasRoad' as TileFlag, value: false }));
+        if (isTerrainBrush) {
+          if (!tileExists) {
+            ops.push({ type: 'add', q, r, terrain: brush as TerrainType });
+          } else {
+            ops.push({ type: 'update', q, r, terrain: brush });
           }
-        } else {
-          if (!tileExists) return;
-          dispatch(setTileFaction({ q, r, factionId: ui.activeFactionId }));
+        } else if (!tileExists) {
+          return;
+        } else if (brush === 'river-on') {
+          ops.push({ type: 'feature', q, r, flag: 'hasRiver' as TileFlag, value: true });
+        } else if (brush === 'river-off') {
+          ops.push({ type: 'feature', q, r, flag: 'hasRiver' as TileFlag, value: false });
+        } else if (brush === 'road-on') {
+          ops.push({ type: 'feature', q, r, flag: 'hasRoad' as TileFlag, value: true });
+        } else if (brush === 'road-off') {
+          ops.push({ type: 'feature', q, r, flag: 'hasRoad' as TileFlag, value: false });
         }
       });
+
+      if (ops.length > 0) dispatch(batchUpdateTiles(ops));
     },
     [dispatch, store]
   );
@@ -351,21 +357,24 @@ const HexGrid = (): React.ReactElement => {
 
   const ghostKeys = useMemo(() => {
     const set = new Set<string>();
-    if (Object.keys(deferredTiles).length === 0) {
+    if (tileKeys.length === 0) {
       set.add(toKey(0, 0));
       return set;
     }
+    const tileKeySet = new Set(tileKeys);
     // Only compute ghosts for visible tiles to avoid off-screen ghost accumulation.
     visibleKeys.forEach((key) => {
-      const tile = deferredTiles[key];
-      if (!tile) return;
-      getNeighbors(tile.q, tile.r).forEach((n) => {
+      if (!tileKeySet.has(key)) return;
+      const [qStr, rStr] = key.split(',');
+      const q = Number(qStr);
+      const r = Number(rStr);
+      getNeighbors(q, r).forEach((n) => {
         const k = toKey(n.q, n.r);
-        if (!deferredTiles[k]) set.add(k);
+        if (!tileKeySet.has(k)) set.add(k);
       });
     });
     return set;
-  }, [deferredTiles, visibleKeys]);
+  }, [tileKeys, visibleKeys]);
 
   return (
     <PaintContext.Provider value={isPaintingRef}>
@@ -389,21 +398,22 @@ const HexGrid = (): React.ReactElement => {
       >
         <TerrainPatterns customTerrains={customTerrains} />
 
-        <g ref={groupRef}>
+        <g ref={groupRef} style={{ willChange: 'transform' }}>
           {[...ghostKeys].map((key) => {
             const [q, r] = key.split(',').map(Number);
             return <GhostTile key={`ghost-${key}`} q={q} r={r} />;
           })}
 
-          {Object.values(tiles)
-            .filter(({ q, r }) => {
-              return visibleKeys.has(toKey(q, r));
+          {tileKeys
+            .filter((key) => {
+              return visibleKeys.has(key);
             })
-            .map(({ q, r }) => {
-              return <HexTile key={toKey(q, r)} q={q} r={r} />;
+            .map((key) => {
+              const [qStr, rStr] = key.split(',');
+              return <HexTile key={key} q={Number(qStr)} r={Number(rStr)} />;
             })}
 
-          <WaterOverlay tiles={deferredTiles} armiesByTile={armiesByTile} />
+          <WaterOverlay visibleKeys={visibleKeys} armiesByTile={armiesByTile} />
 
           {(() => {
             if (!selectedTile) return null;
@@ -430,7 +440,8 @@ const HexGrid = (): React.ReactElement => {
               return visibleKeys.has(tileKey);
             })
             .map(([tileKey, tileArmies]) => {
-              if (tiles[tileKey]?.hasTown) return null;
+              const hasTown = store.getState().tiles[tileKey]?.hasTown;
+              if (hasTown) return null;
               return tileArmies.map((army, idx) => {
                 return (
                   <ArmyToken key={army.id} army={army} tileIndex={idx} total={tileArmies.length} />

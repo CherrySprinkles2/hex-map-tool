@@ -133,6 +133,7 @@ export interface LoadedMapData {
   armies: ArmiesState;
   factions: Faction[];
   terrainConfig?: TerrainConfig;
+  thumbnail?: string;
 }
 
 // Returns { tiles, armies, factions } or null if no data found.
@@ -149,6 +150,7 @@ export const loadMapData = (id: string): LoadedMapData | null => {
           armies: (data.armies ?? {}) as ArmiesState,
           factions: (data.factions ?? []) as Faction[],
           terrainConfig: data.terrainConfig,
+          thumbnail: data.thumbnail,
         };
       }
     }

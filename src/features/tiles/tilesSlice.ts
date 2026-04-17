@@ -77,6 +77,68 @@ const tilesSlice = createSlice({
         state[key].terrain = terrain as Tile['terrain'];
       }
     },
+    batchUpdateTiles: (
+      state,
+      action: PayloadAction<
+        Array<
+          | { type: 'add'; q: number; r: number; terrain: string }
+          | { type: 'update'; q: number; r: number; terrain: string }
+          | { type: 'feature'; q: number; r: number; flag: TileFlag; value: boolean }
+          | { type: 'faction'; q: number; r: number; factionId: string | null }
+        >
+      >
+    ) => {
+      for (const op of action.payload) {
+        const key = toKey(op.q, op.r);
+        switch (op.type) {
+          case 'add':
+            if (!state[key]) {
+              state[key] = {
+                q: op.q,
+                r: op.r,
+                terrain: op.terrain,
+                hasRiver: false,
+                hasRoad: false,
+                riverBlocked: [],
+                roadBlocked: [],
+                hasTown: false,
+                townName: '',
+                fortification: 'none',
+                portBlocked: [],
+                notes: '',
+                factionId: null,
+              };
+            }
+            break;
+          case 'update':
+            if (state[key]) {
+              state[key].terrain = op.terrain as Tile['terrain'];
+            }
+            break;
+          case 'feature':
+            if (state[key]) {
+              state[key][op.flag] = op.value;
+              if (!op.value && op.flag in BLOCKED_KEY) {
+                const blockedKey = BLOCKED_KEY[op.flag as BlockedFlagKey];
+                (state[key][blockedKey] || []).forEach((nk) => {
+                  if (state[nk]?.[blockedKey]) {
+                    state[nk][blockedKey] = state[nk][blockedKey].filter((k) => {
+                      return k !== key;
+                    });
+                  }
+                });
+                state[key][blockedKey] = [];
+              }
+            }
+            break;
+          case 'faction':
+            if (state[key]) {
+              state[key].factionId = op.factionId ?? null;
+            }
+            break;
+        }
+      }
+    },
     toggleTileFlag: (
       state,
       action: PayloadAction<{ q: number; r: number; flag: BlockedFlagKey }>
@@ -237,6 +299,7 @@ const tilesSlice = createSlice({
 export const {
   addTile,
   updateTile,
+  batchUpdateTiles,
   toggleTileFlag,
   blockConnection,
   unblockConnection,

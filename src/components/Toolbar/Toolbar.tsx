@@ -18,6 +18,7 @@ import {
 } from '../../features/ui/uiSlice';
 import { renameCurrentMap, unloadMap } from '../../features/currentMap/currentMapSlice';
 import { renameMap } from '../../utils/mapsStorage';
+import { captureThumbnail } from '../../utils/captureThumbnail';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../app/hooks';
 import TerrainConfigModal from '../TerrainConfigModal/TerrainConfigModal';
 
@@ -343,12 +344,15 @@ const Toolbar = (): React.ReactElement => {
 
   const handleExport = () => {
     setSettingsOpen(false);
+    const terrainConfig = store.getState().terrainConfig;
+    const thumbnail = captureThumbnail(tiles, terrainConfig.custom);
     const payload = {
       name: mapName || 'hex-map',
       tiles,
       armies,
       factions,
-      terrainConfig: store.getState().terrainConfig,
+      terrainConfig,
+      thumbnail,
     };
     const json = JSON.stringify(payload, null, 2);
     const blob = new Blob([json], { type: 'application/json' });

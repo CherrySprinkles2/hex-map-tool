@@ -81,6 +81,7 @@ export interface MapData {
   armies: Record<string, Army>;
   factions: Faction[];
   terrainConfig?: TerrainConfig;
+  thumbnail?: string;
 }
 
 export interface MapEnvelope {
@@ -89,6 +90,7 @@ export interface MapEnvelope {
   armies: Record<string, Army>;
   factions: Faction[];
   terrainConfig?: TerrainConfig;
+  thumbnail?: string;
 }
 
 export interface ExampleMap {

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useDeferredValue } from 'react';
 import { theme } from '../../styles/theme';
 import {
   renderFlagPaths,
@@ -10,17 +10,21 @@ import {
   renderPorts,
 } from '../../utils/overlayHelpers';
 import { useAppSelector } from '../../app/hooks';
-import { buildDeepWaterSet } from '../../utils/hexUtils';
+import { buildDeepWaterSet, getNeighbors, toKey } from '../../utils/hexUtils';
 import type { Army } from '../../types/domain';
-import type { TilesState } from '../../types/state';
 
 interface WaterOverlayProps {
-  tiles: TilesState;
+  visibleKeys: Set<string>;
   armiesByTile: Record<string, Army[]>;
 }
 
 const WaterOverlay = React.memo(
-  ({ tiles, armiesByTile }: WaterOverlayProps): React.ReactElement => {
+  ({ visibleKeys, armiesByTile }: WaterOverlayProps): React.ReactElement => {
+    const tiles = useAppSelector((state) => {
+      return state.tiles;
+    });
+    const deferredTiles = useDeferredValue(tiles);
+
     const customTerrains = useAppSelector((state) => {
       return state.terrainConfig.custom;
     });
@@ -39,27 +43,54 @@ const WaterOverlay = React.memo(
       return map;
     }, [factions]);
 
+    // Expand visible set by 1 tile so overlays at viewport edges render correctly
+    // (rivers/roads need neighbor data for connection detection).
+    const expandedKeys = useMemo(() => {
+      const expanded = new Set<string>(visibleKeys);
+      visibleKeys.forEach((key) => {
+        const tile = deferredTiles[key];
+        if (!tile) return;
+        getNeighbors(tile.q, tile.r).forEach((n) => {
+          const nk = toKey(n.q, n.r);
+          if (deferredTiles[nk]) expanded.add(nk);
+        });
+      });
+      return expanded;
+    }, [visibleKeys, deferredTiles]);
+
     const riverPaths = useMemo(() => {
-      return renderFlagPaths(tiles, 'hasRiver', theme.river, deepWaterSet);
-    }, [tiles, deepWaterSet]);
+      return renderFlagPaths(deferredTiles, 'hasRiver', theme.river, deepWaterSet, expandedKeys);
+    }, [deferredTiles, deepWaterSet, expandedKeys]);
     const riverCurvesByTile = useMemo(() => {
-      return computeAllRiverCurves(tiles, deepWaterSet);
-    }, [tiles, deepWaterSet]);
+      return computeAllRiverCurves(deferredTiles, deepWaterSet, expandedKeys);
+    }, [deferredTiles, deepWaterSet, expandedKeys]);
     const roadPaths = useMemo(() => {
-      return renderRoadPaths(tiles, theme.road, riverCurvesByTile, deepWaterSet);
-    }, [tiles, riverCurvesByTile, deepWaterSet]);
+      return renderRoadPaths(
+        deferredTiles,
+        theme.road,
+        riverCurvesByTile,
+        deepWaterSet,
+        expandedKeys
+      );
+    }, [deferredTiles, riverCurvesByTile, deepWaterSet, expandedKeys]);
     const causewayPaths = useMemo(() => {
-      return renderCausewayPaths(tiles, theme.causeway, deepWaterSet);
-    }, [tiles, deepWaterSet]);
+      return renderCausewayPaths(deferredTiles, theme.causeway, deepWaterSet, expandedKeys);
+    }, [deferredTiles, deepWaterSet, expandedKeys]);
     const townIcons = useMemo(() => {
-      return renderTownIcons(tiles, armiesByTile ?? {}, factionColorMap, deepWaterSet);
-    }, [tiles, armiesByTile, factionColorMap, deepWaterSet]);
+      return renderTownIcons(
+        deferredTiles,
+        armiesByTile ?? {},
+        factionColorMap,
+        deepWaterSet,
+        expandedKeys
+      );
+    }, [deferredTiles, armiesByTile, factionColorMap, deepWaterSet, expandedKeys]);
     const townLabels = useMemo(() => {
-      return renderTownLabels(tiles, armiesByTile ?? {}, deepWaterSet);
-    }, [tiles, armiesByTile, deepWaterSet]);
+      return renderTownLabels(deferredTiles, armiesByTile ?? {}, deepWaterSet, expandedKeys);
+    }, [deferredTiles, armiesByTile, deepWaterSet, expandedKeys]);
     const ports = useMemo(() => {
-      return renderPorts(tiles, deepWaterSet);
-    }, [tiles, deepWaterSet]);
+      return renderPorts(deferredTiles, deepWaterSet, expandedKeys);
+    }, [deferredTiles, deepWaterSet, expandedKeys]);
     return (
       <g>
         {riverPaths}

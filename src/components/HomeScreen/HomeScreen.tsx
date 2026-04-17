@@ -13,7 +13,10 @@ import {
   deleteMap,
   loadMapData,
   saveMapData,
+  type LoadedMapData,
 } from '../../utils/mapsStorage';
+import { captureThumbnail } from '../../utils/captureThumbnail';
+import { skipNextSyncLoad } from '../../hooks/useLocalStorageSync';
 import { loadMap } from '../../features/currentMap/currentMapSlice';
 import { importTiles } from '../../features/tiles/tilesSlice';
 import { importArmies } from '../../features/armies/armiesSlice';
@@ -27,8 +30,7 @@ import { resetViewport } from '../../features/viewport/viewportSlice';
 import MapThumbnail from './MapThumbnail';
 import { exampleMaps } from '../../data/exampleMaps';
 import { theme } from '../../styles/theme';
-import type { MapEntry, CustomTerrainType } from '../../types/domain';
-import type { TilesState } from '../../types/state';
+import type { MapEntry } from '../../types/domain';
 
 const Shell = styled.div`
   display: flex;
@@ -467,10 +469,7 @@ const HomeScreen = (): React.ReactElement => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const [maps, setMaps] = useState<MapEntry[]>([]);
-  const [tilesCache, setTilesCache] = useState<Record<string, TilesState>>({});
-  const [customTerrainsCache, setCustomTerrainsCache] = useState<
-    Record<string, CustomTerrainType[]>
-  >({});
+  const [thumbnailCache, setThumbnailCache] = useState<Record<string, string | undefined>>({});
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [langModalOpen, setLangModalOpen] = useState(false);
   const [newlyImportedId, setNewlyImportedId] = useState<string | null>(null);
@@ -479,15 +478,27 @@ const HomeScreen = (): React.ReactElement => {
   const refreshMaps = useCallback(() => {
     const all = getAllMaps();
     setMaps(all);
-    const cache: Record<string, TilesState> = {};
-    const ctCache: Record<string, CustomTerrainType[]> = {};
+    const thumbCache: Record<string, string | undefined> = {};
     all.forEach(({ id }) => {
       const data = loadMapData(id);
-      cache[id] = data?.tiles ?? {};
-      ctCache[id] = data?.terrainConfig?.custom ?? [];
+      if (!data) return;
+      if (data.thumbnail) {
+        thumbCache[id] = data.thumbnail;
+      } else if (Object.keys(data.tiles).length > 0) {
+        // Generate and persist the thumbnail for maps that don't have one yet
+        const thumbnail = captureThumbnail(data.tiles, data.terrainConfig?.custom);
+        if (thumbnail) {
+          thumbCache[id] = thumbnail;
+          saveMapData(id, { ...data, thumbnail } as LoadedMapData);
+        }
+      }
     });
-    setTilesCache(cache);
-    setCustomTerrainsCache(ctCache);
+    // Generate thumbnails for built-in example maps (not persisted, just cached in state)
+    exampleMaps.forEach((example) => {
+      const thumb = captureThumbnail(example.tiles, example.terrainConfig?.custom);
+      if (thumb) thumbCache[example.id] = thumb;
+    });
+    setThumbnailCache(thumbCache);
   }, []);
 
   useEffect(() => {
@@ -495,8 +506,12 @@ const HomeScreen = (): React.ReactElement => {
   }, [refreshMaps]);
 
   const handleOpen = (map: MapEntry) => {
-    const tiles = loadMapData(map.id)?.tiles ?? {};
-    dispatch(importTiles(tiles));
+    const data = loadMapData(map.id);
+    dispatch(importTiles(data?.tiles ?? {}));
+    dispatch(importArmies(data?.armies ?? {}));
+    dispatch(importFactions(data?.factions ?? []));
+    dispatch(importTerrainConfig(data?.terrainConfig ?? DEFAULT_TERRAIN_CONFIG));
+    skipNextSyncLoad();
     dispatch(loadMap({ id: map.id, name: map.name }));
     dispatch(resetViewport());
     dispatch(setScreen('editor'));
@@ -563,6 +578,7 @@ const HomeScreen = (): React.ReactElement => {
           armies: data.armies ?? {},
           factions: data.factions ?? [],
           terrainConfig: data.terrainConfig,
+          thumbnail: data.thumbnail,
         });
         refreshMaps();
         // Highlight the new card for 5 seconds
@@ -656,10 +672,7 @@ const HomeScreen = (): React.ReactElement => {
                     return handleOpen(map);
                   }}
                 >
-                  <MapThumbnail
-                    tilesData={tilesCache[map.id] ?? {}}
-                    customTerrains={customTerrainsCache[map.id] ?? []}
-                  />
+                  <MapThumbnail thumbnail={thumbnailCache[map.id]} />
                   {isNew && <ImportedBadge>{t('home.imported')}</ImportedBadge>}
                   <DeleteBtn
                     data-testid={`delete-map-${map.id}`}
@@ -685,10 +698,7 @@ const HomeScreen = (): React.ReactElement => {
                   return handleOpenExample(example);
                 }}
               >
-                <MapThumbnail
-                  tilesData={example.tiles}
-                  customTerrains={example.terrainConfig?.custom ?? []}
-                />
+                <MapThumbnail thumbnail={thumbnailCache[example.id]} />
                 <ExampleBadge>{t('home.example')}</ExampleBadge>
                 <CardMeta>
                   <CardName>{example.name}</CardName>

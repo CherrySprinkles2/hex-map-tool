@@ -12,11 +12,22 @@ import {
 } from '../features/terrainConfig/terrainConfigSlice';
 import { loadMap } from '../features/currentMap/currentMapSlice';
 import { saveMapData, loadMapData, createMap } from '../utils/mapsStorage';
+import { captureThumbnail } from '../utils/captureThumbnail';
 import * as historyManager from '../utils/historyManager';
 import type { TilesState, ArmiesState, FactionsState, TerrainConfigState } from '../types/state';
 import type { HistorySnapshot } from '../types/history';
 
 const PAINT_SAVE_DEBOUNCE_MS = 500;
+
+/**
+ * Call before dispatching loadMap() when the caller has already loaded and
+ * dispatched all map data (tiles, armies, factions, terrainConfig). This
+ * prevents useLocalStorageSync from redundantly re-loading from localStorage.
+ */
+let _skipNextLoad = false;
+export const skipNextSyncLoad = (): void => {
+  _skipNextLoad = true;
+};
 
 const useLocalStorageSync = (): void => {
   const dispatch = useAppDispatch();
@@ -42,6 +53,9 @@ const useLocalStorageSync = (): void => {
 
     if (justSavedPendingRef.current) {
       justSavedPendingRef.current = false;
+    } else if (_skipNextLoad) {
+      // Data was already loaded by the caller (e.g. handleOpen) — skip redundant re-load
+      _skipNextLoad = false;
     } else {
       const saved = loadMapData(mapId);
       if (saved) {
@@ -103,11 +117,14 @@ const useLocalStorageSync = (): void => {
           saveTimerRef.current = null;
           historyManager.push(paintSnapshotRef.current!);
           paintSnapshotRef.current = null;
+          const tc = lastTerrainConfigRef.current ?? DEFAULT_TERRAIN_CONFIG;
+          const thumbnail = captureThumbnail(lastTilesRef.current!, tc.custom);
           saveMapData(currentId, {
             tiles: lastTilesRef.current!,
             armies: lastArmiesRef.current!,
             factions: lastFactionsRef.current!,
-            terrainConfig: lastTerrainConfigRef.current ?? DEFAULT_TERRAIN_CONFIG,
+            terrainConfig: tc,
+            thumbnail,
           });
         }, PAINT_SAVE_DEBOUNCE_MS);
       } else {
@@ -132,7 +149,8 @@ const useLocalStorageSync = (): void => {
         lastFactionsRef.current = factions;
         lastTerrainConfigRef.current = terrainConfig;
 
-        saveMapData(currentId, { tiles, armies, factions, terrainConfig });
+        const thumbnail = captureThumbnail(tiles, terrainConfig.custom);
+        saveMapData(currentId, { tiles, armies, factions, terrainConfig, thumbnail });
       }
     });
 
@@ -171,11 +189,13 @@ const useLocalStorageSync = (): void => {
       justSavedPendingRef.current = true;
       const name = state.currentMap.name;
       const map = createMap(name);
+      const thumbnail = captureThumbnail(state.tiles, state.terrainConfig.custom);
       saveMapData(map.id, {
         tiles: state.tiles,
         armies: state.armies,
         factions: state.factions,
         terrainConfig: state.terrainConfig,
+        thumbnail,
       });
       dispatch(loadMap({ id: map.id, name }));
     });

@@ -37,9 +37,17 @@ export const renderFlagPaths = (
   tiles: TilesState,
   flag: FlagKey,
   style: PathStyle,
-  deepWaterSet: Set<string> = DEEP_WATER
+  deepWaterSet: Set<string> = DEEP_WATER,
+  iterateKeys?: Set<string>
 ): React.ReactElement[] => {
-  return Object.values(tiles).flatMap((tile) => {
+  const entries = iterateKeys
+    ? [...iterateKeys]
+        .map((k) => {
+          return tiles[k];
+        })
+        .filter(Boolean)
+    : Object.values(tiles);
+  return entries.flatMap((tile) => {
     if (!tile[flag]) return [];
 
     const { q, r, terrain } = tile;
@@ -90,10 +98,18 @@ export const renderFlagPaths = (
 // same river geometry for intersection detection without recomputing it.
 export const computeAllRiverCurves = (
   tiles: TilesState,
-  deepWaterSet: Set<string> = DEEP_WATER
+  deepWaterSet: Set<string> = DEEP_WATER,
+  iterateKeys?: Set<string>
 ): Map<string, CubicBezier[]> => {
   const result = new Map<string, CubicBezier[]>();
-  Object.values(tiles).forEach((tile) => {
+  const entries = iterateKeys
+    ? [...iterateKeys]
+        .map((k) => {
+          return tiles[k];
+        })
+        .filter(Boolean)
+    : Object.values(tiles);
+  entries.forEach((tile) => {
     if (!tile.hasRiver || deepWaterSet.has(tile.terrain)) return;
     const { q, r } = tile;
     const { x: cx, y: cy } = axialToPixel(q, r);
@@ -116,9 +132,17 @@ export const renderRoadPaths = (
   tiles: TilesState,
   style: PathStyle,
   riverCurvesByTile: Map<string, CubicBezier[]>,
-  deepWaterSet: Set<string> = DEEP_WATER
+  deepWaterSet: Set<string> = DEEP_WATER,
+  iterateKeys?: Set<string>
 ): React.ReactElement[] => {
-  return Object.values(tiles).flatMap((tile) => {
+  const entries = iterateKeys
+    ? [...iterateKeys]
+        .map((k) => {
+          return tiles[k];
+        })
+        .filter(Boolean)
+    : Object.values(tiles);
+  return entries.flatMap((tile) => {
     if (!tile.hasRoad) return [];
 
     const { q, r, terrain, hasTown } = tile;
@@ -178,9 +202,17 @@ interface CausewayStyle {
 export const renderCausewayPaths = (
   tiles: TilesState,
   style: CausewayStyle,
-  deepWaterSet: Set<string> = DEEP_WATER
+  deepWaterSet: Set<string> = DEEP_WATER,
+  iterateKeys?: Set<string>
 ): React.ReactElement[] => {
-  return Object.values(tiles).flatMap((tile) => {
+  const entries = iterateKeys
+    ? [...iterateKeys]
+        .map((k) => {
+          return tiles[k];
+        })
+        .filter(Boolean)
+    : Object.values(tiles);
+  return entries.flatMap((tile) => {
     if (!tile.hasRoad) return [];
     if (!deepWaterSet.has(tile.terrain)) return [];
 
@@ -331,9 +363,17 @@ export const renderTownIcons = (
   tiles: TilesState,
   armiesByTile: Record<string, Army[]> = {},
   factionColorMap: Record<string, string> = {},
-  deepWaterSet: Set<string> = DEEP_WATER
+  deepWaterSet: Set<string> = DEEP_WATER,
+  iterateKeys?: Set<string>
 ): React.ReactElement[] => {
-  return Object.values(tiles).flatMap((tile) => {
+  const entries = iterateKeys
+    ? [...iterateKeys]
+        .map((k) => {
+          return tiles[k];
+        })
+        .filter(Boolean)
+    : Object.values(tiles);
+  return entries.flatMap((tile) => {
     if (!tile.hasTown) return [];
     const { q, r, terrain } = tile;
     if (deepWaterSet.has(terrain)) return [];
@@ -428,9 +468,17 @@ export const renderTownIcons = (
 export const renderTownLabels = (
   tiles: TilesState,
   armiesByTile: Record<string, Army[]> = {},
-  deepWaterSet: Set<string> = DEEP_WATER
+  deepWaterSet: Set<string> = DEEP_WATER,
+  iterateKeys?: Set<string>
 ): React.ReactElement[] => {
-  return Object.values(tiles).flatMap((tile) => {
+  const entries = iterateKeys
+    ? [...iterateKeys]
+        .map((k) => {
+          return tiles[k];
+        })
+        .filter(Boolean)
+    : Object.values(tiles);
+  return entries.flatMap((tile) => {
     if (!tile.hasTown) return [];
     const { q, r, terrain, townName } = tile;
     if (deepWaterSet.has(terrain)) return [];
@@ -497,9 +545,17 @@ export const renderTownLabels = (
 
 export const renderPorts = (
   tiles: TilesState,
-  deepWaterSet: Set<string> = DEEP_WATER
+  deepWaterSet: Set<string> = DEEP_WATER,
+  iterateKeys?: Set<string>
 ): React.ReactElement[] => {
-  return Object.values(tiles).flatMap((tile) => {
+  const entries = iterateKeys
+    ? [...iterateKeys]
+        .map((k) => {
+          return tiles[k];
+        })
+        .filter(Boolean)
+    : Object.values(tiles);
+  return entries.flatMap((tile) => {
     if (!deepWaterSet.has(tile.terrain)) return [];
     const { q, r } = tile;
     const myKey = toKey(q, r);
