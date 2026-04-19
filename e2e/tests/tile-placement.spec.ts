@@ -11,63 +11,46 @@ test.describe('Tile Placement', () => {
 
   test('clicking a ghost tile creates a hex tile', async ({ appPage }) => {
     const editor = new EditorPage(appPage);
-    // The first ghost tile visible after map creation
-    const ghost = appPage.locator('[data-testid^="ghost-tile-"]').first();
-    const testId = await ghost.getAttribute('data-testid');
-    const coords = testId!.replace('ghost-tile-', '').split(',');
-    const q = parseInt(coords[0], 10);
-    const r = parseInt(coords[1], 10);
+    const ghost = await editor.firstGhost();
+    expect(ghost).not.toBeNull();
+    const { q, r } = ghost!;
 
     await editor.clickGhost(q, r);
-    await expect(appPage.getByTestId(`hex-tile-${q},${r}`)).toBeVisible();
+    expect(await editor.tileExists(q, r)).toBe(true);
   });
 
   test('newly created tile is automatically selected (panel opens)', async ({ appPage }) => {
     const editor = new EditorPage(appPage);
-    const ghost = appPage.locator('[data-testid^="ghost-tile-"]').first();
-    const testId = await ghost.getAttribute('data-testid');
-    const [, coords] = testId!.split('ghost-tile-');
-    const [q, r] = coords.split(',').map(Number);
-
-    await editor.clickGhost(q, r);
+    const ghost = await editor.firstGhost();
+    expect(ghost).not.toBeNull();
+    await editor.clickGhost(ghost!.q, ghost!.r);
     await expect(appPage.getByTestId('delete-tile-btn')).toBeVisible();
   });
 
   test('right-clicking a tile deletes it', async ({ appPage, isMobile }) => {
     test.skip(isMobile, 'Right-click/context-menu is not available on touch devices');
     const editor = new EditorPage(appPage);
-    const ghost = appPage.locator('[data-testid^="ghost-tile-"]').first();
-    const testId = await ghost.getAttribute('data-testid');
-    const [, coords] = testId!.split('ghost-tile-');
-    const [q, r] = coords.split(',').map(Number);
+    const ghost = await editor.firstGhost();
+    expect(ghost).not.toBeNull();
+    const { q, r } = ghost!;
 
     await editor.clickGhost(q, r);
-    await expect(appPage.getByTestId(`hex-tile-${q},${r}`)).toBeVisible();
+    expect(await editor.tileExists(q, r)).toBe(true);
     await editor.rightClickTile(q, r);
-    await expect(appPage.getByTestId(`hex-tile-${q},${r}`)).not.toBeVisible();
+    expect(await editor.tileExists(q, r)).toBe(false);
   });
 
   test('tile persists after page reload', async ({ appPage }) => {
     const editor = new EditorPage(appPage);
-    const ghost = appPage.locator('[data-testid^="ghost-tile-"]').first();
-    const testId = await ghost.getAttribute('data-testid');
-    const [, coords] = testId!.split('ghost-tile-');
-    const [q, r] = coords.split(',').map(Number);
+    const ghost = await editor.firstGhost();
+    expect(ghost).not.toBeNull();
+    const { q, r } = ghost!;
 
     await editor.clickGhost(q, r);
 
-    // Note the map name so we can reopen it after reload
-    const mapName = await appPage.getByTestId('map-name-input').inputValue();
-
-    // Reload — app returns to home screen (ui.screen is not persisted)
+    // Reload stays on the map URL — EditorRoute deep-links the map back from localStorage
     await appPage.reload();
-    await appPage.waitForSelector('[data-testid="new-map-card"]');
-
-    // Reopen the saved map
-    const home = new HomeScreenPage(appPage);
-    await home.openMapByName(mapName);
-
-    await expect(appPage.getByTestId(`hex-tile-${q},${r}`)).toBeVisible();
+    expect(await editor.tileExists(q, r)).toBe(true);
   });
 });
 
@@ -75,12 +58,10 @@ test.describe('Tile Editing', () => {
   test.beforeEach(async ({ appPage }) => {
     const home = new HomeScreenPage(appPage);
     await home.createMap();
-    // Create one tile to work with
     const editor = new EditorPage(appPage);
-    const ghost = appPage.locator('[data-testid^="ghost-tile-"]').first();
-    const testId = await ghost.getAttribute('data-testid');
-    const [, coords] = testId!.split('ghost-tile-');
-    const [q, r] = coords.split(',').map(Number);
+    const ghost = await editor.firstGhost();
+    expect(ghost).not.toBeNull();
+    const { q, r } = ghost!;
     await editor.clickGhost(q, r);
     // Store coords for later use
     await appPage.evaluate(
@@ -169,7 +150,8 @@ test.describe('Tile Editing', () => {
     const { q, r } = await appPage.evaluate(() => {
       return (window as unknown as Record<string, { q: number; r: number }>).__testTile;
     });
+    const editor = new EditorPage(appPage);
     await panel.deleteTile();
-    await expect(appPage.getByTestId(`hex-tile-${q},${r}`)).not.toBeVisible();
+    expect(await editor.tileExists(q, r)).toBe(false);
   });
 });

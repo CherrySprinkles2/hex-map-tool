@@ -1,10 +1,8 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { UiState, MapMode, Screen } from '../../types/state';
+import type { UiState, MapMode } from '../../types/state';
 
 const initialState: UiState = {
   selectedTile: null,
-  screen: 'home',
-  helpReturnScreen: 'home',
   selectedArmyId: null,
   placingArmy: false,
   movingArmyId: null,
@@ -33,9 +31,6 @@ const uiSlice = createSlice({
     deselectTile: (state) => {
       state.selectedTile = null;
       state.editingTownTile = null;
-    },
-    setScreen: (state, action: PayloadAction<Screen>) => {
-      state.screen = action.payload;
     },
     selectArmy: (state, action: PayloadAction<string>) => {
       state.selectedArmyId = action.payload;
@@ -101,20 +96,12 @@ const uiSlice = createSlice({
     exitTownEdit: (state) => {
       state.editingTownTile = null;
     },
-    navigateToHelp: (state) => {
-      state.helpReturnScreen = state.screen;
-      state.screen = 'help';
-    },
-    navigateBackFromHelp: (state) => {
-      state.screen = state.helpReturnScreen;
-    },
   },
 });
 
 export const {
   selectTile,
   deselectTile,
-  setScreen,
   selectArmy,
   deselectArmy,
   setPlacingArmy,
@@ -131,7 +118,5 @@ export const {
   closeShortcuts,
   enterTownEdit,
   exitTownEdit,
-  navigateToHelp,
-  navigateBackFromHelp,
 } = uiSlice.actions;
 export default uiSlice.reducer;

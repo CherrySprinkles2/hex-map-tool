@@ -176,6 +176,7 @@ const useLocalStorageSync = (): void => {
     let unsubscribe: (() => void) | undefined;
     unsubscribe = store.subscribe(() => {
       const state = store.getState();
+      if (state.currentMap.id !== null) return;
       if (
         state.tiles === cleanTiles &&
         state.armies === cleanArmies &&

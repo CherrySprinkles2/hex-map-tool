@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { setMapMode } from '../../features/ui/uiSlice';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { MapIcon, FlagIcon } from '../../assets/icons/ui';
 
 const PANEL_OFFSET = '300px';
 
@@ -34,6 +35,9 @@ const Toggle = styled.div`
 `;
 
 const ModeBtn = styled.button<{ $active: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 8px 16px;
   border: none;
   background: ${({ $active, theme }) => {
@@ -52,6 +56,12 @@ const ModeBtn = styled.button<{ $active: boolean }>`
     background 0.15s,
     color 0.15s;
   white-space: nowrap;
+
+  & > svg {
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+  }
 
   &:hover {
     color: ${({ theme }) => {
@@ -75,6 +85,7 @@ const MapModeToggle = (): React.ReactElement => {
           return dispatch(setMapMode('terrain'));
         }}
       >
+        <MapIcon aria-hidden />
         {t('mapModeToggle.terrain')}
       </ModeBtn>
       <ModeBtn
@@ -83,6 +94,7 @@ const MapModeToggle = (): React.ReactElement => {
           return dispatch(setMapMode('faction'));
         }}
       >
+        <FlagIcon aria-hidden />
         {t('mapModeToggle.faction')}
       </ModeBtn>
     </Toggle>

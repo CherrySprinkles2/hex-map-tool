@@ -16,7 +16,7 @@ const setsEqual = (a: Set<string>, b: Set<string>): boolean => {
 };
 
 /**
- * Returns the set of tile keys whose screen-space position falls within the SVG
+ * Returns the set of tile keys whose screen-space position falls within the
  * viewport plus a padding margin. Updates via a throttled requestAnimationFrame
  * loop reading the live viewportRef so it stays accurate during pan/zoom without
  * needing Redux updates on every frame.
@@ -29,10 +29,13 @@ const setsEqual = (a: Set<string>, b: Set<string>): boolean => {
  *
  * On maps with fewer than SMALL_MAP_THRESHOLD tiles the full key set is returned
  * immediately and no rAF loop is started.
+ *
+ * The element ref is used only for its `getBoundingClientRect()`, so any element
+ * type works (SVG in SVG mode, div container in canvas mode).
  */
 const useViewportCulling = (
   viewportRef: React.RefObject<ViewportState | null>,
-  svgRef: React.RefObject<SVGSVGElement | null>,
+  elementRef: React.RefObject<Element | null>,
   tileKeys: string[],
   paddingTiles: number = DEFAULT_PADDING_TILES
 ): Set<string> => {
@@ -41,11 +44,11 @@ const useViewportCulling = (
   const computeVisible = useCallback(
     (keys: string[]): Set<string> => {
       const vp = viewportRef.current;
-      const svg = svgRef.current;
-      if (!vp || !svg) {
+      const el = elementRef.current;
+      if (!vp || !el) {
         return new Set(keys);
       }
-      const { width, height } = svg.getBoundingClientRect();
+      const { width, height } = el.getBoundingClientRect();
       if (width === 0 || height === 0) {
         return new Set(keys);
       }
@@ -62,7 +65,7 @@ const useViewportCulling = (
       }
       return visible;
     },
-    [viewportRef, svgRef, paddingTiles]
+    [viewportRef, elementRef, paddingTiles]
   );
 
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(() => {

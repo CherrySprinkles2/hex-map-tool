@@ -9,6 +9,7 @@ import { SidePanel } from '../shared/SidePanel';
 import { DragHandle } from '../shared/DragHandle';
 import { PanelHeader } from '../shared/PanelHeader';
 import { SectionLabel } from '../shared/SectionLabel';
+import { CloseIcon, FlagIcon } from '../../assets/icons/ui';
 
 const FactionList = styled.div`
   display: flex;
@@ -217,7 +218,7 @@ const FactionItem = ({ faction }: FactionItemProps): React.ReactElement => {
           }}
           title="Delete faction"
         >
-          ✕
+          <CloseIcon width="1em" height="1em" aria-hidden />
         </DeleteBtn>
       </CardRow>
 
@@ -285,6 +286,7 @@ const FactionsPanel = (): React.ReactElement => {
       <DragHandle $margin="0 auto 12px" />
       <PanelHeader
         title={t('factionsPanel.title')}
+        icon={<FlagIcon aria-hidden />}
         onClose={() => {
           return dispatch(closeFactionsPanel());
         }}

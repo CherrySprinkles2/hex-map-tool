@@ -15,6 +15,7 @@ import { generateId } from '../../utils/generateId';
 import { patternMarkColor } from '../../utils/patternColor';
 import { theme } from '../../styles/theme';
 import type { CustomTerrainType, PatternKey } from '../../types/domain';
+import { CloseIcon, PencilIcon } from '../../assets/icons/ui';
 
 const BUILTIN_IDS = ['grass', 'farm', 'forest', 'mountain', 'lake', 'ocean'] as const;
 const PATTERN_OPTIONS: PatternKey[] = [
@@ -810,7 +811,9 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
           <>
             <ModalHeader>
               <ModalTitle>{t('terrainConfig.title')}</ModalTitle>
-              <IconBtn onClick={onClose}>✕</IconBtn>
+              <IconBtn onClick={onClose}>
+                <CloseIcon width="1em" height="1em" aria-hidden />
+              </IconBtn>
             </ModalHeader>
 
             {orderedList.map((entry, idx) => {
@@ -872,7 +875,7 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
                           if (ct) openEditForm(ct);
                         }}
                       >
-                        ✏
+                        <PencilIcon width="1em" height="1em" aria-hidden />
                       </SmallBtn>
                       <SmallBtn
                         $variant="danger"
@@ -880,7 +883,7 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
                           handleDeleteCustom(entry.id);
                         }}
                       >
-                        ✕
+                        <CloseIcon width="1em" height="1em" aria-hidden />
                       </SmallBtn>
                     </>
                   )}
@@ -899,7 +902,9 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
                   ? t('terrainConfig.newTerrainTitle')
                   : t('terrainConfig.editTerrainTitle')}
               </ModalTitle>
-              <IconBtn onClick={onClose}>✕</IconBtn>
+              <IconBtn onClick={onClose}>
+                <CloseIcon width="1em" height="1em" aria-hidden />
+              </IconBtn>
             </ModalHeader>
 
             <FormRow>
@@ -1001,7 +1006,7 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
                       });
                     }}
                   >
-                    ✕
+                    <CloseIcon width="1em" height="1em" aria-hidden />
                   </SmallBtn>
                 )}
               </div>

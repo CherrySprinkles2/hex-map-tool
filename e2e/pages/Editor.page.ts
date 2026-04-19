@@ -1,5 +1,25 @@
 import type { Page } from '@playwright/test';
 
+/**
+ * Canvas renderer has no per-tile DOM. A small bridge is exposed on
+ * `window.__hexMapTest` by HexGrid.tsx in non-production builds — it provides
+ * direct Redux access and synthetic-event helpers keyed by axial coords.
+ */
+interface TestBridge {
+  clickTile: (q: number, r: number) => void;
+  rightClickTile: (q: number, r: number) => void;
+  firstGhostKey: () => string | null;
+  getTileKeys: () => string[];
+  tileExists: (q: number, r: number) => boolean;
+}
+
+const bridge = async (page: Page): Promise<void> => {
+  // Wait until HexGrid has mounted and the bridge is attached.
+  await page.waitForFunction(() => {
+    return !!(window as unknown as { __hexMapTest?: unknown }).__hexMapTest;
+  });
+};
+
 export class EditorPage {
   constructor(private page: Page) {}
 
@@ -27,34 +47,79 @@ export class EditorPage {
 
   /** Click an existing hex tile by its axial coordinate. */
   async clickTile(q: number, r: number): Promise<void> {
-    // dispatchEvent bypasses browser hit-testing so mobile bottom sheets
-    // (TileEditPanel / ArmyPanel) don't intercept the event.
-    await this.page.getByTestId(`hex-tile-${q},${r}`).dispatchEvent('click');
+    await bridge(this.page);
+    await this.page.evaluate(
+      ({ q: _q, r: _r }) => {
+        const t = (window as unknown as { __hexMapTest: TestBridge }).__hexMapTest;
+        t.clickTile(_q, _r);
+      },
+      { q, r }
+    );
   }
 
   /** Right-click an existing hex tile (delete). */
   async rightClickTile(q: number, r: number): Promise<void> {
-    await this.page.getByTestId(`hex-tile-${q},${r}`).dispatchEvent('contextmenu');
+    await bridge(this.page);
+    await this.page.evaluate(
+      ({ q: _q, r: _r }) => {
+        const t = (window as unknown as { __hexMapTest: TestBridge }).__hexMapTest;
+        t.rightClickTile(_q, _r);
+      },
+      { q, r }
+    );
   }
 
   /** Click a ghost (unoccupied) tile to create it. */
   async clickGhost(q: number, r: number): Promise<void> {
-    await this.page.getByTestId(`ghost-tile-${q},${r}`).dispatchEvent('click');
+    // Same path as clickTile — the canvas click handler routes by hit type.
+    await this.clickTile(q, r);
   }
 
-  /** Return whether a tile exists in the SVG. */
+  /** Return whether a tile exists in the Redux store. */
   async tileExists(q: number, r: number): Promise<boolean> {
-    return this.page.getByTestId(`hex-tile-${q},${r}`).isVisible();
+    await bridge(this.page);
+    return this.page.evaluate(
+      ({ q: _q, r: _r }) => {
+        const t = (window as unknown as { __hexMapTest: TestBridge }).__hexMapTest;
+        return t.tileExists(_q, _r);
+      },
+      { q, r }
+    );
   }
 
-  /** Return whether a ghost tile is visible. */
+  /** Return whether a ghost tile is currently rendered at (q, r). */
   async ghostExists(q: number, r: number): Promise<boolean> {
-    return this.page.getByTestId(`ghost-tile-${q},${r}`).isVisible();
+    await bridge(this.page);
+    return this.page.evaluate(
+      ({ q: _q, r: _r }) => {
+        const t = (
+          window as unknown as { __hexMapTest: TestBridge & { getGhostKeys: () => string[] } }
+        ).__hexMapTest;
+        return t.getGhostKeys().includes(`${_q},${_r}`);
+      },
+      { q, r }
+    );
   }
 
-  /** Count all rendered hex tiles. */
+  /** Count all tiles in the current map. */
   async tileCount(): Promise<number> {
-    return this.page.locator('[data-testid^="hex-tile-"]').count();
+    await bridge(this.page);
+    return this.page.evaluate(() => {
+      const t = (window as unknown as { __hexMapTest: TestBridge }).__hexMapTest;
+      return t.getTileKeys().length;
+    });
+  }
+
+  /** Returns the first ghost-tile coordinates, or null if none exist. */
+  async firstGhost(): Promise<{ q: number; r: number } | null> {
+    await bridge(this.page);
+    const key = await this.page.evaluate(() => {
+      const t = (window as unknown as { __hexMapTest: TestBridge }).__hexMapTest;
+      return t.firstGhostKey();
+    });
+    if (!key) return null;
+    const [q, r] = key.split(',').map(Number);
+    return { q, r };
   }
 
   /** Rename the current map. */

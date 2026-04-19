@@ -1,4 +1,5 @@
 import { test as base, expect, type Page } from '@playwright/test';
+import { APP_BASE } from '../helpers/base-path';
 
 type AppFixtures = {
   appPage: Page;
@@ -6,7 +7,7 @@ type AppFixtures = {
 
 export const test = base.extend<AppFixtures>({
   appPage: async ({ page }, use) => {
-    await page.goto('/');
+    await page.goto(APP_BASE + '/');
     // Clear all localStorage so each test starts with a clean slate
     await page.evaluate(() => {
       return localStorage.clear();

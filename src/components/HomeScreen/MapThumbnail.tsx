@@ -1,7 +1,6 @@
 import React from 'react';
 import { theme } from '../../styles/theme';
 
-const THUMB_W = 220;
 const THUMB_H = 160;
 
 interface MapThumbnailProps {

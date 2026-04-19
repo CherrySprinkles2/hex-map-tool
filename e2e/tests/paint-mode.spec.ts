@@ -9,10 +9,9 @@ test.describe('Terrain Paint Mode', () => {
     await home.createMap();
     // Create an initial tile and open it
     const editor = new EditorPage(appPage);
-    const ghost = appPage.locator('[data-testid^="ghost-tile-"]').first();
-    const testId = await ghost.getAttribute('data-testid');
-    const [, coords] = testId!.split('ghost-tile-');
-    const [q, r] = coords.split(',').map(Number);
+    const ghost = await editor.firstGhost();
+    expect(ghost).not.toBeNull();
+    const { q, r } = ghost!;
     await editor.clickGhost(q, r);
     await appPage.evaluate(
       ({ q: _q, r: _r }) => {

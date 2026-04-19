@@ -1,0 +1,17 @@
+export { ReactComponent as SwordsIcon } from './swords.svg';
+export { ReactComponent as TrashIcon } from './trash.svg';
+export { ReactComponent as BrushIcon } from './brush.svg';
+export { ReactComponent as CloseIcon } from './close.svg';
+export { ReactComponent as MoveArrowIcon } from './move-arrow.svg';
+export { ReactComponent as SettingsIcon } from './settings.svg';
+export { ReactComponent as KeyboardIcon } from './keyboard.svg';
+export { ReactComponent as GlobeIcon } from './globe.svg';
+export { ReactComponent as FlagIcon } from './flag.svg';
+export { ReactComponent as HousesIcon } from './houses.svg';
+export { ReactComponent as MapIcon } from './map.svg';
+export { ReactComponent as HexIcon } from './hex.svg';
+export { ReactComponent as WarningIcon } from './warning.svg';
+export { ReactComponent as UploadIcon } from './upload.svg';
+export { ReactComponent as DownloadIcon } from './download.svg';
+export { ReactComponent as PencilIcon } from './pencil.svg';
+export { ReactComponent as QuestionIcon } from './question.svg';

@@ -10,6 +10,7 @@
 //   hex-map-tool-factions-{id}   (old per-map factions)
 
 import { generateId } from './generateId';
+import { slugify } from './slugify';
 import type { MapEntry, MapData, Faction, TerrainConfig } from '../types/domain';
 import type { TilesState, ArmiesState } from '../types/state';
 
@@ -86,24 +87,62 @@ export const migrateFromLegacy = (): void => {
 
 // ── CRUD ──────────────────────────────────────────────────────────────────────
 
+// Slugs reserved for route segments that must not collide with map URLs.
+const RESERVED_SLUGS = new Set(['example']);
+
 export const getAllMaps = (): MapEntry[] => {
   return readIndex() ?? [];
 };
 
+export const getMapBySlug = (slug: string): MapEntry | null => {
+  return (
+    getAllMaps().find((m) => {
+      return slugify(m.name) === slug;
+    }) ?? null
+  );
+};
+
 export const createMap = (name = 'Untitled Map'): MapEntry => {
   const id = generateId('map');
-  const entry: MapEntry = { id, name, updatedAt: new Date().toISOString() };
-  writeIndex([...getAllMaps(), entry]);
+  const maps = getAllMaps();
+  const existingSlugs = new Set(
+    maps.map((m) => {
+      return slugify(m.name);
+    })
+  );
+  let finalName = name;
+  const baseSlug = slugify(name);
+  if (RESERVED_SLUGS.has(baseSlug) || existingSlugs.has(baseSlug)) {
+    let n = 2;
+    while (
+      RESERVED_SLUGS.has(slugify(`${name} (${n})`)) ||
+      existingSlugs.has(slugify(`${name} (${n})`))
+    )
+      n++;
+    finalName = `${name} (${n})`;
+  }
+  const entry: MapEntry = { id, name: finalName, updatedAt: new Date().toISOString() };
+  writeIndex([...maps, entry]);
   safeSetItem(DATA_KEY(id), JSON.stringify({ version: 2, tiles: {}, armies: {}, factions: [] }));
   return entry;
 };
 
-export const renameMap = (id: string, name: string): void => {
+export type RenameResult = { ok: true } | { ok: false; reason: 'nameTaken' };
+
+export const renameMap = (id: string, name: string): RenameResult => {
+  const maps = getAllMaps();
+  const newSlug = slugify(name);
+  if (RESERVED_SLUGS.has(newSlug)) return { ok: false, reason: 'nameTaken' };
+  const conflict = maps.some((m) => {
+    return m.id !== id && slugify(m.name) === newSlug;
+  });
+  if (conflict) return { ok: false, reason: 'nameTaken' };
   writeIndex(
-    getAllMaps().map((m) => {
+    maps.map((m) => {
       return m.id === id ? { ...m, name } : m;
     })
   );
+  return { ok: true };
 };
 
 export const deleteMap = (id: string): void => {

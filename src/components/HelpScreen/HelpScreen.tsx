@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { useAppDispatch } from '../../app/hooks';
-import { navigateBackFromHelp } from '../../features/ui/uiSlice';
 import {
   HelpOverviewIcon,
   HelpCanvasIcon,
@@ -30,11 +29,9 @@ type HelpSectionId =
   | 'shortcuts'
   | 'maps';
 
-type HelpView = { kind: 'grid' } | { kind: 'section'; sectionId: HelpSectionId };
-
 interface SectionMeta {
   id: HelpSectionId;
-  Icon: React.ComponentType<{ size?: number }>;
+  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   titleKey: string;
   summaryKey: string;
 }
@@ -338,17 +335,6 @@ const PlaceholderDimensions = styled.div`
   margin-top: 10px;
   opacity: 0.55;
   font-size: 0.72rem;
-`;
-
-const SectionImage = styled.img`
-  width: 100%;
-  border-radius: 8px;
-  border: 1.5px solid
-    ${({ theme }) => {
-      return theme.panelBorder;
-    }};
-  margin-bottom: 28px;
-  display: block;
 `;
 
 const SubHeading = styled.h3`
@@ -729,28 +715,33 @@ const SectionContent = ({ sectionId }: { sectionId: HelpSectionId }): React.Reac
 // ── Main component ────────────────────────────────────────────────────────────
 
 const HelpScreen = (): React.ReactElement => {
-  const dispatch = useAppDispatch();
+  const { section } = useParams<{ section?: string }>();
+  const navigate = useNavigate();
   const { t: tTyped } = useTranslation();
   // Section titleKey / summaryKey are variable strings validated against the locale files
   // at authoring time; cast to bypass react-i18next's static key inference.
   const t = tTyped as unknown as (key: string) => string;
-  const [view, setView] = useState<HelpView>({ kind: 'grid' });
+
+  const validSectionId = section
+    ? (SECTIONS.find((s) => {
+        return s.id === section;
+      })?.id ?? null)
+    : null;
+
+  // Redirect unknown section IDs to the grid
+  if (section && !validSectionId) {
+    return <Navigate to="/help" replace />;
+  }
 
   const handleBack = () => {
-    if (view.kind === 'section') {
-      setView({ kind: 'grid' });
-    } else {
-      dispatch(navigateBackFromHelp());
-    }
+    navigate(-1);
   };
 
   const openSection = (sectionId: HelpSectionId) => {
-    setView({ kind: 'section', sectionId });
-    // Scroll section content back to top whenever a new section is opened.
-    // The scroll container is re-mounted so this happens automatically.
+    navigate(`/help/${sectionId}`);
   };
 
-  if (view.kind === 'grid') {
+  if (!section) {
     return (
       <Shell>
         <Header>
@@ -771,7 +762,7 @@ const HelpScreen = (): React.ReactElement => {
                     }}
                   >
                     <CardIcon>
-                      <Icon size={40} />
+                      <Icon width={40} height={40} />
                     </CardIcon>
                     <CardTitle>{t(titleKey)}</CardTitle>
                     <CardSummary>{t(summaryKey)}</CardSummary>
@@ -787,7 +778,7 @@ const HelpScreen = (): React.ReactElement => {
 
   // Section view
   const currentIndex = SECTIONS.findIndex((s) => {
-    return s.id === view.sectionId;
+    return s.id === section;
   });
   const prevSection = currentIndex > 0 ? SECTIONS[currentIndex - 1] : null;
   const nextSection = currentIndex < SECTIONS.length - 1 ? SECTIONS[currentIndex + 1] : null;
@@ -804,17 +795,16 @@ const HelpScreen = (): React.ReactElement => {
           </HeaderTitle>
         </HeaderInner>
       </Header>
-      <SectionScroll key={view.sectionId}>
+      <SectionScroll key={section}>
         <SectionScrollInner>
           <SectionInner>
             <SectionTitle>{t(currentMeta.titleKey)}</SectionTitle>
-            <SectionContent sectionId={view.sectionId} />
+            <SectionContent sectionId={section as HelpSectionId} />
             <SectionNav>
               <NavBtn
                 onClick={() => {
-                  return prevSection ? openSection(prevSection.id) : setView({ kind: 'grid' });
+                  return prevSection ? openSection(prevSection.id) : navigate('/help');
                 }}
-                disabled={currentIndex === 0 && !prevSection}
               >
                 {prevSection ? `← ${t(prevSection.titleKey)}` : t('help.back')}
               </NavBtn>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { withTranslation, WithTranslation } from 'react-i18next';
+import { WarningIcon } from '../../assets/icons/ui';
 
 const containerStyle: React.CSSProperties = {
   padding: '2rem',
@@ -47,7 +48,10 @@ class ErrorBoundary extends React.Component<
     if (this.state.hasError) {
       return (
         <div style={containerStyle}>
-          <h2 style={{ margin: 0 }}>{t('errorBoundary.title')}</h2>
+          <h2 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '0.4em' }}>
+            <WarningIcon width="1em" height="1em" aria-hidden />
+            {t('errorBoundary.title')}
+          </h2>
           <p style={{ margin: 0, color: '#888', textAlign: 'center', maxWidth: 420 }}>
             {t('errorBoundary.body')}
           </p>

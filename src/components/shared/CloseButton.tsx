@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { CloseIcon } from '../../assets/icons/ui';
 
 type Variant = 'simple' | 'bordered';
 
@@ -14,6 +15,9 @@ const SimpleBtn = styled.button`
   padding: 2px 6px;
   border-radius: 4px;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   &:hover {
     color: ${({ theme }) => {
       return theme.text;
@@ -35,6 +39,9 @@ const BorderedBtn = styled.button`
   font-size: 1rem;
   cursor: pointer;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition:
     background 0.15s,
     color 0.15s;
@@ -61,16 +68,10 @@ export const CloseButton = ({
   title,
   'aria-label': ariaLabel,
 }: CloseButtonProps): React.ReactElement => {
-  if (variant === 'bordered') {
-    return (
-      <BorderedBtn onClick={onClick} title={title} aria-label={ariaLabel}>
-        ×
-      </BorderedBtn>
-    );
-  }
+  const Btn = variant === 'bordered' ? BorderedBtn : SimpleBtn;
   return (
-    <SimpleBtn onClick={onClick} title={title} aria-label={ariaLabel}>
-      ×
-    </SimpleBtn>
+    <Btn onClick={onClick} title={title} aria-label={ariaLabel}>
+      <CloseIcon width="1em" height="1em" aria-hidden />
+    </Btn>
   );
 };

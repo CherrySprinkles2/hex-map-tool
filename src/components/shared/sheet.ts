@@ -46,8 +46,18 @@ export const SheetItem = styled.button<{ $active?: boolean; $desktopHide?: boole
 `;
 
 export const SheetIcon = styled.span`
-  font-size: 1.1rem;
   width: 22px;
-  text-align: center;
+  height: 22px;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: ${({ theme }) => {
+    return theme.textMuted;
+  }};
+
+  & > svg {
+    width: 20px;
+    height: 20px;
+  }
 `;

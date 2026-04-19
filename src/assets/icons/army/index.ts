@@ -1,2 +1,2 @@
-export { default as LandIcon } from './LandIcon';
-export { default as NavalIcon } from './NavalIcon';
+export { ReactComponent as LandIcon } from './land.svg';
+export { ReactComponent as NavalIcon } from './naval.svg';

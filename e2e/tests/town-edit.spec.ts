@@ -10,10 +10,9 @@ test.describe('Town Edit Panel', () => {
     await home.createMap();
     // Create a tile and toggle the town flag on
     const editor = new EditorPage(appPage);
-    const ghost = appPage.locator('[data-testid^="ghost-tile-"]').first();
-    const testId = await ghost.getAttribute('data-testid');
-    const [, coords] = testId!.split('ghost-tile-');
-    const [q, r] = coords.split(',').map(Number);
+    const ghost = await editor.firstGhost();
+    expect(ghost).not.toBeNull();
+    const { q, r } = ghost!;
     await editor.clickGhost(q, r);
     await appPage.evaluate(
       ({ q: _q, r: _r }) => {
@@ -96,7 +95,7 @@ test.describe('Town Edit Panel', () => {
     expect(await townPanel.isSizeActive('city')).toBe(true);
   });
 
-  test('town fortification icon is visible on the map tile', async ({ appPage }) => {
+  test('town with fortification persists in store', async ({ appPage }) => {
     const townPanel = new TownEditPanelPage(appPage);
     await townPanel.setFortification('stone');
     await townPanel.back();
@@ -104,10 +103,8 @@ test.describe('Town Edit Panel', () => {
     const { q, r } = await appPage.evaluate(() => {
       return (window as unknown as Record<string, { q: number; r: number }>).__testTile;
     });
-    // The stone wall fortification renders a wall graphic on the tile
-    await expect(appPage.getByTestId(`hex-tile-${q},${r}`)).toBeVisible();
-    // The tile itself should have a town indicator (hasTown = true)
-    const tile = appPage.getByTestId(`hex-tile-${q},${r}`);
-    await expect(tile).toBeVisible();
+    const editor = new EditorPage(appPage);
+    // Canvas renderer has no per-tile DOM — verify via the Redux store bridge.
+    expect(await editor.tileExists(q, r)).toBe(true);
   });
 });

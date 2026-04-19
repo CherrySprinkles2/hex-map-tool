@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useDispatch } from 'react-redux';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
 import { useTranslation, Trans } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -7,6 +8,14 @@ import { Backdrop, SheetItem, SheetIcon } from '../shared/sheet';
 import { LanguageToggle } from '../shared/LanguageToggle';
 import { LanguageModal } from '../shared/LanguageModal';
 import { SettingsButton } from '../shared/SettingsButton';
+import {
+  SettingsIcon,
+  WarningIcon,
+  CloseIcon,
+  GlobeIcon,
+  HexIcon,
+  UploadIcon,
+} from '../../assets/icons/ui';
 import {
   getAllMaps,
   createMap,
@@ -17,6 +26,7 @@ import {
 } from '../../utils/mapsStorage';
 import { captureThumbnail } from '../../utils/captureThumbnail';
 import { skipNextSyncLoad } from '../../hooks/useLocalStorageSync';
+import { slugify } from '../../utils/slugify';
 import { loadMap } from '../../features/currentMap/currentMapSlice';
 import { importTiles } from '../../features/tiles/tilesSlice';
 import { importArmies } from '../../features/armies/armiesSlice';
@@ -25,7 +35,6 @@ import {
   importTerrainConfig,
   DEFAULT_TERRAIN_CONFIG,
 } from '../../features/terrainConfig/terrainConfigSlice';
-import { setScreen, navigateToHelp } from '../../features/ui/uiSlice';
 import { resetViewport } from '../../features/viewport/viewportSlice';
 import MapThumbnail from './MapThumbnail';
 import { exampleMaps } from '../../data/exampleMaps';
@@ -453,6 +462,27 @@ const ExampleBadge = styled.div`
   padding: 2px 6px;
 `;
 
+const WarningBanner = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid
+    ${({ theme }) => {
+      return theme.accent;
+    }};
+  background: ${({ theme }) => {
+    return `${theme.accent}18`;
+  }};
+  font-size: 0.82rem;
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
+  line-height: 1.5;
+`;
+
 const formatDate = (iso: string | undefined, t: TFunction): string => {
   if (!iso) return '';
   const d = new Date(iso);
@@ -467,7 +497,10 @@ const formatDate = (iso: string | undefined, t: TFunction): string => {
 
 const HomeScreen = (): React.ReactElement => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
+  const locationWarning = (location.state as { warning?: string } | null)?.warning ?? null;
   const [maps, setMaps] = useState<MapEntry[]>([]);
   const [thumbnailCache, setThumbnailCache] = useState<Record<string, string | undefined>>({});
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -514,15 +547,18 @@ const HomeScreen = (): React.ReactElement => {
     skipNextSyncLoad();
     dispatch(loadMap({ id: map.id, name: map.name }));
     dispatch(resetViewport());
-    dispatch(setScreen('editor'));
+    navigate(`/map/${slugify(map.name)}`);
   };
 
   const handleNew = () => {
     const map = createMap(t('home.untitledMap'));
     dispatch(importTiles({}));
+    dispatch(importArmies({}));
+    dispatch(importFactions([]));
+    dispatch(importTerrainConfig(DEFAULT_TERRAIN_CONFIG));
     dispatch(loadMap({ id: map.id, name: map.name }));
     dispatch(resetViewport());
-    dispatch(setScreen('editor'));
+    navigate(`/map/${slugify(map.name)}`);
   };
 
   const handleOpenExample = (example: (typeof exampleMaps)[number]) => {
@@ -532,12 +568,12 @@ const HomeScreen = (): React.ReactElement => {
     dispatch(importTerrainConfig(example.terrainConfig ?? DEFAULT_TERRAIN_CONFIG));
     dispatch(loadMap({ id: null, name: t('home.copyOf', { name: example.name }) }));
     dispatch(resetViewport());
-    dispatch(setScreen('editor'));
+    navigate('/map/example');
   };
 
   const handleHelpClick = () => {
     setSettingsOpen(false);
-    dispatch(navigateToHelp());
+    navigate('/help');
   };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
@@ -598,7 +634,10 @@ const HomeScreen = (): React.ReactElement => {
     <Shell>
       {/* Mobile-only top bar */}
       <MobileBar>
-        <MobileBarTitle>{t('home.title')}</MobileBarTitle>
+        <MobileBarTitle>
+          <HexIcon width="1em" height="1em" aria-hidden style={{ marginRight: '0.4em' }} />
+          {t('home.title')}
+        </MobileBarTitle>
         <SettingsButton
           $active={settingsOpen}
           onClick={() => {
@@ -608,7 +647,7 @@ const HomeScreen = (): React.ReactElement => {
           }}
           aria-label="Settings"
         >
-          ⚙
+          <SettingsIcon width="1.1em" height="1.1em" aria-hidden />
         </SettingsButton>
       </MobileBar>
 
@@ -616,7 +655,10 @@ const HomeScreen = (): React.ReactElement => {
         <Header>
           <HeaderTop>
             <HeaderLeft>
-              <Title>{t('home.title')}</Title>
+              <Title>
+                <HexIcon width="1em" height="1em" aria-hidden style={{ marginRight: '0.35em' }} />
+                {t('home.title')}
+              </Title>
               <Subtitle>{t('home.subtitle')}</Subtitle>
             </HeaderLeft>
             <HeaderRight>
@@ -626,7 +668,8 @@ const HomeScreen = (): React.ReactElement => {
                   return fileInput.current?.click();
                 }}
               >
-                ⬆ {t('toolbar.importJSON')}
+                <UploadIcon width="1em" height="1em" aria-hidden style={{ marginRight: '0.4em' }} />
+                {t('toolbar.importJSON')}
               </ImportBtn>
               <HomeHelpBtn onClick={handleHelpClick}>? {t('help.helpButtonLabel')}</HomeHelpBtn>
               <LanguageToggle
@@ -637,8 +680,26 @@ const HomeScreen = (): React.ReactElement => {
             </HeaderRight>
           </HeaderTop>
           <Description>{t('home.description')}</Description>
+          {locationWarning === 'mapNotFound' && (
+            <WarningBanner>
+              <span aria-hidden style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <WarningIcon width="1.2em" height="1.2em" />
+              </span>
+              <span>{t('home.warningMapNotFound')}</span>
+            </WarningBanner>
+          )}
+          {locationWarning === 'pageNotFound' && (
+            <WarningBanner>
+              <span aria-hidden style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <WarningIcon width="1.2em" height="1.2em" />
+              </span>
+              <span>{t('home.warningPageNotFound')}</span>
+            </WarningBanner>
+          )}
           <Notice>
-            <span>⚠️</span>
+            <span aria-hidden style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <WarningIcon width="1.2em" height="1.2em" />
+            </span>
             <span>
               <strong>{t('home.noticeStorageTitle')}</strong>{' '}
               <Trans
@@ -680,7 +741,7 @@ const HomeScreen = (): React.ReactElement => {
                       return handleDelete(e, map.id);
                     }}
                   >
-                    ✕
+                    <CloseIcon width="1em" height="1em" aria-hidden />
                   </DeleteBtn>
                   <CardMeta>
                     <CardName data-testid={`map-name-${map.id}`}>{map.name}</CardName>
@@ -726,7 +787,9 @@ const HomeScreen = (): React.ReactElement => {
             fileInput.current?.click();
           }}
         >
-          <SheetIcon>⬆</SheetIcon>
+          <SheetIcon>
+            <UploadIcon aria-hidden />
+          </SheetIcon>
           {t('toolbar.importJSON')}
         </SheetItem>
         <SheetItem onClick={handleHelpClick}>
@@ -739,7 +802,9 @@ const HomeScreen = (): React.ReactElement => {
             setLangModalOpen(true);
           }}
         >
-          <SheetIcon>🌐</SheetIcon>
+          <SheetIcon>
+            <GlobeIcon aria-hidden />
+          </SheetIcon>
           {t('toolbar.languageLabel')}
         </SheetItem>
       </Sheet>

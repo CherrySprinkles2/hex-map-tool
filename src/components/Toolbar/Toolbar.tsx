@@ -1,20 +1,28 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { Backdrop, SheetItem, SheetIcon } from '../shared/sheet';
 import { LanguageToggle } from '../shared/LanguageToggle';
 import { LanguageModal } from '../shared/LanguageModal';
 import { SettingsButton } from '../shared/SettingsButton';
+import {
+  KeyboardIcon,
+  SettingsIcon,
+  FlagIcon,
+  MapIcon,
+  GlobeIcon,
+  DownloadIcon,
+  QuestionIcon,
+} from '../../assets/icons/ui';
 import { importTiles } from '../../features/tiles/tilesSlice';
 import { importArmies } from '../../features/armies/armiesSlice';
 import {
   deselectTile,
   deselectArmy,
-  setScreen,
   toggleFactionsPanel,
   openShortcuts,
   closeShortcuts,
-  navigateToHelp,
 } from '../../features/ui/uiSlice';
 import { renameCurrentMap, unloadMap } from '../../features/currentMap/currentMapSlice';
 import { renameMap } from '../../utils/mapsStorage';
@@ -74,7 +82,7 @@ const BackBtn = styled.button`
   }
 `;
 
-const MapNameInput = styled.input`
+const MapNameInput = styled.input<{ $hasError?: boolean }>`
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -83,7 +91,10 @@ const MapNameInput = styled.input`
   }};
   background: transparent;
   border: none;
-  border-bottom: 1.5px solid transparent;
+  border-bottom: 1.5px solid
+    ${({ $hasError, theme }) => {
+      return $hasError ? theme.accent : 'transparent';
+    }};
   border-radius: 0;
   padding: 2px 4px;
   outline: none;
@@ -100,9 +111,31 @@ const MapNameInput = styled.input`
 
   &:hover,
   &:focus {
-    border-bottom-color: ${({ theme }) => {
-      return theme.textMuted;
+    border-bottom-color: ${({ $hasError, theme }) => {
+      return $hasError ? theme.accent : theme.textMuted;
     }};
+  }
+`;
+
+const NameError = styled.div`
+  font-size: 0.7rem;
+  color: ${({ theme }) => {
+    return theme.accent;
+  }};
+  position: absolute;
+  top: 100%;
+  left: 0;
+  white-space: nowrap;
+  padding: 2px 4px;
+`;
+
+const MapNameWrapper = styled.div`
+  position: relative;
+  min-width: 0;
+  flex: 1;
+
+  @media (min-width: 601px) {
+    margin-right: auto;
   }
 `;
 
@@ -270,6 +303,7 @@ const SheetHandle = styled.div`
 
 const Toolbar = (): React.ReactElement => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const tiles = useAppSelector((state) => {
     return state.tiles;
@@ -300,6 +334,7 @@ const Toolbar = (): React.ReactElement => {
   });
   const [localName, setLocalName] = useState('');
   const [editing, setEditing] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [langModalOpen, setLangModalOpen] = useState(false);
   const [terrainConfigOpen, setTerrainConfigOpen] = useState(false);
@@ -317,13 +352,21 @@ const Toolbar = (): React.ReactElement => {
   const handleNameFocus = () => {
     setLocalName(mapName);
     setEditing(true);
+    setNameError(null);
   };
 
   const handleNameBlur = () => {
     setEditing(false);
     const trimmed = localName.trim() || t('home.untitledMap');
+    if (mapId) {
+      const result = renameMap(mapId, trimmed);
+      if (!result.ok) {
+        setNameError(t('toolbar.nameTaken'));
+        return;
+      }
+      setNameError(null);
+    }
     dispatch(renameCurrentMap(trimmed));
-    if (mapId) renameMap(mapId, trimmed);
   };
 
   const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -339,7 +382,7 @@ const Toolbar = (): React.ReactElement => {
     dispatch(unloadMap());
     dispatch(importTiles({}));
     dispatch(importArmies({}));
-    dispatch(setScreen('home'));
+    navigate('/');
   };
 
   const handleExport = () => {
@@ -384,7 +427,7 @@ const Toolbar = (): React.ReactElement => {
 
   const handleHelpClick = () => {
     setSettingsOpen(false);
-    dispatch(navigateToHelp());
+    navigate('/help');
   };
 
   return (
@@ -393,22 +436,27 @@ const Toolbar = (): React.ReactElement => {
         <BackBtn onClick={handleBack} data-testid="back-btn">
           {t('toolbar.back')}
         </BackBtn>
-        <MapNameInput
-          data-testid="map-name-input"
-          value={displayName}
-          onChange={(e) => {
-            return setLocalName(e.target.value);
-          }}
-          onFocus={handleNameFocus}
-          onBlur={handleNameBlur}
-          onKeyDown={handleNameKeyDown}
-          maxLength={48}
-        />
+        <MapNameWrapper>
+          <MapNameInput
+            data-testid="map-name-input"
+            $hasError={nameError !== null}
+            value={displayName}
+            onChange={(e) => {
+              return setLocalName(e.target.value);
+            }}
+            onFocus={handleNameFocus}
+            onBlur={handleNameBlur}
+            onKeyDown={handleNameKeyDown}
+            maxLength={48}
+          />
+          {nameError && <NameError>{nameError}</NameError>}
+        </MapNameWrapper>
         <DesktopFactionsBtn
           data-testid="factions-btn"
           $active={factionsOpen}
           onClick={handleFactionsClick}
         >
+          <FlagIcon width="1em" height="1em" aria-hidden />
           {t('toolbar.factions')}
         </DesktopFactionsBtn>
         <ShortcutsBtn
@@ -416,10 +464,10 @@ const Toolbar = (): React.ReactElement => {
           onClick={handleShortcutsToggle}
           aria-label={t('toolbar.keyboardShortcuts')}
         >
-          ⌨
+          <KeyboardIcon width="1.1em" height="1.1em" aria-hidden />
         </ShortcutsBtn>
         <HelpBtn onClick={handleHelpClick} aria-label={t('help.helpButtonLabel')}>
-          ?
+          <QuestionIcon width="1.1em" height="1.1em" aria-hidden />
         </HelpBtn>
         <LanguageToggle
           onAfterSelect={() => {
@@ -435,7 +483,7 @@ const Toolbar = (): React.ReactElement => {
           }}
           aria-label="Settings"
         >
-          ⚙
+          <SettingsIcon width="1.1em" height="1.1em" aria-hidden />
         </SettingsButton>
       </Bar>
 
@@ -454,15 +502,21 @@ const Toolbar = (): React.ReactElement => {
           $desktopHide
           onClick={handleFactionsClick}
         >
-          <SheetIcon>⚑</SheetIcon>
+          <SheetIcon>
+            <FlagIcon aria-hidden />
+          </SheetIcon>
           {t('toolbar.factions')}
         </SheetItem>
         <SheetItem $desktopHide onClick={handleShortcutsMobile}>
-          <SheetIcon>⌨</SheetIcon>
+          <SheetIcon>
+            <KeyboardIcon aria-hidden />
+          </SheetIcon>
           {t('toolbar.keyboardShortcuts')}
         </SheetItem>
         <SheetItem $desktopHide onClick={handleHelpClick}>
-          <SheetIcon>?</SheetIcon>
+          <SheetIcon>
+            <QuestionIcon aria-hidden />
+          </SheetIcon>
           {t('help.helpButtonLabel')}
         </SheetItem>
         <SheetItem
@@ -471,11 +525,15 @@ const Toolbar = (): React.ReactElement => {
             setTerrainConfigOpen(true);
           }}
         >
-          <SheetIcon>🗺</SheetIcon>
+          <SheetIcon>
+            <MapIcon aria-hidden />
+          </SheetIcon>
           {t('terrainConfig.title')}
         </SheetItem>
         <SheetItem data-testid="export-json-btn" onClick={handleExport}>
-          <SheetIcon>⬇</SheetIcon>
+          <SheetIcon>
+            <DownloadIcon aria-hidden />
+          </SheetIcon>
           {t('toolbar.exportJSON')}
         </SheetItem>
         <SheetItem
@@ -485,7 +543,9 @@ const Toolbar = (): React.ReactElement => {
             setLangModalOpen(true);
           }}
         >
-          <SheetIcon>🌐</SheetIcon>
+          <SheetIcon>
+            <GlobeIcon aria-hidden />
+          </SheetIcon>
           {t('toolbar.languageLabel')}
         </SheetItem>
       </Sheet>

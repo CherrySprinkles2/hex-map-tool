@@ -13,13 +13,11 @@ test.describe('Army Management', () => {
     await home.createMap();
     const editor = new EditorPage(appPage);
 
-    // Create a tile
-    const ghost = appPage.locator('[data-testid^="ghost-tile-"]').first();
-    const testId = await ghost.getAttribute('data-testid');
-    const [, coords] = testId!.split('ghost-tile-');
-    [tileQ, tileR] = coords.split(',').map(Number);
+    const ghost = await editor.firstGhost();
+    expect(ghost).not.toBeNull();
+    tileQ = ghost!.q;
+    tileR = ghost!.r;
     await editor.clickGhost(tileQ, tileR);
-
     // The tile is now selected — panel is open
   });
 
@@ -28,7 +26,6 @@ test.describe('Army Management', () => {
     await tilePanel.waitForPanel();
     await tilePanel.addArmy();
     await tilePanel.selectFirstArmy();
-    const armyPanel = new ArmyPanelPage(appPage);
     await expect(appPage.getByTestId('move-army-btn')).toBeVisible();
   });
 
@@ -62,10 +59,8 @@ test.describe('Army Management', () => {
     const armyPanel = new ArmyPanelPage(appPage);
     await armyPanel.waitForPanel();
     await armyPanel.startMove();
-    // Move button label changes to cancel
     await expect(appPage.getByTestId('move-army-btn')).toBeVisible();
     await armyPanel.cancelMove();
-    // Still visible but not in move mode
     await expect(appPage.getByTestId('move-army-btn')).toBeVisible();
   });
 
@@ -74,12 +69,13 @@ test.describe('Army Management', () => {
     const tilePanel = new TileEditPanelPage(appPage);
     await tilePanel.waitForPanel();
 
-    // Create a destination tile before entering move mode
-    const ghost = appPage.locator('[data-testid^="ghost-tile-"]').first();
-    const testId = await ghost.getAttribute('data-testid');
-    const [, coords] = testId!.split('ghost-tile-');
-    const [destQ, destR] = coords.split(',').map(Number);
+    // Create a destination tile before entering move mode.
+    // Placing the first tile consumed the default ghost — pick a new neighbour.
+    const destGhost = await editor.firstGhost();
+    expect(destGhost).not.toBeNull();
+    const { q: destQ, r: destR } = destGhost!;
     await editor.clickGhost(destQ, destR);
+
     // Re-select the original tile so TileEditPanel is on the army's tile
     await editor.clickTile(tileQ, tileR);
     await tilePanel.waitForPanel();
@@ -90,16 +86,16 @@ test.describe('Army Management', () => {
     await armyPanel.waitForPanel();
     await armyPanel.startMove();
 
-    // Move to the destination tile (already a real tile — no ghost click needed)
+    // Move to the destination tile
     await editor.clickTile(destQ, destR);
 
     // Army panel stays open (selectedArmyId not cleared by move)
     await expect(appPage.getByTestId('delete-army-btn')).toBeVisible();
-    // Destination tile still exists
-    await expect(appPage.getByTestId(`hex-tile-${destQ},${destR}`)).toBeVisible();
+    expect(await editor.tileExists(destQ, destR)).toBe(true);
   });
 
   test('escape cancels move mode', async ({ appPage }) => {
+    const editor = new EditorPage(appPage);
     const tilePanel = new TileEditPanelPage(appPage);
     await tilePanel.waitForPanel();
     await tilePanel.addArmy();
@@ -108,8 +104,7 @@ test.describe('Army Management', () => {
     await armyPanel.waitForPanel();
     await armyPanel.startMove();
     await appPage.keyboard.press('Escape');
-    // After escape, move mode ends — panel may close or stay, but army is not moved
-    // Army token should still exist on original tile
-    await expect(appPage.locator('[data-testid^="hex-tile-"]').first()).toBeVisible();
+    // After escape, move mode ends — army should still exist on original tile
+    expect(await editor.tileExists(tileQ, tileR)).toBe(true);
   });
 });

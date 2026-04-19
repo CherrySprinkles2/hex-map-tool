@@ -1,8 +1,6 @@
 import type React from 'react';
-import type { TownIconProps } from '../assets/icons/town';
 
 type SvgIcon = React.ComponentType<React.SVGProps<SVGSVGElement>>;
-type TownIcon = React.ComponentType<TownIconProps>;
 
 export interface IconsMap {
   terrain: Record<string, SvgIcon>;
@@ -16,9 +14,9 @@ export interface IconsMap {
     naval: SvgIcon;
   };
   town: {
-    village: TownIcon;
-    town: TownIcon;
-    city: TownIcon;
+    village: SvgIcon;
+    town: SvgIcon;
+    city: SvgIcon;
   };
 }
 

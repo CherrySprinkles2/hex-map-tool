@@ -1,98 +1,98 @@
 import React, { useRef, useCallback, useMemo, useLayoutEffect, useEffect } from 'react';
 import styled from 'styled-components';
 import { shallowEqual } from 'react-redux';
+import { HexRenderer } from './canvas/HexRenderer';
+import { hitTest, clientToWorld } from './canvas/hitTest';
 import { setViewport, MIN_SCALE, MAX_SCALE } from '../../features/viewport/viewportSlice';
 import {
+  selectTile,
   deselectTile,
+  selectArmy,
   deselectArmy,
   setPlacingArmy,
   stopMovingArmy,
   exitTerrainPaint,
 } from '../../features/ui/uiSlice';
-import { addTile, batchUpdateTiles, setTileFaction } from '../../features/tiles/tilesSlice';
 import {
-  getNeighbors,
-  toKey,
-  pixelToAxial,
-  hexLine,
-  hexPointsString,
-  axialToPixel,
-  HEX_SIZE,
-} from '../../utils/hexUtils';
+  addTile,
+  batchUpdateTiles,
+  deleteTile,
+  setTileFaction,
+} from '../../features/tiles/tilesSlice';
+import { addArmy, deleteArmy, moveArmy } from '../../features/armies/armiesSlice';
+import { getNeighbors, toKey, pixelToAxial, hexLine, axialToPixel } from '../../utils/hexUtils';
+import { inferTerrain } from '../../utils/inferTerrain';
 import { theme } from '../../styles/theme';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../app/hooks';
 import useViewportCulling from '../../hooks/useViewportCulling';
-import HexTile from './HexTile';
-import GhostTile from './GhostTile';
-import WaterOverlay from './WaterOverlay';
-import ArmyToken from './ArmyToken';
-import TerrainPatterns from './TerrainPatterns';
-import { PaintContext } from './PaintContext';
 import type { TileFlag, TerrainType } from '../../types/domain';
 import type { HexCoord } from '../../utils/hexUtils';
-import type { Army } from '../../types/domain';
 import type { ViewportState } from '../../types/state';
 
-const SvgCanvas = styled.svg`
+const GridContainer = styled.div`
+  position: relative;
   flex: 1;
+  display: block;
+  min-height: 0;
+  min-width: 0;
+`;
+
+const CanvasInteractionLayer = styled.div`
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+`;
+
+const HexCanvasLayer = styled.canvas`
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
-  touch-action: none;
+  pointer-events: none;
 `;
 
 const HexGrid = (): React.ReactElement => {
   const dispatch = useAppDispatch();
   const store = useAppStore();
 
-  // Subscribe only to the set of tile keys — HexTile components subscribe to
-  // their own data independently, so HexGrid only needs to re-render when tiles
-  // are added or removed.
   const tileKeys = useAppSelector((state) => {
     return Object.keys(state.tiles);
   }, shallowEqual);
 
-  const armies = useAppSelector((state) => {
-    return state.armies;
-  });
   const placingArmy = useAppSelector((state) => {
     return state.ui.placingArmy;
   });
   const mapMode = useAppSelector((state) => {
     return state.ui.mapMode;
   });
-  const customTerrains = useAppSelector((state) => {
-    return state.terrainConfig.custom;
-  });
-
-  const selectedTile = useAppSelector((state) => {
-    return state.ui.selectedTile;
-  });
-
-  const armiesByTile = useMemo(() => {
-    const grouped: Record<string, Army[]> = {};
-    Object.values(armies).forEach((army) => {
-      const key = toKey(army.q, army.r);
-      if (!grouped[key]) grouped[key] = [];
-      grouped[key].push(army);
-    });
-    return grouped;
-  }, [armies]);
 
   const viewportRef = useRef<ViewportState>({ x: 0, y: 0, scale: 1 });
-  const groupRef = useRef<SVGGElement | null>(null);
-  const svgRef = useRef<SVGSVGElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const interactionLayerRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const rendererRef = useRef<HexRenderer | null>(null);
 
-  const visibleKeys = useViewportCulling(viewportRef, svgRef, tileKeys);
+  const visibleKeys = useViewportCulling(viewportRef, containerRef, tileKeys);
+
+  useLayoutEffect(() => {
+    if (!canvasRef.current || !overlayCanvasRef.current) return;
+    const renderer = new HexRenderer({ store, viewportRef });
+    renderer.attach(canvasRef.current, overlayCanvasRef.current);
+    rendererRef.current = renderer;
+    return () => {
+      renderer.detach();
+      rendererRef.current = null;
+    };
+  }, [store]);
+
+  useEffect(() => {
+    rendererRef.current?.setVisibleKeys(visibleKeys);
+  }, [visibleKeys]);
 
   const applyTransform = useCallback(() => {
-    if (!groupRef.current || !svgRef.current) return;
-    const { x, y, scale } = viewportRef.current;
-    const { width, height } = svgRef.current.getBoundingClientRect();
-    groupRef.current.setAttribute(
-      'transform',
-      `translate(${width / 2 + x}, ${height / 2 + y}) scale(${scale})`
-    );
+    rendererRef.current?.onViewportChanged();
   }, []);
 
   useLayoutEffect(() => {
@@ -104,12 +104,13 @@ const HexGrid = (): React.ReactElement => {
       applyTransform();
     });
 
+    const measureEl = containerRef.current;
     let ro: ResizeObserver | undefined;
-    if (svgRef.current && typeof ResizeObserver !== 'undefined') {
+    if (measureEl && typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
         return applyTransform();
       });
-      ro.observe(svgRef.current);
+      ro.observe(measureEl);
     }
 
     return () => {
@@ -133,17 +134,17 @@ const HexGrid = (): React.ReactElement => {
   // drags don't leave gaps).
   const applyBrushAtScreenPos = useCallback(
     (clientX: number, clientY: number) => {
-      if (!svgRef.current) return;
+      const measureEl = containerRef.current;
+      if (!measureEl) return;
       const ui = store.getState().ui;
       if (ui.mapMode !== 'terrain-paint' && ui.mapMode !== 'faction') return;
 
-      const rect = svgRef.current.getBoundingClientRect();
+      const rect = measureEl.getBoundingClientRect();
       const { x, y, scale } = viewportRef.current;
       const gridX = (clientX - rect.left - (rect.width / 2 + x)) / scale;
       const gridY = (clientY - rect.top - (rect.height / 2 + y)) / scale;
       const current = pixelToAxial(gridX, gridY);
 
-      // Interpolate from last painted position so no tiles are skipped
       const prev = lastPaintedPosRef.current;
       const coords = prev ? hexLine(prev.q, prev.r, current.q, current.r) : [current];
 
@@ -207,25 +208,25 @@ const HexGrid = (): React.ReactElement => {
   );
 
   const handleWheel = useCallback(
-    (e: React.WheelEvent<SVGSVGElement>) => {
+    (e: React.WheelEvent<HTMLDivElement>) => {
       e.preventDefault();
       const rect = e.currentTarget.getBoundingClientRect();
       const focalX = e.clientX - rect.left;
       const focalY = e.clientY - rect.top;
-      const svgWidth = rect.width;
-      const svgHeight = rect.height;
+      const width = rect.width;
+      const height = rect.height;
 
       const { x, y, scale } = viewportRef.current;
       const factor = e.deltaY < 0 ? 1.1 : 0.9;
       const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * factor));
-      const tx = svgWidth / 2 + x;
-      const ty = svgHeight / 2 + y;
+      const tx = width / 2 + x;
+      const ty = height / 2 + y;
       const wx = (focalX - tx) / scale;
       const wy = (focalY - ty) / scale;
 
       viewportRef.current = {
-        x: focalX - svgWidth / 2 - wx * newScale,
-        y: focalY - svgHeight / 2 - wy * newScale,
+        x: focalX - width / 2 - wx * newScale,
+        y: focalY - height / 2 - wy * newScale,
         scale: newScale,
       };
       applyTransform();
@@ -234,14 +235,14 @@ const HexGrid = (): React.ReactElement => {
     [applyTransform, commitViewport]
   );
 
-  const handleMouseDown = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
     dragging.current = true;
     lastPos.current = { x: e.clientX, y: e.clientY };
   }, []);
 
   const handleMouseMove = useCallback(
-    (e: React.MouseEvent<SVGSVGElement>) => {
+    (e: React.MouseEvent<HTMLDivElement>) => {
       if (isPaintingRef.current) {
         applyBrushAtScreenPos(e.clientX, e.clientY);
         return;
@@ -264,7 +265,7 @@ const HexGrid = (): React.ReactElement => {
     }
   }, [commitViewport]);
 
-  const handleSvgClick = useCallback(() => {
+  const handleBackgroundClear = useCallback(() => {
     const ui = store.getState().ui;
     if (ui.mapMode === 'terrain-paint') return;
     dispatch(deselectTile());
@@ -273,7 +274,7 @@ const HexGrid = (): React.ReactElement => {
     if (ui.movingArmyId) dispatch(stopMovingArmy());
   }, [dispatch, store]);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent<SVGSVGElement>) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
     if (e.touches.length === 1) {
       dragging.current = true;
       lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -287,7 +288,7 @@ const HexGrid = (): React.ReactElement => {
   }, []);
 
   const handleTouchMove = useCallback(
-    (e: React.TouchEvent<SVGSVGElement>) => {
+    (e: React.TouchEvent<HTMLDivElement>) => {
       e.preventDefault();
       if (e.touches.length === 1 && dragging.current) {
         viewportRef.current.x += e.touches[0].clientX - lastPos.current.x;
@@ -303,20 +304,20 @@ const HexGrid = (): React.ReactElement => {
         const rect = e.currentTarget.getBoundingClientRect();
         const focalX = midX - rect.left;
         const focalY = midY - rect.top;
-        const svgWidth = rect.width;
-        const svgHeight = rect.height;
+        const width = rect.width;
+        const height = rect.height;
         const ratio = dist / lastPinchDist.current;
 
         const { x, y, scale } = viewportRef.current;
         const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * ratio));
-        const tx = svgWidth / 2 + x;
-        const ty = svgHeight / 2 + y;
+        const tx = width / 2 + x;
+        const ty = height / 2 + y;
         const wx = (focalX - tx) / scale;
         const wy = (focalY - ty) / scale;
 
         viewportRef.current = {
-          x: focalX - svgWidth / 2 - wx * newScale,
-          y: focalY - svgHeight / 2 - wy * newScale,
+          x: focalX - width / 2 - wx * newScale,
+          y: focalY - height / 2 - wy * newScale,
           scale: newScale,
         };
         applyTransform();
@@ -327,7 +328,7 @@ const HexGrid = (): React.ReactElement => {
   );
 
   const handleTouchEnd = useCallback(
-    (e: React.TouchEvent<SVGSVGElement>) => {
+    (e: React.TouchEvent<HTMLDivElement>) => {
       if (e.touches.length === 0) {
         dragging.current = false;
         lastPinchDist.current = null;
@@ -362,7 +363,6 @@ const HexGrid = (): React.ReactElement => {
       return set;
     }
     const tileKeySet = new Set(tileKeys);
-    // Only compute ghosts for visible tiles to avoid off-screen ghost accumulation.
     visibleKeys.forEach((key) => {
       if (!tileKeySet.has(key)) return;
       const [qStr, rStr] = key.split(',');
@@ -376,10 +376,231 @@ const HexGrid = (): React.ReactElement => {
     return set;
   }, [tileKeys, visibleKeys]);
 
+  // Stable ref so canvas event handlers don't have to be recreated on every ghost change.
+  const ghostKeysRef = useRef(ghostKeys);
+  ghostKeysRef.current = ghostKeys;
+
+  useEffect(() => {
+    rendererRef.current?.setGhostKeys(ghostKeys);
+  }, [ghostKeys]);
+
+  // Test bridge: exposes the Redux store and synthetic-event helpers on window so
+  // Playwright can interact with tiles/ghosts that have no DOM representation.
+  // Tree-shaken out of production builds.
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    const tileClient = (q: number, r: number): { x: number; y: number } | null => {
+      const el = containerRef.current;
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      const { x: vx, y: vy, scale } = viewportRef.current;
+      const { x: px, y: py } = axialToPixel(q, r);
+      return {
+        x: rect.left + rect.width / 2 + vx + px * scale,
+        y: rect.top + rect.height / 2 + vy + py * scale,
+      };
+    };
+    const fire = (type: string, q: number, r: number, init: MouseEventInit = {}): void => {
+      const el = interactionLayerRef.current;
+      const pt = tileClient(q, r);
+      if (!el || !pt) return;
+      el.dispatchEvent(
+        new MouseEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          clientX: pt.x,
+          clientY: pt.y,
+          button: init.button ?? 0,
+          ...init,
+        })
+      );
+    };
+    const firePointer = (type: string, q: number, r: number): void => {
+      const el = interactionLayerRef.current;
+      const pt = tileClient(q, r);
+      if (!el || !pt) return;
+      el.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          clientX: pt.x,
+          clientY: pt.y,
+          button: 0,
+          pointerType: 'mouse',
+        })
+      );
+    };
+    (window as unknown as { __hexMapTest?: unknown }).__hexMapTest = {
+      store,
+      tileClient,
+      clickTile: (q: number, r: number): void => {
+        // Paint-mode clicks rely on pointerdown (which opens the paint stroke) —
+        // fire pointerdown/up around the click so both paint and non-paint handlers fire.
+        firePointer('pointerdown', q, r);
+        firePointer('pointerup', q, r);
+        fire('click', q, r);
+      },
+      rightClickTile: (q: number, r: number): void => {
+        fire('contextmenu', q, r, { button: 2 });
+      },
+      firstGhostKey: (): string | null => {
+        const iter = ghostKeysRef.current.values().next();
+        return iter.done ? null : iter.value;
+      },
+      getTileKeys: (): string[] => {
+        return Object.keys(store.getState().tiles);
+      },
+      getGhostKeys: (): string[] => {
+        return Array.from(ghostKeysRef.current);
+      },
+      tileExists: (q: number, r: number): boolean => {
+        return !!store.getState().tiles[toKey(q, r)];
+      },
+    };
+    return () => {
+      delete (window as unknown as { __hexMapTest?: unknown }).__hexMapTest;
+    };
+  }, [store]);
+
+  const getHit = useCallback(
+    (clientX: number, clientY: number) => {
+      const el = containerRef.current;
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      const { worldX, worldY } = clientToWorld(clientX, clientY, rect, viewportRef.current);
+      return hitTest({
+        state: store.getState(),
+        ghostKeys: ghostKeysRef.current,
+        worldX,
+        worldY,
+      });
+    },
+    [store]
+  );
+
+  const handleCanvasPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.button !== 0) return;
+      const ui = store.getState().ui;
+      if (ui.mapMode !== 'terrain-paint' && ui.mapMode !== 'faction') return;
+      isPaintingRef.current = true;
+      applyBrushAtScreenPos(e.clientX, e.clientY);
+    },
+    [store, applyBrushAtScreenPos]
+  );
+
+  const handleCanvasPointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const hit = getHit(e.clientX, e.clientY);
+      if (!hit) return;
+      if (hit.kind === 'tile' || hit.kind === 'ghost') {
+        rendererRef.current?.setHoveredKey(hit.key);
+      } else {
+        rendererRef.current?.setHoveredKey(null);
+      }
+    },
+    [getHit]
+  );
+
+  const handleCanvasPointerLeave = useCallback(() => {
+    rendererRef.current?.setHoveredKey(null);
+  }, []);
+
+  const handleCanvasClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const state = store.getState();
+      const ui = state.ui;
+      if (ui.mapMode === 'terrain-paint') return;
+
+      const hit = getHit(e.clientX, e.clientY);
+      if (!hit) return;
+
+      if (hit.kind === 'army') {
+        if (ui.selectedArmyId === hit.army.id) dispatch(deselectArmy());
+        else dispatch(selectArmy(hit.army.id));
+        return;
+      }
+
+      if (hit.kind === 'tile') {
+        if (ui.mapMode === 'faction') {
+          dispatch(setTileFaction({ q: hit.q, r: hit.r, factionId: ui.activeFactionId }));
+          return;
+        }
+        if (ui.movingArmyId) {
+          dispatch(moveArmy({ id: ui.movingArmyId, q: hit.q, r: hit.r }));
+          dispatch(stopMovingArmy());
+          return;
+        }
+        if (ui.placingArmy) {
+          dispatch(addArmy({ q: hit.q, r: hit.r }));
+          dispatch(setPlacingArmy(false));
+          return;
+        }
+        if (ui.selectedTile === hit.key) {
+          dispatch(deselectTile());
+        } else {
+          const hasTown = state.tiles[hit.key]?.hasTown ?? false;
+          dispatch(selectTile({ key: hit.key, hasTown }));
+        }
+        return;
+      }
+
+      if (hit.kind === 'ghost') {
+        const terrain = inferTerrain(hit.q, hit.r, state.tiles);
+        if (ui.movingArmyId) {
+          dispatch(addTile({ q: hit.q, r: hit.r, terrain }));
+          dispatch(moveArmy({ id: ui.movingArmyId, q: hit.q, r: hit.r }));
+          dispatch(stopMovingArmy());
+          return;
+        }
+        if (ui.placingArmy) {
+          dispatch(addTile({ q: hit.q, r: hit.r, terrain }));
+          dispatch(addArmy({ q: hit.q, r: hit.r }));
+          dispatch(setPlacingArmy(false));
+          return;
+        }
+        if (ui.mapMode === 'faction') {
+          dispatch(addTile({ q: hit.q, r: hit.r, terrain }));
+          dispatch(setTileFaction({ q: hit.q, r: hit.r, factionId: ui.activeFactionId }));
+          return;
+        }
+        dispatch(addTile({ q: hit.q, r: hit.r, terrain }));
+        dispatch(selectTile({ key: toKey(hit.q, hit.r), hasTown: false }));
+        return;
+      }
+
+      handleBackgroundClear();
+    },
+    [store, dispatch, getHit, handleBackgroundClear]
+  );
+
+  const handleCanvasContextMenu = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      const hit = getHit(e.clientX, e.clientY);
+      if (!hit) return;
+      const ui = store.getState().ui;
+
+      if (hit.kind === 'army') {
+        dispatch(deleteArmy(hit.army.id));
+        dispatch(deselectArmy());
+        return;
+      }
+
+      if (hit.kind === 'tile') {
+        if (ui.selectedTile === hit.key) dispatch(deselectTile());
+        dispatch(deleteTile({ q: hit.q, r: hit.r }));
+      }
+    },
+    [getHit, dispatch, store]
+  );
+
   return (
-    <PaintContext.Provider value={isPaintingRef}>
-      <SvgCanvas
-        ref={svgRef}
+    <GridContainer ref={containerRef}>
+      <HexCanvasLayer ref={canvasRef} />
+      <HexCanvasLayer ref={overlayCanvasRef} />
+      <CanvasInteractionLayer
+        ref={interactionLayerRef}
         style={{
           cursor:
             placingArmy || mapMode === 'terrain-paint' || mapMode === 'faction'
@@ -391,66 +612,16 @@ const HexGrid = (): React.ReactElement => {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        onClick={handleSvgClick}
+        onClick={handleCanvasClick}
+        onContextMenu={handleCanvasContextMenu}
+        onPointerDown={handleCanvasPointerDown}
+        onPointerMove={handleCanvasPointerMove}
+        onPointerLeave={handleCanvasPointerLeave}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-      >
-        <TerrainPatterns customTerrains={customTerrains} />
-
-        <g ref={groupRef} style={{ willChange: 'transform' }}>
-          {[...ghostKeys].map((key) => {
-            const [q, r] = key.split(',').map(Number);
-            return <GhostTile key={`ghost-${key}`} q={q} r={r} />;
-          })}
-
-          {tileKeys
-            .filter((key) => {
-              return visibleKeys.has(key);
-            })
-            .map((key) => {
-              const [qStr, rStr] = key.split(',');
-              return <HexTile key={key} q={Number(qStr)} r={Number(rStr)} />;
-            })}
-
-          <WaterOverlay visibleKeys={visibleKeys} armiesByTile={armiesByTile} />
-
-          {(() => {
-            if (!selectedTile) return null;
-            const [sqStr, srStr] = selectedTile.split(',');
-            const sq = Number(sqStr);
-            const sr = Number(srStr);
-            const { x: sx, y: sy } = axialToPixel(sq, sr);
-            const selPts = hexPointsString(sx, sy, HEX_SIZE - 5);
-            return (
-              <polygon
-                points={selPts}
-                fill="none"
-                stroke={theme.selectedStroke}
-                strokeWidth={2.5}
-                strokeDasharray="6 3"
-                strokeLinecap="round"
-                style={{ animation: 'marchingAnts 1s linear infinite', pointerEvents: 'none' }}
-              />
-            );
-          })()}
-
-          {Object.entries(armiesByTile)
-            .filter(([tileKey]) => {
-              return visibleKeys.has(tileKey);
-            })
-            .map(([tileKey, tileArmies]) => {
-              const hasTown = store.getState().tiles[tileKey]?.hasTown;
-              if (hasTown) return null;
-              return tileArmies.map((army, idx) => {
-                return (
-                  <ArmyToken key={army.id} army={army} tileIndex={idx} total={tileArmies.length} />
-                );
-              });
-            })}
-        </g>
-      </SvgCanvas>
-    </PaintContext.Provider>
+      />
+    </GridContainer>
   );
 };
 

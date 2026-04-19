@@ -81,7 +81,7 @@ npm run test:e2e       # run Playwright integration tests (headless)
 npm run test:e2e:ui    # run Playwright tests in interactive UI mode
 ```
 
-Validate source changes with `npm run build`. Playwright runs against a live development server started automatically; see `.github/copilot-instructions.md` for the test architecture.
+Validate source changes with `npm run build`. Playwright runs against a live development server started automatically; see `CLAUDE.md` for the test architecture.
 
 ---
 
@@ -89,8 +89,8 @@ Validate source changes with `npm run build`. Playwright runs against a live dev
 
 - **React 19** (Create React App / react-scripts 5)
 - **Redux Toolkit** — tiles, armies, factions, viewport, UI, and currentMap slices
-- **styled-components v6** — theming and component styles
-- **SVG** — all map rendering (patterns, overlays, tokens)
+- **styled-components v6** — chrome, panels, and toolbar styling
+- **Canvas 2D** — all map rendering. Two stacked `<canvas>` elements (main + overlay) and one transparent `<div>` for pointer events. The renderer subscribes to the Redux store directly and schedules repaints via `requestAnimationFrame`; React never re-renders for pan, zoom, or map data changes.
 - **react-i18next + i18next** — internationalisation (EN + FI); `i18next-browser-languagedetector` auto-detects from browser and caches to localStorage
 - **Playwright** — end-to-end integration tests (`e2e/`)
 - **Prettier** — `singleQuote`, `trailingComma: es5`, `printWidth: 100`; enforced via a husky pre-commit hook
@@ -113,9 +113,10 @@ src/
   assets/
     icons/
       help/               SVG icon components for the help screen cards (one per section)
-      features/           River, road, port icon components
-      terrain/            Terrain type icon components
-      town/               Village, town, city icon components
+      features/           River, road, port icon components (UI previews only)
+      terrain/            Terrain type icon components (UI previews only)
+      town/               Village, town, city icon components (UI previews only)
+      army/               Land, naval army icon components (UI previews only)
   components/
     ArmyPanel/            Panel for editing a selected army (name, composition, faction, move/delete)
     Editor/               Top-level editor layout — composes Toolbar, HexGrid, all side panels
@@ -123,8 +124,10 @@ src/
     FactionPaintPanel/    Right-side panel for painting faction territories
     FactionsPanel/        Faction management (create, edit, delete factions)
     HelpScreen/           Standalone help page — card grid landing and per-section views
-    HexGrid/              SVG canvas — hex math, tiles, ghost tiles, water overlay,
-                          terrain patterns, water caps, army tokens
+    HexGrid/              Canvas rendering host (HexGrid.tsx) + draw modules under canvas/ —
+                          HexRenderer, drawTiles, drawGhosts, drawRivers, drawRoads,
+                          drawCauseways, drawPorts, drawTowns, drawLabels, drawArmies,
+                          drawOverlay, hitTest, patternCache
     HomeScreen/           Home screen (map cards, example maps, import)
     KeyboardShortcutsPanel/ Slide-in reference panel listing all keyboard shortcuts
     MapModeToggle/        Fixed toggle button (bottom-right) to switch Terrain / Faction mode
@@ -167,13 +170,15 @@ src/
     state.ts              TilesState, ArmiesState, FactionsState, MapMode, Screen, UiState, …
     theme.ts              AppTheme interface
   utils/
+    bezierIntersect.ts    Cubic-bezier intersection math used by pathGenerator
+    captureThumbnail.ts   Renders a simplified map to an offscreen canvas for HomeScreen previews
     generateId.ts         Creates unique IDs with a given prefix (e.g. army_12345)
     hexUtils.ts           Axial coordinate math, toKey/fromKey, NEIGHBOR_DIRS, DEEP_WATER
     historyManager.ts     Snapshot-based undo/redo (past/future stacks)
+    inferTerrain.ts       Picks a terrain for a new tile from its existing neighbours
     mapsStorage.ts        localStorage CRUD for maps, tiles, armies, factions + legacy migration
-    overlayHelpers.tsx    SVG rendering helpers: rivers, roads, causeways, town icons, ports
     pathGenerator.ts      Programmatic bezier path generator for rivers and roads
-    routeLookup.ts        Legacy bitmask/canonical-path system (retained for reference; causeways migrated)
+    patternColor.ts       Derives a contrasting mark colour from a terrain base colour
 ```
 
 ---
@@ -220,24 +225,38 @@ src/
 
 ## Rendering pipeline
 
-Inside HexGrid's SVG `<g transform>` group, components render in this order:
+`HexGrid.tsx` mounts two `<canvas>` layers (main + overlay) plus a transparent interaction `<div>` on top. On mount, it constructs a `HexRenderer` (`src/components/HexGrid/canvas/HexRenderer.ts`) and attaches both canvases. The renderer subscribes to the Redux store directly and schedules repaints via `requestAnimationFrame` — React never re-renders for pan, zoom, or map-data changes.
 
-1. `GhostTile` components (bottom layer)
-2. `HexTile` components
-3. `WaterOverlay` — water edge merge → rivers → roads → causeways → towns/garrisons → water caps → ports
-4. `ArmyToken` components — suppressed on town tiles (garrison visual is used instead)
+**Main canvas (repainted only on dirty flags):**
 
-`<TerrainPatterns />` must be rendered **outside** the `<g transform>` group — placing it inside causes patterns to scale with pan/zoom and break.
+1. `drawTiles` — base fill + cached terrain pattern
+2. `drawGhosts` — dashed placement guides for neighbour tiles
+3. `drawRivers` — bezier curves (returns a map of curves for roads to dodge)
+4. `drawRoads` — routed around river curves at 90°
+5. `drawCauseways` — embanked roads through deep water with notch accents
+6. `drawTowns` — ground circle, clipped SVG icon (village/town/city from `src/assets/town/`), fortification ring + wall marks, kite shield when garrisoned
+7. `drawPorts` — plank + pilings on every deep-water edge of a town tile
+8. `drawLabels` — haloed town and single-garrisoned-army names
+9. `drawArmies` — faction-tinted tokens with land / naval icon from `src/assets/army/` (suppressed on town tiles)
+
+**Overlay canvas (repainted every rAF while anything is selected or moving):**
+
+- `drawOverlay` — marching-ants selection ring on the selected tile, marching-ants ring on the selected / moving army
+
+Hit-testing for pointer events is mathematical (`canvas/hitTest.ts` — `pixelToAxial` for tiles/ghosts, circle-distance for armies). No DOM hit-testing.
 
 ---
 
 ## Performance
 
-- `React.memo` on `HexTile`, `GhostTile`, `WaterOverlay`, `WaterCap`, and `ArmyToken`.
-- **Ref-based viewport**: pan and zoom write directly to the DOM via `groupRef.current.setAttribute('transform', …)` — zero React re-renders per frame. Redux viewport state is only updated at drag-end and after each zoom tick, for persistence.
-- Tile-specific `isSelected` selectors (`state.ui.selectedTile === key`) mean only the affected tile re-renders on selection change.
-- `createSelector` is used for any selector that returns a new array or object, to prevent spurious downstream re-renders.
-- Viewport hex culling: tiles outside the visible viewport bounds are skipped during render.
+- **Store subscription in the renderer, not React**: `HexRenderer` diffs slice references (`state.tiles`, `state.armies`, etc.) each store tick and only repaints when something relevant actually changes.
+- **Dirty-flag repaint**: the main canvas repaints via a coalesced rAF, and only when the renderer's last-seen references disagree with the current store.
+- **Pan / zoom never cross React**: viewport changes write to a ref, the renderer recomputes the DPR-aware transform, and a repaint is scheduled. Redux viewport is only written at drag-end / after each zoom tick for persistence.
+- **DPR-aware transform**: `ctx.setTransform(dpr*scale, 0, 0, dpr*scale, dpr*(w/2+x), dpr*(h/2+y))` — crisp on HiDPI displays, no manual pixel scaling in draw code.
+- **Pattern cache**: built-in terrain SVGs under `src/assets/patterns/` are rasterised once into an offscreen canvas (via `src/utils/svgCache.ts`) and wrapped in `ctx.createPattern(tile, 'repeat')`; the `CanvasPattern` is reused across every tile of that terrain. Custom terrains reuse the same SVG tinted into a single mark colour via `source-in` composition.
+- **Path2D reuse**: rivers and roads construct `Path2D` objects once per paint; causeways reuse the river / road geometry from `pathGenerator`.
+- **Viewport hex culling** (`src/hooks/useViewportCulling.ts`): tiles outside the visible viewport plus a padding margin are skipped. The renderer iterates the visible-key set for every draw call, so draw work scales with visible tile count, not total tile count. Small maps (&lt;500 tiles) skip the rAF culling loop entirely.
+- **`createSelector`** is used for any selector that returns a new array or object, to prevent spurious downstream re-renders in the surrounding panels.
 
 ---
 
@@ -261,13 +280,13 @@ All visual properties are centralised in `src/styles/theme.ts`. `GlobalStyles.ts
 
 ## Extending — adding a terrain type
 
-1. Add an entry to `theme.terrain` in `src/styles/theme.ts`.
-2. Add a `<pattern id="pattern-NAME">` SVG element in `src/components/HexGrid/TerrainPatterns.tsx`.
+1. Add an entry to `theme.terrain` in `src/styles/theme.ts` (colour + label + `icon` React component for the UI picker). Create a matching `<Name>Icon` in `src/assets/icons/terrain/` if you need a new preview icon.
+2. Register the terrain's `PatternKey` in `src/types/domain.ts`, add a matching `<key>.svg` under `src/assets/patterns/`, and add an entry to `PATTERNS` in `src/components/HexGrid/canvas/patternCache.ts` with the SVG's viewBox size.
 3. For water types (edge merging, river/road suppression, port eligibility, ⛵ army icon): add the terrain name to `DEEP_WATER` in `src/utils/hexUtils.ts`.
 
 The terrain picker in `TileEditPanel` is derived automatically from `theme.terrain` — no component changes needed.
 
-Custom terrain types can also be added at runtime via the Terrain Types panel in the editor; these are stored in the `terrainConfig` Redux slice and persisted with the map.
+Custom terrain types can also be added at runtime via the Terrain Types panel in the editor; these are stored in the `terrainConfig` Redux slice and persisted with the map. Custom terrains reuse the built-in pattern SVGs, recolouring every mark to a contrasting tone derived from the base colour via `source-in` composition (see `patternColor.ts` for the tint logic).
 
 ---
 

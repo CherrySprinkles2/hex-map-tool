@@ -21,11 +21,21 @@ const Title = styled.h2`
   letter-spacing: 0.08em;
   margin: 0;
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+
+  & > svg {
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+  }
 `;
 
 interface PanelHeaderProps {
   title: string;
   onClose: () => void;
+  icon?: React.ReactNode;
   closeVariant?: 'simple' | 'bordered';
   $marginBottom?: string;
 }
@@ -33,12 +43,16 @@ interface PanelHeaderProps {
 export const PanelHeader = ({
   title,
   onClose,
+  icon,
   closeVariant = 'simple',
   $marginBottom,
 }: PanelHeaderProps): React.ReactElement => {
   return (
     <HeaderRow $marginBottom={$marginBottom}>
-      <Title>{title}</Title>
+      <Title>
+        {icon}
+        {title}
+      </Title>
       <CloseButton onClick={onClose} variant={closeVariant} />
     </HeaderRow>
   );

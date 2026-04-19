@@ -1,23 +1,19 @@
 import { test, expect } from '../fixtures/app.fixture';
 import { HomeScreenPage } from '../pages/HomeScreen.page';
 import { EditorPage } from '../pages/Editor.page';
-import { TileEditPanelPage } from '../pages/TileEditPanel.page';
 import { getMapIndex } from '../helpers/storage';
 
 test.describe('Multi-Map', () => {
   test('two maps have independent tile data', async ({ appPage }) => {
     const home = new HomeScreenPage(appPage);
     const editor = new EditorPage(appPage);
-    const panel = new TileEditPanelPage(appPage);
 
     // Create map A and add a tile
     await home.createMap();
     await editor.renameMap('Map A');
-    const ghostA = appPage.locator('[data-testid^="ghost-tile-"]').first();
-    const tidA = await ghostA.getAttribute('data-testid');
-    const [, coordsA] = tidA!.split('ghost-tile-');
-    const [qA, rA] = coordsA.split(',').map(Number);
-    await editor.clickGhost(qA, rA);
+    const ghostA = await editor.firstGhost();
+    expect(ghostA).not.toBeNull();
+    await editor.clickGhost(ghostA!.q, ghostA!.r);
     const countA = await editor.tileCount();
 
     // Go back and create map B (empty)
@@ -36,10 +32,9 @@ test.describe('Multi-Map', () => {
     // Create Map A with a tile
     await home.createMap();
     await editor.renameMap('Switching A');
-    const ghost = appPage.locator('[data-testid^="ghost-tile-"]').first();
-    const tid = await ghost.getAttribute('data-testid');
-    const [, coords] = tid!.split('ghost-tile-');
-    const [q, r] = coords.split(',').map(Number);
+    const ghost = await editor.firstGhost();
+    expect(ghost).not.toBeNull();
+    const { q, r } = ghost!;
     await editor.clickGhost(q, r);
 
     // Go back, create Map B (no tiles), go back
@@ -52,7 +47,7 @@ test.describe('Multi-Map', () => {
     // Go back and open Map A — tile should still be there
     await editor.goBack();
     await home.openMapByName('Switching A');
-    await expect(appPage.getByTestId(`hex-tile-${q},${r}`)).toBeVisible();
+    expect(await editor.tileExists(q, r)).toBe(true);
   });
 
   test('deleting one map does not affect the other', async ({ appPage }) => {

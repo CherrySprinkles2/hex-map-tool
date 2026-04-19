@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { SidePanel } from '../shared/SidePanel';
 import { DragHandle } from '../shared/DragHandle';
 import { PanelHeader } from '../shared/PanelHeader';
+import { FlagIcon } from '../../assets/icons/ui';
 
 const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
 
@@ -114,6 +115,7 @@ const FactionPaintPanel = ({ suppressed }: FactionPaintPanelProps): React.ReactE
       <DragHandle />
       <PanelHeader
         title={t('factionPaintPanel.title')}
+        icon={<FlagIcon aria-hidden />}
         onClose={() => {
           return dispatch(setMapMode('terrain'));
         }}

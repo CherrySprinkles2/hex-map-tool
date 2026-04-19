@@ -24,7 +24,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm start',
-    url: 'http://localhost:3000',
+    url: 'http://localhost:3000/hex-map-tool',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     env: {

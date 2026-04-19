@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" width="60" height="60">
+  <defs>
+    <clipPath id="village-ui-clip">
+      <circle cx="30" cy="30" r="30"/>
+    </clipPath>
+  </defs>
+  <circle cx="30" cy="30" r="30" fill="#7ec850"/>
+  <g clip-path="url(#village-ui-clip)">
+    <rect x="0" y="27" width="60" height="5" fill="#a08060"/>
+    <rect x="10" y="11" width="16" height="12" fill="#012731"/>
+    <rect x="34" y="35" width="12" height="10" fill="#012731"/>
+  </g>
+</svg>

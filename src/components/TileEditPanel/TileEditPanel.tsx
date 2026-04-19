@@ -29,6 +29,14 @@ import { SidePanel } from '../shared/SidePanel';
 import { DragHandle } from '../shared/DragHandle';
 import { SectionLabel } from '../shared/SectionLabel';
 import { StyledTextarea } from '../shared/StyledTextarea';
+import {
+  SwordsIcon,
+  TrashIcon,
+  BrushIcon,
+  CloseIcon,
+  HousesIcon,
+  HexIcon,
+} from '../../assets/icons/ui';
 
 const selectTileArmies = createSelector(
   [
@@ -92,9 +100,27 @@ const EmptyState = styled.div`
 `;
 
 const EmptyHexIcon = styled.div`
-  font-size: 3.5rem;
-  line-height: 1;
+  width: 3.5rem;
+  height: 3.5rem;
+  color: ${({ theme }) => {
+    return theme.textMuted;
+  }};
+  opacity: 0.45;
 `;
+
+const BTN_ICON_PROPS = {
+  width: '1em',
+  height: '1em',
+  style: { marginRight: '0.4em', flexShrink: 0 },
+  'aria-hidden': true,
+} as const;
+
+const TITLE_ICON_PROPS = {
+  width: '1em',
+  height: '1em',
+  style: { marginRight: '0.4em', verticalAlign: '-0.15em' },
+  'aria-hidden': true,
+} as const;
 
 const EmptyText = styled.p`
   font-size: 0.85rem;
@@ -684,13 +710,17 @@ const TileEditPanel = (): React.ReactElement => {
       {mapMode === 'terrain-paint' ? (
         <>
           <PaintModeHeader>
-            <PanelTitle>{t('tilePanel.paintMode')}</PanelTitle>
+            <PanelTitle>
+              <BrushIcon {...TITLE_ICON_PROPS} />
+              {t('tilePanel.paintMode')}
+            </PanelTitle>
             <ExitPaintBtn
               data-testid="exit-paint-btn"
               onClick={() => {
                 return dispatch(exitTerrainPaint());
               }}
             >
+              <CloseIcon {...BTN_ICON_PROPS} />
               {t('tilePanel.exitPaint')}
             </ExitPaintBtn>
           </PaintModeHeader>
@@ -815,11 +845,13 @@ const TileEditPanel = (): React.ReactElement => {
       ) : (
         <>
           <PanelTitle>{t('tilePanel.title')}</PanelTitle>
-          <CloseBtn onClick={handleClose}>✕</CloseBtn>
+          <CloseBtn onClick={handleClose}>
+            <CloseIcon width="1em" height="1em" />
+          </CloseBtn>
 
           {!selectedKey ? (
             <EmptyState>
-              <EmptyHexIcon>⬡</EmptyHexIcon>
+              <EmptyHexIcon as={HexIcon} />
               <EmptyText>{t('tilePanel.noTileSelected')}</EmptyText>
             </EmptyState>
           ) : (
@@ -868,6 +900,7 @@ const TileEditPanel = (): React.ReactElement => {
                     return dispatch(enterTerrainPaint(tile?.terrain ?? null));
                   }}
                 >
+                  <BrushIcon {...BTN_ICON_PROPS} />
                   {t('tilePanel.paintTerrain')}
                 </PaintModeBtn>
               </div>
@@ -1021,6 +1054,7 @@ const TileEditPanel = (): React.ReactElement => {
                       return selectedKey && dispatch(enterTownEdit(selectedKey));
                     }}
                   >
+                    <HousesIcon {...BTN_ICON_PROPS} />
                     {t('tilePanel.editTown')}
                   </EditTownBtn>
                 )}
@@ -1075,10 +1109,12 @@ const TileEditPanel = (): React.ReactElement => {
                   return tile && dispatch(addArmy({ q: tile.q, r: tile.r }));
                 }}
               >
+                <SwordsIcon {...BTN_ICON_PROPS} />
                 {t('tilePanel.addArmy')}
               </AddArmyBtn>
 
               <DeleteBtn data-testid="delete-tile-btn" onClick={handleDelete}>
+                <TrashIcon {...BTN_ICON_PROPS} />
                 {t('tilePanel.deleteTile')}
               </DeleteBtn>
             </>

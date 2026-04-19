@@ -34,11 +34,11 @@
     "features": "Ominaisuudet",
     "notes": "Muistiinpanot",
     "armies": "Armeijat tällä ruudulla",
-    "addArmy": "⚔ Lisää armeija ruudulle",
-    "deleteTile": "🗑 Poista ruutu",
-    "paintTerrain": "🖌 Maalaa maasto",
-    "paintMode": "🖌 Maalausmoodi",
-    "exitPaint": "✕ Poistu",
+    "addArmy": "Lisää armeija ruudulle",
+    "deleteTile": "Poista ruutu",
+    "paintTerrain": "Maalaa maasto",
+    "paintMode": "Maalausmoodi",
+    "exitPaint": "Poistu",
     "paintHint": "Klikkaa tai vedä ruutuja maalataksesi valitulla siveltimellä.",
     "noTileSelected": "Valitse muokattava ruutu",
     "townNamePlaceholder": "Kaupungin nimi…",
@@ -47,7 +47,7 @@
     "riverRemove": "− Poista",
     "roadAdd": "+ Lisää",
     "roadRemove": "− Poista",
-    "editTown": "🏘 Muokkaa kaupunkia"
+    "editTown": "Muokkaa kaupunkia"
   },
   "townPanel": {
     "title": "Muokkaa kaupunkia",
@@ -70,14 +70,14 @@
     "size_city_desc": "Merkittävä kaupunkikeskus, jolla on pitkä historia."
   },
   "factionPaintPanel": {
-    "title": "⚑ Maalaa ryhmittymä",
+    "title": "Maalaa ryhmittymä",
     "hint": "Valitse alla oleva ryhmittymä ja klikkaa tai vedä ruutuja sen nimeämiseksi.",
     "hintTouch": "Valitse alla oleva ryhmittymä ja napauta ruutuja sen nimeämiseksi.",
     "unassigned": "Ei ryhmittymää",
-    "noFactions": "Ei ryhmittymiä.\nLisää niitä ⚑ Ryhmittymät -valikosta."
+    "noFactions": "Ei ryhmittymiä.\nLisää niitä Ryhmittymät-valikosta."
   },
   "factionsPanel": {
-    "title": "⚑ Ryhmittymät",
+    "title": "Ryhmittymät",
     "colour": "Väri",
     "description": "Kuvaus",
     "descriptionPlaceholder": "Muistiinpanoja tästä ryhmittymästä…",
@@ -85,7 +85,7 @@
     "noFactions": "Ei ryhmittymiä. Lisää yksi alta."
   },
   "armyPanel": {
-    "title": "⚔ Armeija",
+    "title": "Armeija",
     "name": "Nimi",
     "namePlaceholder": "Armeijan nimi",
     "composition": "Kokoonpano",
@@ -94,26 +94,27 @@
     "factionNone": "Ei mitään",
     "notes": "Muistiinpanot",
     "notesPlaceholder": "Muistiinpanoja tästä armeijasta…",
-    "moveArmy": "↪ Siirrä armeija",
-    "cancelMove": "✕ Peruuta siirto",
-    "deleteArmy": "✕ Poista armeija",
+    "moveArmy": "Siirrä armeija",
+    "cancelMove": "Peruuta siirto",
+    "deleteArmy": "Poista armeija",
     "deleteConfirm": "Poistetaanko tämä armeija? Toimintoa ei voi kumota.",
     "moveHint": "Napauta kartan mitä tahansa ruutua siirtääksesi armeijan sinne. Panorointi ja zoomaus toimivat normaalisti."
   },
   "toolbar": {
     "back": "← Kartat",
-    "factions": "⚑ Ryhmittymät",
+    "factions": "Ryhmittymät",
     "keyboardShortcuts": "Näppäinoikotiet",
     "exportJSON": "Vie kartta",
     "importJSON": "Tuo kartta",
-    "languageLabel": "Kieli"
+    "languageLabel": "Kieli",
+    "nameTaken": "Tällä nimellä on jo olemassa kartta."
   },
   "mapModeToggle": {
-    "terrain": "🗺 Maasto",
-    "faction": "⚑ Ryhmittymä"
+    "terrain": "Maasto",
+    "faction": "Ryhmittymä"
   },
   "home": {
-    "title": "⬡ Hex Map Tool",
+    "title": "Hex Map Tool",
     "subtitle": "Valitse muokattava kartta tai luo uusi.",
     "description": "Suunnittele maailmoja ja komenna armeijoita. Rakenna hex-karttoja sotapeleille, kampanjoille ja strategiseen suunnitteluun — aseta maasto, perusta kaupunkeja, sijoita joukot ja piirrä taistelulinjat. Kaikki renderöidään reaaliaikaisesti SVG:nä ja tallennetaan automaattisesti selaimeesi.",
     "noticeStorageTitle": "Kartat tallennetaan selaimen paikalliseen tallennustilaan.",
@@ -131,7 +132,9 @@
     "justNow": "Juuri nyt",
     "minutesAgo": "{{n}} min sitten",
     "hoursAgo": "{{n}} h sitten",
-    "daysAgo": "{{n}} pv sitten"
+    "daysAgo": "{{n}} pv sitten",
+    "warningMapNotFound": "Karttaa ei löydy — se on ehkä poistettu.",
+    "warningPageNotFound": "Sivua ei löydy. Sinut ohjattiin aloitusnäkymään."
   },
   "shortcuts": {
     "title": "Näppäinoikotiet",
@@ -273,7 +276,7 @@
     }
   },
   "errorBoundary": {
-    "title": "⚠ Jokin meni pieleen",
+    "title": "Jokin meni pieleen",
     "body": "Odottamaton virhe tapahtui. Kokeile ladata sivu uudelleen. Jos ongelma jatkuu, karttadatasi saattaa olla vioittunut.",
     "tryAgain": "Yritä uudelleen"
   }

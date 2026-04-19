@@ -34,11 +34,11 @@
     "features": "Features",
     "notes": "Notes",
     "armies": "Armies on this tile",
-    "addArmy": "⚔ Add Army to Tile",
-    "deleteTile": "🗑 Delete Tile",
-    "paintTerrain": "🖌 Paint Terrain",
-    "paintMode": "🖌 Paint Mode",
-    "exitPaint": "✕ Exit",
+    "addArmy": "Add Army to Tile",
+    "deleteTile": "Delete Tile",
+    "paintTerrain": "Paint Terrain",
+    "paintMode": "Paint Mode",
+    "exitPaint": "Exit",
     "paintHint": "Click or drag tiles to paint with the selected brush.",
     "noTileSelected": "Select a tile to edit it",
     "townNamePlaceholder": "Town name…",
@@ -47,7 +47,7 @@
     "riverRemove": "− Remove",
     "roadAdd": "+ Add",
     "roadRemove": "− Remove",
-    "editTown": "🏘 Edit Town"
+    "editTown": "Edit Town"
   },
   "townPanel": {
     "title": "Edit Town",
@@ -70,14 +70,14 @@
     "size_city_desc": "A major urban centre with a long history."
   },
   "factionPaintPanel": {
-    "title": "⚑ Paint Faction",
+    "title": "Paint Faction",
     "hint": "Select a faction below, then click or drag tiles to assign it.",
     "hintTouch": "Select a faction below, then tap tiles to assign it.",
     "unassigned": "Unassigned",
-    "noFactions": "No factions yet.\nAdd some via ⚑ Factions in the settings menu."
+    "noFactions": "No factions yet.\nAdd some via Factions in the settings menu."
   },
   "factionsPanel": {
-    "title": "⚑ Factions",
+    "title": "Factions",
     "colour": "Colour",
     "description": "Description",
     "descriptionPlaceholder": "Notes about this faction…",
@@ -85,7 +85,7 @@
     "noFactions": "No factions yet. Add one below."
   },
   "armyPanel": {
-    "title": "⚔ Army",
+    "title": "Army",
     "name": "Name",
     "namePlaceholder": "Army name",
     "composition": "Composition",
@@ -94,26 +94,27 @@
     "factionNone": "None",
     "notes": "Notes",
     "notesPlaceholder": "Notes about this army…",
-    "moveArmy": "↪ Move Army",
-    "cancelMove": "✕ Cancel Move",
-    "deleteArmy": "✕ Delete Army",
+    "moveArmy": "Move Army",
+    "cancelMove": "Cancel Move",
+    "deleteArmy": "Delete Army",
     "deleteConfirm": "Delete this army? This cannot be undone.",
     "moveHint": "Tap any tile on the map to move this army there. Pan and zoom work normally."
   },
   "toolbar": {
     "back": "← Maps",
-    "factions": "⚑ Factions",
+    "factions": "Factions",
     "keyboardShortcuts": "Keyboard Shortcuts",
     "exportJSON": "Export map",
     "importJSON": "Import map",
-    "languageLabel": "Language"
+    "languageLabel": "Language",
+    "nameTaken": "A map with that name already exists."
   },
   "mapModeToggle": {
-    "terrain": "🗺 Terrain",
-    "faction": "⚑ Faction"
+    "terrain": "Terrain",
+    "faction": "Faction"
   },
   "home": {
-    "title": "⬡ Hex Map Tool",
+    "title": "Hex Map Tool",
     "subtitle": "Select a map to edit, or create a new one.",
     "description": "Design worlds and command armies. Build hex maps for wargames, campaigns, and strategic planning — place terrain, found towns, deploy forces, and trace the lines of battle. All rendered live as SVG, saved automatically in your browser.",
     "noticeStorageTitle": "Maps are stored in your browser's local storage.",
@@ -131,7 +132,9 @@
     "justNow": "Just now",
     "minutesAgo": "{{n}}m ago",
     "hoursAgo": "{{n}}h ago",
-    "daysAgo": "{{n}}d ago"
+    "daysAgo": "{{n}}d ago",
+    "warningMapNotFound": "That map could not be found — it may have been deleted.",
+    "warningPageNotFound": "Page not found. You have been redirected to the home screen."
   },
   "shortcuts": {
     "title": "Keyboard Shortcuts",
@@ -273,7 +276,7 @@
     }
   },
   "errorBoundary": {
-    "title": "⚠ Something went wrong",
+    "title": "Something went wrong",
     "body": "An unexpected error occurred. Try reloading the page. If the problem persists, your map data may be corrupted.",
     "tryAgain": "Try again"
   }

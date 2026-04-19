@@ -37,15 +37,7 @@ const FortificationPreview = ({ fortification }: Props): React.ReactElement => {
 
   return (
     <svg viewBox="0 0 60 60" width="60" height="60">
-      <TownIcon
-        x={CX - R}
-        y={CY - R}
-        width={R * 2}
-        height={R * 2}
-        groundColor={theme.town.groundColor}
-        buildingColor={theme.town.buildingColor}
-        streetColor={theme.town.streetColor}
-      />
+      <TownIcon x={CX - R} y={CY - R} width={R * 2} height={R * 2} />
       {cfg && (
         <circle
           cx={CX}

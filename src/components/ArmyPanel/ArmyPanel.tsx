@@ -8,7 +8,15 @@ import { DragHandle } from '../shared/DragHandle';
 import { PanelHeader } from '../shared/PanelHeader';
 import { SectionLabel } from '../shared/SectionLabel';
 import { StyledTextarea } from '../shared/StyledTextarea';
+import { SwordsIcon, MoveArrowIcon, CloseIcon, TrashIcon } from '../../assets/icons/ui';
 import styled from 'styled-components';
+
+const BTN_ICON_PROPS = {
+  width: '1em',
+  height: '1em',
+  style: { marginRight: '0.4em', flexShrink: 0 },
+  'aria-hidden': true,
+} as const;
 
 // ── Styled components ──────────────────────────────────────────────────────────
 
@@ -416,7 +424,11 @@ const ArmyPanel = (): React.ReactElement => {
   return (
     <SidePanel $open={isOpen} $gap="20px">
       <DragHandle $margin="0 auto -8px" />
-      <PanelHeader title={t('armyPanel.title')} onClose={handleClose} />
+      <PanelHeader
+        title={t('armyPanel.title')}
+        icon={<SwordsIcon aria-hidden />}
+        onClose={handleClose}
+      />
 
       {army && (
         <>
@@ -448,9 +460,20 @@ const ArmyPanel = (): React.ReactElement => {
 
           <ButtonGroup>
             <MoveBtn data-testid="move-army-btn" $active={isMoving} onClick={handleMoveToggle}>
-              {isMoving ? t('armyPanel.cancelMove') : t('armyPanel.moveArmy')}
+              {isMoving ? (
+                <>
+                  <CloseIcon {...BTN_ICON_PROPS} />
+                  {t('armyPanel.cancelMove')}
+                </>
+              ) : (
+                <>
+                  <MoveArrowIcon {...BTN_ICON_PROPS} />
+                  {t('armyPanel.moveArmy')}
+                </>
+              )}
             </MoveBtn>
             <DeleteBtn data-testid="delete-army-btn" onClick={handleDelete}>
+              <TrashIcon {...BTN_ICON_PROPS} />
               {t('armyPanel.deleteArmy')}
             </DeleteBtn>
           </ButtonGroup>

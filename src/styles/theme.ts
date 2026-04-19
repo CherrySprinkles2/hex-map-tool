@@ -17,7 +17,7 @@ export const theme: AppTheme = {
   panelBackground: '#16213e',
   panelBorder: '#0f3460',
   text: '#e0e0e0',
-  textMuted: '#888',
+  textMuted: '#a9a9a9',
   accent: '#e94560',
 
   // ── Surface opacity tokens ────────────────────────────────────────────────────
