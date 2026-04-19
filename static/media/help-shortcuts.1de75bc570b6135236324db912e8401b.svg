@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <rect x="6" y="10" width="36" height="24" rx="5" stroke="currentColor" stroke-width="2" fill="currentColor" fill-opacity="0.1"/>
+  <rect x="9" y="13" width="30" height="18" rx="3" stroke="currentColor" stroke-width="1" fill="none" opacity="0.35"/>
+  <text x="24" y="26" text-anchor="middle" dominant-baseline="middle" font-size="9" font-family="monospace" fill="currentColor" letter-spacing="0.5">Ctrl</text>
+  <rect x="6" y="31" width="36" height="5" rx="3" fill="currentColor" fill-opacity="0.18"/>
+</svg>
