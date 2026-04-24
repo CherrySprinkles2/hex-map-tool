@@ -1,1 +1,1 @@
-export const APP_BASE = '/hex-map-tool';
+export const APP_BASE = '/';
