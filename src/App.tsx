@@ -1,14 +1,19 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
 import { theme } from './styles/theme';
 import GlobalStyles from './styles/GlobalStyles';
 import HomeScreen from './components/HomeScreen/HomeScreen';
-import HelpScreen from './components/HelpScreen/HelpScreen';
-import EditorRoute from './components/EditorRoute/EditorRoute';
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
 import { migrateFromLegacy } from './utils/mapsStorage';
 import { useAppSelector } from './app/hooks';
+
+const EditorRoute = React.lazy(() => {
+  return import('./components/EditorRoute/EditorRoute');
+});
+const HelpScreen = React.lazy(() => {
+  return import('./components/HelpScreen/HelpScreen');
+});
 
 const App = (): React.ReactElement => {
   const location = useLocation();
@@ -31,34 +36,39 @@ const App = (): React.ReactElement => {
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyles />
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <ErrorBoundary>
-              <HomeScreen />
-            </ErrorBoundary>
-          }
-        />
-        <Route path="/map/:mapSlug" element={<EditorRoute />} />
-        <Route
-          path="/help"
-          element={
-            <ErrorBoundary>
-              <HelpScreen />
-            </ErrorBoundary>
-          }
-        />
-        <Route
-          path="/help/:section"
-          element={
-            <ErrorBoundary>
-              <HelpScreen />
-            </ErrorBoundary>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace state={{ warning: 'pageNotFound' }} />} />
-      </Routes>
+      <Suspense fallback={null}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <ErrorBoundary>
+                <HomeScreen />
+              </ErrorBoundary>
+            }
+          />
+          <Route path="/map/:mapSlug" element={<EditorRoute />} />
+          <Route
+            path="/help"
+            element={
+              <ErrorBoundary>
+                <HelpScreen />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/help/:section"
+            element={
+              <ErrorBoundary>
+                <HelpScreen />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="*"
+            element={<Navigate to="/" replace state={{ warning: 'pageNotFound' }} />}
+          />
+        </Routes>
+      </Suspense>
     </ThemeProvider>
   );
 };
