@@ -4,6 +4,9 @@ import svgr from 'vite-plugin-svgr';
 
 export default defineConfig({
   base: '/hex-map-tool',
+  build: {
+    outDir: 'dist/hex-map-tool',
+  },
   plugins: [react(), svgr()],
   server: {
     port: 3000,
