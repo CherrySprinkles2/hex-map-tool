@@ -37,7 +37,12 @@ import {
 } from '../../features/terrainConfig/terrainConfigSlice';
 import { resetViewport } from '../../features/viewport/viewportSlice';
 import MapThumbnail from './MapThumbnail';
-import { exampleMaps } from '../../data/exampleMaps';
+import {
+  exampleMapsMeta,
+  loadExampleMapData,
+  type ExampleMapData,
+  type ExampleMapMeta,
+} from '../../data/exampleMaps';
 import { theme } from '../../styles/theme';
 import type { MapEntry } from '../../types/domain';
 
@@ -506,7 +511,9 @@ const HomeScreen = (): React.ReactElement => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [langModalOpen, setLangModalOpen] = useState(false);
   const [newlyImportedId, setNewlyImportedId] = useState<string | null>(null);
+  const [loadingExampleId, setLoadingExampleId] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement | null>(null);
+  const loadedExamplesRef = useRef<Record<string, ExampleMapData>>({});
 
   const refreshMaps = useCallback(() => {
     const all = getAllMaps();
@@ -526,17 +533,35 @@ const HomeScreen = (): React.ReactElement => {
         }
       }
     });
-    // Generate thumbnails for built-in example maps (not persisted, just cached in state)
-    exampleMaps.forEach((example) => {
-      const thumb = captureThumbnail(example.tiles, example.terrainConfig?.custom);
-      if (thumb) thumbCache[example.id] = thumb;
-    });
     setThumbnailCache(thumbCache);
   }, []);
 
   useEffect(() => {
     refreshMaps();
   }, [refreshMaps]);
+
+  // Load example map data in the background to generate thumbnails and cache data for fast clicks
+  useEffect(() => {
+    let cancelled = false;
+    const loadThumbnails = async () => {
+      for (const meta of exampleMapsMeta) {
+        if (cancelled) break;
+        const data = await loadExampleMapData(meta.id);
+        if (cancelled) break;
+        loadedExamplesRef.current[meta.id] = data;
+        const thumb = captureThumbnail(data.tiles, data.terrainConfig?.custom);
+        if (thumb) {
+          setThumbnailCache((prev) => {
+            return { ...prev, [meta.id]: thumb };
+          });
+        }
+      }
+    };
+    loadThumbnails();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleOpen = (map: MapEntry) => {
     const data = loadMapData(map.id);
@@ -561,12 +586,16 @@ const HomeScreen = (): React.ReactElement => {
     navigate(`/map/${slugify(map.name)}`);
   };
 
-  const handleOpenExample = (example: (typeof exampleMaps)[number]) => {
-    dispatch(importTiles(example.tiles));
-    dispatch(importArmies(example.armies));
-    dispatch(importFactions(example.factions));
-    dispatch(importTerrainConfig(example.terrainConfig ?? DEFAULT_TERRAIN_CONFIG));
-    dispatch(loadMap({ id: null, name: t('home.copyOf', { name: example.name }) }));
+  const handleOpenExample = async (meta: ExampleMapMeta) => {
+    if (loadingExampleId) return;
+    setLoadingExampleId(meta.id);
+    const data = loadedExamplesRef.current[meta.id] ?? (await loadExampleMapData(meta.id));
+    loadedExamplesRef.current[meta.id] = data;
+    dispatch(importTiles(data.tiles));
+    dispatch(importArmies(data.armies));
+    dispatch(importFactions(data.factions));
+    dispatch(importTerrainConfig(data.terrainConfig ?? DEFAULT_TERRAIN_CONFIG));
+    dispatch(loadMap({ id: null, name: t('home.copyOf', { name: meta.name }) }));
     dispatch(resetViewport());
     navigate('/map/example', { state: { examplePreloaded: true } });
   };
@@ -750,7 +779,7 @@ const HomeScreen = (): React.ReactElement => {
                 </Card>
               );
             })}
-          {exampleMaps.map((example) => {
+          {exampleMapsMeta.map((example) => {
             return (
               <Card
                 key={example.id}
@@ -759,7 +788,10 @@ const HomeScreen = (): React.ReactElement => {
                   return handleOpenExample(example);
                 }}
               >
-                <MapThumbnail thumbnail={thumbnailCache[example.id]} />
+                <MapThumbnail
+                  thumbnail={thumbnailCache[example.id]}
+                  loading={loadingExampleId === example.id}
+                />
                 <ExampleBadge>{t('home.example')}</ExampleBadge>
                 <CardMeta>
                   <CardName>{example.name}</CardName>

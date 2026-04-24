@@ -18,7 +18,7 @@ export default defineConfig({
       closeBundle() {
         mkdirSync('dist', { recursive: true });
         copyFileSync('dist/hex-map-tool/index.html', 'dist/app.html');
-        writeFileSync('dist/_redirects', '/hex-map-tool/* /app.html 200\n');
+        writeFileSync('dist/_redirects', '/hex-map-tool/* /app 200\n');
       },
     },
   ],

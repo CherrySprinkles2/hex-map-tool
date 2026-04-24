@@ -5,10 +5,11 @@ const THUMB_H = 160;
 
 interface MapThumbnailProps {
   thumbnail?: string;
+  loading?: boolean;
 }
 
-const MapThumbnail = ({ thumbnail }: MapThumbnailProps): React.ReactElement => {
-  if (thumbnail) {
+const MapThumbnail = ({ thumbnail, loading }: MapThumbnailProps): React.ReactElement => {
+  if (thumbnail && !loading) {
     return (
       <img
         src={thumbnail}
@@ -45,7 +46,7 @@ const MapThumbnail = ({ thumbnail }: MapThumbnailProps): React.ReactElement => {
         fontSize="11"
         fontFamily="sans-serif"
       >
-        Empty map
+        {loading ? 'Loading…' : 'Empty map'}
       </text>
     </svg>
   );

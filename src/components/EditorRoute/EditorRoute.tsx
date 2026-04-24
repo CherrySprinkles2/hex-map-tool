@@ -15,7 +15,7 @@ import { skipNextSyncLoad } from '../../hooks/useLocalStorageSync';
 import { slugify } from '../../utils/slugify';
 import Editor from '../Editor/Editor';
 import ErrorBoundary from '../ErrorBoundary/ErrorBoundary';
-import { exampleMaps } from '../../data/exampleMaps';
+import { loadExampleMapData, exampleMapsMeta } from '../../data/exampleMaps';
 
 // EditorRoute handles two URL patterns:
 //   /map/example      — unsaved example map
@@ -44,19 +44,25 @@ const EditorRoute = (): React.ReactElement | null => {
         setReady(true);
         return;
       }
-      // Deep link to /map/example — load first example map
-      const example = exampleMaps[0];
-      if (!example) {
+      // Deep link to /map/example — load first example map on demand
+      const meta = exampleMapsMeta[0];
+      if (!meta) {
         setRedirect('/');
         return;
       }
-      dispatch(loadMap({ id: null, name: example.name }));
-      dispatch(importTiles(example.tiles));
-      dispatch(importArmies(example.armies));
-      dispatch(importFactions(example.factions));
-      dispatch(importTerrainConfig(example.terrainConfig ?? DEFAULT_TERRAIN_CONFIG));
-      dispatch(resetViewport());
-      setReady(true);
+      loadExampleMapData(meta.id)
+        .then((data) => {
+          dispatch(loadMap({ id: null, name: data.name }));
+          dispatch(importTiles(data.tiles));
+          dispatch(importArmies(data.armies));
+          dispatch(importFactions(data.factions));
+          dispatch(importTerrainConfig(data.terrainConfig ?? DEFAULT_TERRAIN_CONFIG));
+          dispatch(resetViewport());
+          setReady(true);
+        })
+        .catch(() => {
+          setRedirect('/');
+        });
       return;
     }
 

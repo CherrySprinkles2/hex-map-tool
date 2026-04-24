@@ -1,9 +1,3 @@
-// Example map data loaded from the bundled JSON.
-// Each JSON file uses the export envelope: { name, tiles, armies, factions }.
-// Tile defaults are applied here so the rest of the app never has to guard for missing properties.
-import rawSmall from './example-map.json';
-import rawLarge from './large-map.json';
-import rawBahamas from './bahamas-map.json';
 import type { Tile, Army, Faction, TerrainConfig } from '../types/domain';
 import type { TilesState, ArmiesState } from '../types/state';
 
@@ -25,6 +19,17 @@ export interface ExampleMapData {
   factions: Faction[];
   terrainConfig?: TerrainConfig;
 }
+
+export interface ExampleMapMeta {
+  id: string;
+  name: string;
+}
+
+export const exampleMapsMeta: ExampleMapMeta[] = [
+  { id: 'builtin-example-1', name: 'Simple' },
+  { id: 'builtin-example-large', name: 'Finland' },
+  { id: 'builtin-example-bahamas', name: 'The Bahamas' },
+];
 
 const normalizeTile = (t: RawTile): Tile => {
   return {
@@ -83,8 +88,20 @@ const fromEnvelope = (raw: RawEnvelope, id: string): ExampleMapData => {
   };
 };
 
-export const exampleMaps: ExampleMapData[] = [
-  fromEnvelope(rawSmall as RawEnvelope, 'builtin-example-1'),
-  fromEnvelope(rawLarge as RawEnvelope, 'builtin-example-large'),
-  fromEnvelope(rawBahamas as RawEnvelope, 'builtin-example-bahamas'),
-];
+export const loadExampleMapData = async (id: string): Promise<ExampleMapData> => {
+  let raw: RawEnvelope;
+  switch (id) {
+    case 'builtin-example-1':
+      raw = (await import('./example-map.json')).default as unknown as RawEnvelope;
+      break;
+    case 'builtin-example-large':
+      raw = (await import('./large-map.json')).default as unknown as RawEnvelope;
+      break;
+    case 'builtin-example-bahamas':
+      raw = (await import('./bahamas-map.json')).default as unknown as RawEnvelope;
+      break;
+    default:
+      throw new Error(`Unknown example map id: ${id}`);
+  }
+  return fromEnvelope(raw, id);
+};
