@@ -572,20 +572,6 @@ const PaintModeBtn = styled.button`
   }
 `;
 
-const PaintHint = styled.p`
-  font-size: 0.75rem;
-  color: ${({ theme }) => {
-    return theme.textMuted;
-  }};
-  text-align: center;
-  margin: 0;
-  line-height: 1.5;
-
-  @media (max-width: 600px) {
-    display: none;
-  }
-`;
-
 const DIR_LABELS = ['E', 'NE', 'NW', 'W', 'SW', 'SE'] as const;
 
 const FLAG_BLOCKED_KEY: Record<
@@ -839,8 +825,6 @@ const TileEditPanel = (): React.ReactElement => {
               </FeatureBrushRow>
             </div>
           </div>
-
-          <PaintHint>{t('tilePanel.paintHint')}</PaintHint>
         </>
       ) : (
         <>

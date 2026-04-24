@@ -1,3 +1,3 @@
-export { ReactComponent as VillageIcon } from './village.svg';
-export { ReactComponent as TownIcon } from './town.svg';
-export { ReactComponent as CityIcon } from './city.svg';
+export { default as VillageIcon } from './village.svg?react';
+export { default as TownIcon } from './town.svg?react';
+export { default as CityIcon } from './city.svg?react';

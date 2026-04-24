@@ -39,7 +39,8 @@
     "paintTerrain": "Maalaa maasto",
     "paintMode": "Maalausmoodi",
     "exitPaint": "Poistu",
-    "paintHint": "Klikkaa tai vedä ruutuja maalataksesi valitulla siveltimellä.",
+    "selectBrushHint": "Valitse sivellin alta aloittaaksesi maalaamisen.",
+    "deselectBrush": "Poista valinta",
     "noTileSelected": "Valitse muokattava ruutu",
     "townNamePlaceholder": "Kaupungin nimi…",
     "notesPlaceholder": "Lisää muistiinpanoja tästä ruudusta…",
@@ -71,6 +72,8 @@
   },
   "factionPaintPanel": {
     "title": "Maalaa ryhmittymä",
+    "selectBrushHint": "Valitse alla oleva ryhmittymä aloittaaksesi maalaamisen.",
+    "deselectBrush": "Poista valinta",
     "hint": "Valitse alla oleva ryhmittymä ja klikkaa tai vedä ruutuja sen nimeämiseksi.",
     "hintTouch": "Valitse alla oleva ryhmittymä ja napauta ruutuja sen nimeämiseksi.",
     "unassigned": "Ei ryhmittymää",

@@ -568,7 +568,7 @@ const HomeScreen = (): React.ReactElement => {
     dispatch(importTerrainConfig(example.terrainConfig ?? DEFAULT_TERRAIN_CONFIG));
     dispatch(loadMap({ id: null, name: t('home.copyOf', { name: example.name }) }));
     dispatch(resetViewport());
-    navigate('/map/example');
+    navigate('/map/example', { state: { examplePreloaded: true } });
   };
 
   const handleHelpClick = () => {

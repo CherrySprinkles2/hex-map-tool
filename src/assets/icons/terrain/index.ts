@@ -1,6 +1,6 @@
-export { ReactComponent as GrassIcon } from './grass.svg';
-export { ReactComponent as FarmIcon } from './farm.svg';
-export { ReactComponent as ForestIcon } from './forest.svg';
-export { ReactComponent as MountainIcon } from './mountain.svg';
-export { ReactComponent as LakeIcon } from './lake.svg';
-export { ReactComponent as OceanIcon } from './ocean.svg';
+export { default as GrassIcon } from './grass.svg?react';
+export { default as FarmIcon } from './farm.svg?react';
+export { default as ForestIcon } from './forest.svg?react';
+export { default as MountainIcon } from './mountain.svg?react';
+export { default as LakeIcon } from './lake.svg?react';
+export { default as OceanIcon } from './ocean.svg?react';

@@ -388,7 +388,7 @@ const HexGrid = (): React.ReactElement => {
   // Playwright can interact with tiles/ghosts that have no DOM representation.
   // Tree-shaken out of production builds.
   useEffect(() => {
-    if (process.env.NODE_ENV === 'production') return;
+    if (import.meta.env.PROD) return;
     const tileClient = (q: number, r: number): { x: number; y: number } | null => {
       const el = containerRef.current;
       if (!el) return null;

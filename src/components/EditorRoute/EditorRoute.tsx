@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { loadMap } from '../../features/currentMap/currentMapSlice';
 import { importTiles } from '../../features/tiles/tilesSlice';
@@ -23,6 +23,7 @@ import { exampleMaps } from '../../data/exampleMaps';
 const EditorRoute = (): React.ReactElement | null => {
   const { mapSlug } = useParams<{ mapSlug: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const currentMapId = useAppSelector((state) => {
     return state.currentMap.id;
@@ -36,7 +37,10 @@ const EditorRoute = (): React.ReactElement | null => {
   useEffect(() => {
     if (mapSlug === 'example') {
       // Data should already be in Redux (navigated from HomeScreen)
-      if (currentMapId !== null || ready) {
+      const preloaded = Boolean(
+        (location.state as Record<string, unknown> | null)?.examplePreloaded
+      );
+      if (preloaded || currentMapId !== null || ready) {
         setReady(true);
         return;
       }
