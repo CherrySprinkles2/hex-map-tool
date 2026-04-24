@@ -6,7 +6,7 @@
     <script type="text/javascript">
       // GitHub Pages SPA redirect shim.
       // Encodes the full path into the query string so index.html can restore it.
-      var segmentCount = 1; // number of path segments in the repo name (1 for /hex-map-tool)
+      var segmentCount = 0; // number of path segments in the repo name (0 for root deployment)
       var l = window.location;
       l.replace(
         l.protocol +
