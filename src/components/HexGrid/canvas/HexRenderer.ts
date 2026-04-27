@@ -22,7 +22,7 @@ import { drawTowns } from './drawTowns';
 import { drawLabels } from './drawLabels';
 import { drawArmies } from './drawArmies';
 import { drawOverlay } from './drawOverlay';
-import { buildDeepWaterSet, getNeighbors, toKey } from '../../../utils/hexUtils';
+import { buildDeepWaterSet, getNeighbors, toKey, setHexOrientation } from '../../../utils/hexUtils';
 import { registerRepaintOnLoad } from '../../../utils/svgCache';
 import type { store as appStore } from '../../../app/store';
 import type { ViewportState } from '../../../types/state';
@@ -66,6 +66,7 @@ export class HexRenderer {
   private lastSelectedTile: string | null = null;
   private lastSelectedArmyId: string | null = null;
   private lastMovingArmyId: string | null = null;
+  private lastOrientation: string = 'pointy-top';
 
   constructor(opts: HexRendererOptions) {
     this.store = opts.store;
@@ -92,6 +93,8 @@ export class HexRenderer {
     this.lastSelectedTile = state.ui.selectedTile;
     this.lastSelectedArmyId = state.ui.selectedArmyId;
     this.lastMovingArmyId = state.ui.movingArmyId;
+    this.lastOrientation = state.currentMap.orientation ?? 'pointy-top';
+    setHexOrientation(state.currentMap.orientation ?? 'pointy-top');
 
     this.measure();
 
@@ -142,6 +145,13 @@ export class HexRenderer {
         this.lastMovingArmyId = s.ui.movingArmyId;
         needsOverlay = true;
         needsMain = true;
+      }
+      const newOrientation = s.currentMap.orientation ?? 'pointy-top';
+      if (newOrientation !== this.lastOrientation) {
+        this.lastOrientation = newOrientation;
+        setHexOrientation(newOrientation);
+        needsMain = true;
+        needsOverlay = true;
       }
       if (needsMain) this.scheduleRepaint();
       if (needsOverlay) this.scheduleOverlay();

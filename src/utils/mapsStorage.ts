@@ -11,7 +11,7 @@
 
 import { generateId } from './generateId';
 import { slugify } from './slugify';
-import type { MapEntry, MapData, Faction, TerrainConfig } from '../types/domain';
+import type { MapEntry, MapData, Faction, TerrainConfig, HexOrientation } from '../types/domain';
 import type { TilesState, ArmiesState } from '../types/state';
 
 const INDEX_KEY = 'hex-map-tool-index';
@@ -173,6 +173,7 @@ export interface LoadedMapData {
   factions: Faction[];
   terrainConfig?: TerrainConfig;
   thumbnail?: string;
+  orientation?: HexOrientation;
 }
 
 // Returns { tiles, armies, factions } or null if no data found.
@@ -190,6 +191,7 @@ export const loadMapData = (id: string): LoadedMapData | null => {
           factions: (data.factions ?? []) as Faction[],
           terrainConfig: data.terrainConfig,
           thumbnail: data.thumbnail,
+          orientation: data.orientation,
         };
       }
     }

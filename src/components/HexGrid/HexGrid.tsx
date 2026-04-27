@@ -409,9 +409,11 @@ const HexGrid = (): React.ReactElement => {
   }, [dispatch, store]);
 
   const ghostKeys = useMemo(() => {
+    console.time('ghostKeys');
     const set = new Set<string>();
     if (tileKeys.length === 0) {
       set.add(toKey(0, 0));
+      console.timeEnd('ghostKeys');
       return set;
     }
     const tileKeySet = new Set(tileKeys);
@@ -425,6 +427,7 @@ const HexGrid = (): React.ReactElement => {
         if (!tileKeySet.has(k)) set.add(k);
       });
     });
+    console.timeEnd('ghostKeys');
     return set;
   }, [tileKeys, visibleKeys]);
 

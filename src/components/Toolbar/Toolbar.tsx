@@ -29,6 +29,7 @@ import { renameMap } from '../../utils/mapsStorage';
 import { captureThumbnail } from '../../utils/captureThumbnail';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../app/hooks';
 import TerrainConfigModal from '../TerrainConfigModal/TerrainConfigModal';
+import { OrientationModal } from '../OrientationModal/OrientationModal';
 
 const Bar = styled.div<{ $rightPanelOpen: boolean }>`
   display: flex;
@@ -338,6 +339,7 @@ const Toolbar = (): React.ReactElement => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [langModalOpen, setLangModalOpen] = useState(false);
   const [terrainConfigOpen, setTerrainConfigOpen] = useState(false);
+  const [orientationModalOpen, setOrientationModalOpen] = useState(false);
   const store = useAppStore();
 
   const rightPanelOpen =
@@ -389,6 +391,7 @@ const Toolbar = (): React.ReactElement => {
     setSettingsOpen(false);
     const terrainConfig = store.getState().terrainConfig;
     const thumbnail = captureThumbnail(tiles, terrainConfig.custom);
+    const orientation = store.getState().currentMap.orientation ?? 'pointy-top';
     const payload = {
       name: mapName || 'hex-map',
       tiles,
@@ -396,6 +399,7 @@ const Toolbar = (): React.ReactElement => {
       factions,
       terrainConfig,
       thumbnail,
+      orientation,
     };
     const json = JSON.stringify(payload, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
@@ -530,6 +534,17 @@ const Toolbar = (): React.ReactElement => {
           </SheetIcon>
           {t('terrainConfig.title')}
         </SheetItem>
+        <SheetItem
+          onClick={() => {
+            setSettingsOpen(false);
+            setOrientationModalOpen(true);
+          }}
+        >
+          <SheetIcon>
+            <MapIcon aria-hidden />
+          </SheetIcon>
+          {t('orientation.title')}
+        </SheetItem>
         <SheetItem data-testid="export-json-btn" onClick={handleExport}>
           <SheetIcon>
             <DownloadIcon aria-hidden />
@@ -567,6 +582,12 @@ const Toolbar = (): React.ReactElement => {
           }}
         />
       )}
+      <OrientationModal
+        open={orientationModalOpen}
+        onClose={() => {
+          return setOrientationModalOpen(false);
+        }}
+      />
     </>
   );
 };

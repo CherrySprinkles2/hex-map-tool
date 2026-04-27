@@ -1,6 +1,6 @@
-// Pointy-top axial hex coordinate utilities
+// Axial hex coordinate utilities — supports pointy-top and flat-top orientations.
 
-import type { CustomTerrainType } from '../types/domain';
+import type { CustomTerrainType, HexOrientation } from '../types/domain';
 
 export const HEX_SIZE = 50; // radius in pixels (center to corner)
 
@@ -8,13 +8,34 @@ export const HEX_SIZE = 50; // radius in pixels (center to corner)
 const SQRT3 = Math.sqrt(3);
 const SQRT3_OVER_2 = SQRT3 / 2;
 
-// Pre-computed unit corner cosines and sines (pointy-top, angles 30°, 90°, 150°, 210°, 270°, 330°)
-const UNIT_CORNER_COS = Array.from({ length: 6 }, (_, i) => {
+// Pre-computed unit corner cosines and sines
+// Pointy-top: corners at -30°, 30°, 90°, 150°, 210°, 270°
+const POINTY_CORNER_COS = Array.from({ length: 6 }, (_, i) => {
   return Math.cos((Math.PI / 180) * (60 * i - 30));
 });
-const UNIT_CORNER_SIN = Array.from({ length: 6 }, (_, i) => {
+const POINTY_CORNER_SIN = Array.from({ length: 6 }, (_, i) => {
   return Math.sin((Math.PI / 180) * (60 * i - 30));
 });
+// Flat-top: corners at 0°, 60°, 120°, 180°, 240°, 300°
+const FLAT_CORNER_COS = Array.from({ length: 6 }, (_, i) => {
+  return Math.cos((Math.PI / 180) * (60 * i));
+});
+const FLAT_CORNER_SIN = Array.from({ length: 6 }, (_, i) => {
+  return Math.sin((Math.PI / 180) * (60 * i));
+});
+
+// Module-level orientation. All geometry functions read this so call sites need
+// no changes when the map's orientation is toggled. Set it via setHexOrientation
+// whenever the Redux store's currentMap.orientation changes.
+let _orientation: HexOrientation = 'pointy-top';
+
+export const setHexOrientation = (o: HexOrientation): void => {
+  _orientation = o;
+};
+
+export const getHexOrientation = (): HexOrientation => {
+  return _orientation;
+};
 
 export interface HexCoord {
   q: number;
@@ -71,17 +92,30 @@ export const hexLine = (q1: number, r1: number, q2: number, r2: number): HexCoor
   return results;
 };
 
-// Axial → pixel (pointy-top), returns { x, y } for the hex center
+// Axial → pixel, returns { x, y } for the hex center.
+// Uses the module-level orientation set by setHexOrientation().
 export const axialToPixel = (q: number, r: number, size = HEX_SIZE): PixelCoord => {
+  if (_orientation === 'flat-top') {
+    return {
+      x: size * (3 / 2) * q,
+      y: size * (SQRT3_OVER_2 * q + SQRT3 * r),
+    };
+  }
   return {
     x: size * (SQRT3 * q + SQRT3_OVER_2 * r),
     y: size * (3 / 2) * r,
   };
 };
 
-// Pixel → axial (pointy-top), returns { q, r } (fractional)
+// Pixel → axial, returns { q, r } rounded to nearest hex.
+// Uses the module-level orientation set by setHexOrientation().
 export const pixelToAxial = (x: number, y: number, size = HEX_SIZE): HexCoord => {
-  const q = ((Math.sqrt(3) / 3) * x - (1 / 3) * y) / size;
+  if (_orientation === 'flat-top') {
+    const q = ((2 / 3) * x) / size;
+    const r = ((-1 / 3) * x + (SQRT3 / 3) * y) / size;
+    return hexRound(q, r);
+  }
+  const q = ((SQRT3 / 3) * x - (1 / 3) * y) / size;
   const r = ((2 / 3) * y) / size;
   return hexRound(q, r);
 };
@@ -103,12 +137,15 @@ export const hexRound = (q: number, r: number): HexCoord => {
   return { q: rq, r: rr };
 };
 
-// Returns the 6 corner pixel positions for a pointy-top hex centered at (cx, cy)
+// Returns the 6 corner pixel positions for a hex centered at (cx, cy).
+// Uses the module-level orientation set by setHexOrientation().
 export const hexCorners = (cx: number, cy: number, size = HEX_SIZE): PixelCoord[] => {
+  const cosArr = _orientation === 'flat-top' ? FLAT_CORNER_COS : POINTY_CORNER_COS;
+  const sinArr = _orientation === 'flat-top' ? FLAT_CORNER_SIN : POINTY_CORNER_SIN;
   return Array.from({ length: 6 }, (_, i) => {
     return {
-      x: cx + size * UNIT_CORNER_COS[i],
-      y: cy + size * UNIT_CORNER_SIN[i],
+      x: cx + size * cosArr[i],
+      y: cy + size * sinArr[i],
     };
   });
 };

@@ -138,7 +138,12 @@ export const getFeatureAnchor = (
   // Canonical "first" corner: lower y (or lower x if y is equal).
   // This ordering is the same whether computed from tile A or tile B,
   // so both tiles agree on which physical point is the river/road anchor.
-  const firstIsA = cA.y < cB.y || (cA.y === cB.y && cA.x < cB.x);
+  // Use an epsilon for the y comparison: flat-top hexagons have horizontal
+  // edges where two corners share the same y, but Math.sin(60°) vs
+  // Math.sin(120°) differ by 1 ULP, causing opposite tiles to pick opposite
+  // corners when compared exactly.
+  const EPS = 1e-9;
+  const firstIsA = cA.y < cB.y - EPS || (Math.abs(cA.y - cB.y) <= EPS && cA.x < cB.x);
   const riverCorner = firstIsA ? cA : cB;
   const roadCorner = firstIsA ? cB : cA;
   const corner = feature === 'river' ? riverCorner : roadCorner;

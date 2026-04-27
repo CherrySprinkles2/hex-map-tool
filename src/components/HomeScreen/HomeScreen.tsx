@@ -570,7 +570,9 @@ const HomeScreen = (): React.ReactElement => {
     dispatch(importFactions(data?.factions ?? []));
     dispatch(importTerrainConfig(data?.terrainConfig ?? DEFAULT_TERRAIN_CONFIG));
     skipNextSyncLoad();
-    dispatch(loadMap({ id: map.id, name: map.name }));
+    dispatch(
+      loadMap({ id: map.id, name: map.name, orientation: data?.orientation ?? 'pointy-top' })
+    );
     dispatch(resetViewport());
     navigate(`/map/${slugify(map.name)}`);
   };
@@ -644,6 +646,7 @@ const HomeScreen = (): React.ReactElement => {
           factions: data.factions ?? [],
           terrainConfig: data.terrainConfig,
           thumbnail: data.thumbnail,
+          orientation: data.orientation ?? 'pointy-top',
         });
         refreshMaps();
         // Highlight the new card for 5 seconds

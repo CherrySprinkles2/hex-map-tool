@@ -288,6 +288,11 @@
       }
     }
   },
+  "orientation": {
+    "title": "Tile Orientation",
+    "pointyTop": "Pointy-top",
+    "flatTop": "Flat-top"
+  },
   "errorBoundary": {
     "title": "Something went wrong",
     "body": "An unexpected error occurred. Try reloading the page. If the problem persists, your map data may be corrupted.",

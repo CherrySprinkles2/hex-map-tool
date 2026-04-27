@@ -288,6 +288,11 @@
       }
     }
   },
+  "orientation": {
+    "title": "Ruudun suuntaus",
+    "pointyTop": "Kärki ylöspäin",
+    "flatTop": "Sivu ylöspäin"
+  },
   "errorBoundary": {
     "title": "Jokin meni pieleen",
     "body": "Odottamaton virhe tapahtui. Kokeile ladata sivu uudelleen. Jos ongelma jatkuu, karttadatasi saattaa olla vioittunut.",

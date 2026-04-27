@@ -1,4 +1,4 @@
-import type { Tile, Army, Faction, TerrainConfig } from './domain';
+import type { Tile, Army, Faction, TerrainConfig, HexOrientation } from './domain';
 
 export type TilesState = Record<string, Tile>;
 export type ArmiesState = Record<string, Army>;
@@ -30,4 +30,5 @@ export interface UiState {
 export interface CurrentMapState {
   id: string | null;
   name: string;
+  orientation: HexOrientation;
 }

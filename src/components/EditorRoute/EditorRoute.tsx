@@ -86,7 +86,9 @@ const EditorRoute = (): React.ReactElement | null => {
 
     const data = loadMapData(entry.id);
     // loadMap first so useLocalStorageSync null-mapId guard fires before any data imports
-    dispatch(loadMap({ id: entry.id, name: entry.name }));
+    dispatch(
+      loadMap({ id: entry.id, name: entry.name, orientation: data?.orientation ?? 'pointy-top' })
+    );
     skipNextSyncLoad();
     dispatch(importTiles(data?.tiles ?? {}));
     dispatch(importArmies(data?.armies ?? {}));

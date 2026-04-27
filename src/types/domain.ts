@@ -1,5 +1,7 @@
 export type TerrainType = string;
 
+export type HexOrientation = 'pointy-top' | 'flat-top';
+
 export type PatternKey =
   | 'grass'
   | 'farm'
@@ -82,6 +84,7 @@ export interface MapData {
   factions: Faction[];
   terrainConfig?: TerrainConfig;
   thumbnail?: string;
+  orientation?: HexOrientation;
 }
 
 export interface MapEnvelope {
