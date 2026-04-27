@@ -10,6 +10,7 @@ import {
   selectArmy,
   deselectArmy,
   setPlacingArmy,
+  startMovingArmy,
   stopMovingArmy,
   exitTerrainPaint,
 } from '../../features/ui/uiSlice';
@@ -22,6 +23,7 @@ import {
 import { addArmy, deleteArmy, moveArmy } from '../../features/armies/armiesSlice';
 import { getNeighbors, toKey, pixelToAxial, hexLine, axialToPixel } from '../../utils/hexUtils';
 import { inferTerrain } from '../../utils/inferTerrain';
+import { registerViewportAnimator, unregisterViewportAnimator } from '../../utils/viewportAnimator';
 import { theme } from '../../styles/theme';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../app/hooks';
 import useViewportCulling from '../../hooks/useViewportCulling';
@@ -124,10 +126,52 @@ const HexGrid = (): React.ReactElement => {
   const lastPinchDist = useRef<number | null>(null);
   const isPaintingRef = useRef(false);
   const lastPaintedPosRef = useRef<HexCoord | null>(null);
+  const animRafRef = useRef<number | null>(null);
 
   const commitViewport = useCallback(() => {
     dispatch(setViewport({ ...viewportRef.current }));
   }, [dispatch]);
+
+  useLayoutEffect(() => {
+    const scrollTo = (worldX: number, worldY: number) => {
+      if (animRafRef.current !== null) {
+        cancelAnimationFrame(animRafRef.current);
+        animRafRef.current = null;
+      }
+
+      const { x: startX, y: startY, scale } = viewportRef.current;
+      const targetX = -worldX * scale;
+      const targetY = -worldY * scale;
+      const duration = 500;
+      const startTime = performance.now();
+
+      const tick = (now: number) => {
+        const raw = Math.min((now - startTime) / duration, 1);
+        const t = raw < 0.5 ? 4 * raw * raw * raw : 1 - Math.pow(-2 * raw + 2, 3) / 2;
+
+        viewportRef.current = {
+          x: startX + (targetX - startX) * t,
+          y: startY + (targetY - startY) * t,
+          scale,
+        };
+        applyTransform();
+
+        if (raw < 1) {
+          animRafRef.current = requestAnimationFrame(tick);
+        } else {
+          animRafRef.current = null;
+          dispatch(setViewport({ x: targetX, y: targetY, scale }));
+        }
+      };
+
+      animRafRef.current = requestAnimationFrame(tick);
+    };
+
+    registerViewportAnimator(scrollTo);
+    return () => {
+      return unregisterViewportAnimator();
+    };
+  }, [applyTransform, dispatch]);
 
   // Converts a screen-space position to hex coords and paints that tile (and all
   // tiles on the straight hex line from the last painted position to here, so fast
@@ -237,6 +281,10 @@ const HexGrid = (): React.ReactElement => {
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
+    if (animRafRef.current !== null) {
+      cancelAnimationFrame(animRafRef.current);
+      animRafRef.current = null;
+    }
     dragging.current = true;
     lastPos.current = { x: e.clientX, y: e.clientY };
   }, []);
@@ -275,6 +323,10 @@ const HexGrid = (): React.ReactElement => {
   }, [dispatch, store]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (animRafRef.current !== null) {
+      cancelAnimationFrame(animRafRef.current);
+      animRafRef.current = null;
+    }
     if (e.touches.length === 1) {
       dragging.current = true;
       lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -482,9 +534,15 @@ const HexGrid = (): React.ReactElement => {
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (e.button !== 0) return;
       const ui = store.getState().ui;
-      if (ui.mapMode !== 'terrain-paint' && ui.mapMode !== 'faction') return;
-      isPaintingRef.current = true;
-      applyBrushAtScreenPos(e.clientX, e.clientY);
+      if (ui.mapMode === 'terrain-paint') {
+        if (!ui.activePaintBrush) return;
+        isPaintingRef.current = true;
+        applyBrushAtScreenPos(e.clientX, e.clientY);
+      } else if (ui.mapMode === 'faction') {
+        if (!ui.factionBrushActive) return;
+        isPaintingRef.current = true;
+        applyBrushAtScreenPos(e.clientX, e.clientY);
+      }
     },
     [store, applyBrushAtScreenPos]
   );
@@ -515,6 +573,47 @@ const HexGrid = (): React.ReactElement => {
       const hit = getHit(e.clientX, e.clientY);
       if (!hit) return;
 
+      if (ui.mapMode === 'army') {
+        if (hit.kind === 'army') {
+          if (ui.movingArmyId === hit.army.id) {
+            dispatch(stopMovingArmy());
+            dispatch(deselectArmy());
+          } else {
+            dispatch(selectArmy(hit.army.id));
+            dispatch(startMovingArmy(hit.army.id));
+          }
+          return;
+        }
+        if (hit.kind === 'tile') {
+          if (ui.movingArmyId) {
+            dispatch(moveArmy({ id: ui.movingArmyId, q: hit.q, r: hit.r }));
+            dispatch(stopMovingArmy());
+            dispatch(deselectArmy());
+            return;
+          }
+          const armyOnTile = Object.values(state.armies).find((a) => {
+            return a.q === hit.q && a.r === hit.r;
+          });
+          if (armyOnTile) {
+            dispatch(selectArmy(armyOnTile.id));
+            dispatch(startMovingArmy(armyOnTile.id));
+          }
+          return;
+        }
+        if (hit.kind === 'ghost') {
+          if (ui.movingArmyId) {
+            const terrain = inferTerrain(hit.q, hit.r, state.tiles);
+            dispatch(addTile({ q: hit.q, r: hit.r, terrain }));
+            dispatch(moveArmy({ id: ui.movingArmyId, q: hit.q, r: hit.r }));
+            dispatch(stopMovingArmy());
+            dispatch(deselectArmy());
+          }
+          return;
+        }
+        handleBackgroundClear();
+        return;
+      }
+
       if (hit.kind === 'army') {
         if (ui.selectedArmyId === hit.army.id) dispatch(deselectArmy());
         else dispatch(selectArmy(hit.army.id));
@@ -523,6 +622,7 @@ const HexGrid = (): React.ReactElement => {
 
       if (hit.kind === 'tile') {
         if (ui.mapMode === 'faction') {
+          if (!ui.factionBrushActive) return;
           dispatch(setTileFaction({ q: hit.q, r: hit.r, factionId: ui.activeFactionId }));
           return;
         }
@@ -560,6 +660,7 @@ const HexGrid = (): React.ReactElement => {
           return;
         }
         if (ui.mapMode === 'faction') {
+          if (!ui.factionBrushActive) return;
           dispatch(addTile({ q: hit.q, r: hit.r, terrain }));
           dispatch(setTileFaction({ q: hit.q, r: hit.r, factionId: ui.activeFactionId }));
           return;

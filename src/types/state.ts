@@ -5,7 +5,7 @@ export type ArmiesState = Record<string, Army>;
 export type FactionsState = Faction[];
 export type TerrainConfigState = TerrainConfig;
 
-export type MapMode = 'terrain' | 'faction' | 'terrain-paint';
+export type MapMode = 'terrain' | 'faction' | 'terrain-paint' | 'army';
 
 export interface ViewportState {
   x: number;
@@ -21,6 +21,7 @@ export interface UiState {
   mapMode: MapMode;
   factionsOpen: boolean;
   activeFactionId: string | null;
+  factionBrushActive: boolean;
   activePaintBrush: string | null;
   showShortcuts: boolean;
   editingTownTile: string | null;

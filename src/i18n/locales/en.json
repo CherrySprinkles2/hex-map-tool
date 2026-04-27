@@ -114,7 +114,17 @@
   },
   "mapModeToggle": {
     "terrain": "Terrain",
-    "faction": "Faction"
+    "faction": "Faction",
+    "army": "Army"
+  },
+  "armyEditPanel": {
+    "title": "Armies",
+    "empty": "No armies on this map.",
+    "unassigned": "Unassigned",
+    "scrollTo": "Go to",
+    "move": "Move",
+    "edit": "Edit",
+    "movingHint": "Click any tile on the map to move {{name}}."
   },
   "home": {
     "title": "Hex Map Tool",

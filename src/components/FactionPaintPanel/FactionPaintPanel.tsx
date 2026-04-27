@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { setActiveFaction, setMapMode } from '../../features/ui/uiSlice';
+import { setFactionBrush, setMapMode } from '../../features/ui/uiSlice';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { SidePanel } from '../shared/SidePanel';
 import { DragHandle } from '../shared/DragHandle';
@@ -104,6 +104,9 @@ const FactionPaintPanel = ({ suppressed }: FactionPaintPanelProps): React.ReactE
   const activeFactionId = useAppSelector((state) => {
     return state.ui.activeFactionId;
   });
+  const factionBrushActive = useAppSelector((state) => {
+    return state.ui.factionBrushActive;
+  });
   const mapMode = useAppSelector((state) => {
     return state.ui.mapMode;
   });
@@ -124,10 +127,10 @@ const FactionPaintPanel = ({ suppressed }: FactionPaintPanelProps): React.ReactE
       <Hint>{isTouchDevice ? t('factionPaintPanel.hintTouch') : t('factionPaintPanel.hint')}</Hint>
 
       <FactionBtn
-        $active={activeFactionId === null}
+        $active={factionBrushActive && activeFactionId === null}
         $color={null}
         onClick={() => {
-          return dispatch(setActiveFaction(null));
+          return dispatch(setFactionBrush(null));
         }}
       >
         <NoFactionDot />
@@ -153,10 +156,10 @@ const FactionPaintPanel = ({ suppressed }: FactionPaintPanelProps): React.ReactE
         return (
           <FactionBtn
             key={faction.id}
-            $active={activeFactionId === faction.id}
+            $active={factionBrushActive && activeFactionId === faction.id}
             $color={faction.color}
             onClick={() => {
-              return dispatch(setActiveFaction(faction.id));
+              return dispatch(setFactionBrush(faction.id));
             }}
           >
             <Swatch $color={faction.color} />

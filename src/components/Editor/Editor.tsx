@@ -4,6 +4,7 @@ import HexGrid from '../HexGrid/HexGrid';
 import TileEditPanel from '../TileEditPanel/TileEditPanel';
 import TownEditPanel from '../TownEditPanel/TownEditPanel';
 import ArmyPanel from '../ArmyPanel/ArmyPanel';
+import ArmyEditPanel from '../ArmyEditPanel/ArmyEditPanel';
 import Toolbar from '../Toolbar/Toolbar';
 import FactionsPanel from '../FactionsPanel/FactionsPanel';
 import FactionPaintPanel from '../FactionPaintPanel/FactionPaintPanel';
@@ -37,6 +38,7 @@ const Editor = (): React.ReactElement => {
     <AppShell>
       <Toolbar />
       <CanvasArea>
+        <ArmyEditPanel />
         <ArmyPanel />
         <HexGrid />
         <MapModeToggle />

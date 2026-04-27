@@ -722,7 +722,7 @@ const TileEditPanel = (): React.ReactElement => {
                     $active={activePaintBrush === id}
                     $color={color}
                     onClick={() => {
-                      return dispatch(setActivePaintBrush(id));
+                      return dispatch(setActivePaintBrush(activePaintBrush === id ? null : id));
                     }}
                   >
                     {TerrainIcon ? (
@@ -773,7 +773,9 @@ const TileEditPanel = (): React.ReactElement => {
                     $active={activePaintBrush === 'river-on'}
                     $color={theme.river.color}
                     onClick={() => {
-                      return dispatch(setActivePaintBrush('river-on'));
+                      return dispatch(
+                        setActivePaintBrush(activePaintBrush === 'river-on' ? null : 'river-on')
+                      );
                     }}
                   >
                     {t('tilePanel.riverAdd')}
@@ -782,7 +784,9 @@ const TileEditPanel = (): React.ReactElement => {
                     $active={activePaintBrush === 'river-off'}
                     $color={theme.textMuted}
                     onClick={() => {
-                      return dispatch(setActivePaintBrush('river-off'));
+                      return dispatch(
+                        setActivePaintBrush(activePaintBrush === 'river-off' ? null : 'river-off')
+                      );
                     }}
                   >
                     {t('tilePanel.riverRemove')}
@@ -807,7 +811,9 @@ const TileEditPanel = (): React.ReactElement => {
                     $active={activePaintBrush === 'road-on'}
                     $color={theme.road.color}
                     onClick={() => {
-                      return dispatch(setActivePaintBrush('road-on'));
+                      return dispatch(
+                        setActivePaintBrush(activePaintBrush === 'road-on' ? null : 'road-on')
+                      );
                     }}
                   >
                     {t('tilePanel.roadAdd')}
@@ -816,7 +822,9 @@ const TileEditPanel = (): React.ReactElement => {
                     $active={activePaintBrush === 'road-off'}
                     $color={theme.textMuted}
                     onClick={() => {
-                      return dispatch(setActivePaintBrush('road-off'));
+                      return dispatch(
+                        setActivePaintBrush(activePaintBrush === 'road-off' ? null : 'road-off')
+                      );
                     }}
                   >
                     {t('tilePanel.roadRemove')}
@@ -881,7 +889,7 @@ const TileEditPanel = (): React.ReactElement => {
                   data-testid="paint-terrain-btn"
                   style={{ marginTop: '10px' }}
                   onClick={() => {
-                    return dispatch(enterTerrainPaint(tile?.terrain ?? null));
+                    return dispatch(enterTerrainPaint(null));
                   }}
                 >
                   <BrushIcon {...BTN_ICON_PROPS} />

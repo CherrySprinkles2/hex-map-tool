@@ -114,7 +114,17 @@
   },
   "mapModeToggle": {
     "terrain": "Maasto",
-    "faction": "Ryhmittymä"
+    "faction": "Ryhmittymä",
+    "army": "Armeijat"
+  },
+  "armyEditPanel": {
+    "title": "Armeijat",
+    "empty": "Kartalla ei ole armeijoja.",
+    "unassigned": "Ei ryhmittymää",
+    "scrollTo": "Mene",
+    "move": "Siirrä",
+    "edit": "Muokkaa",
+    "movingHint": "Napauta mitä tahansa ruutua siirtääksesi {{name}}."
   },
   "home": {
     "title": "Hex Map Tool",

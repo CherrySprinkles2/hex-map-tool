@@ -9,6 +9,7 @@ const initialState: UiState = {
   factionsOpen: false,
   mapMode: 'terrain',
   activeFactionId: null,
+  factionBrushActive: false,
   showShortcuts: false,
   activePaintBrush: null,
   editingTownTile: null,
@@ -68,10 +69,28 @@ const uiSlice = createSlice({
       state.mapMode = action.payload;
       if (action.payload === 'faction') {
         state.factionsOpen = false;
+        state.factionBrushActive = false;
+      } else {
+        state.factionBrushActive = false;
+      }
+      if (action.payload === 'army') {
+        state.selectedTile = null;
+        state.selectedArmyId = null;
+        state.movingArmyId = null;
+        state.editingTownTile = null;
+        state.activePaintBrush = null;
       }
     },
     setActiveFaction: (state, action: PayloadAction<string | null>) => {
       state.activeFactionId = action.payload;
+    },
+    setFactionBrush: (state, action: PayloadAction<string | null>) => {
+      if (state.factionBrushActive && state.activeFactionId === action.payload) {
+        state.factionBrushActive = false;
+      } else {
+        state.activeFactionId = action.payload;
+        state.factionBrushActive = true;
+      }
     },
     enterTerrainPaint: (state, action: PayloadAction<string | null>) => {
       state.mapMode = 'terrain-paint';
@@ -111,6 +130,7 @@ export const {
   closeFactionsPanel,
   setMapMode,
   setActiveFaction,
+  setFactionBrush,
   enterTerrainPaint,
   exitTerrainPaint,
   setActivePaintBrush,

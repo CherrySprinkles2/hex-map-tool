@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { setMapMode } from '../../features/ui/uiSlice';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { MapIcon, FlagIcon } from '../../assets/icons/ui';
+import { MapIcon, FlagIcon, SwordsIcon } from '../../assets/icons/ui';
 
 const PANEL_OFFSET = '300px';
 
@@ -96,6 +96,15 @@ const MapModeToggle = (): React.ReactElement => {
       >
         <FlagIcon aria-hidden />
         {t('mapModeToggle.faction')}
+      </ModeBtn>
+      <ModeBtn
+        $active={mapMode === 'army'}
+        onClick={() => {
+          return dispatch(setMapMode('army'));
+        }}
+      >
+        <SwordsIcon aria-hidden />
+        {t('mapModeToggle.army')}
       </ModeBtn>
     </Toggle>
   );
