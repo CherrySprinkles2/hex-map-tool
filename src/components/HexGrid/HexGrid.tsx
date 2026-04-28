@@ -511,6 +511,17 @@ const HexGrid = (): React.ReactElement => {
       tileExists: (q: number, r: number): boolean => {
         return !!store.getState().tiles[toKey(q, r)];
       },
+      getArmies: (): Record<
+        string,
+        { id: string; q: number; r: number; name: string; factionId: string | null }
+      > => {
+        const armies = store.getState().armies;
+        return Object.fromEntries(
+          Object.entries(armies).map(([k, v]) => {
+            return [k, { id: v.id, q: v.q, r: v.r, name: v.name, factionId: v.factionId }];
+          })
+        );
+      },
     };
     return () => {
       delete (window as unknown as { __hexMapTest?: unknown }).__hexMapTest;

@@ -11,6 +11,10 @@ interface TestBridge {
   firstGhostKey: () => string | null;
   getTileKeys: () => string[];
   tileExists: (q: number, r: number) => boolean;
+  getArmies: () => Record<
+    string,
+    { id: string; q: number; r: number; name: string; factionId: string | null }
+  >;
 }
 
 const bridge = async (page: Page): Promise<void> => {
@@ -107,6 +111,17 @@ export class EditorPage {
     return this.page.evaluate(() => {
       const t = (window as unknown as { __hexMapTest: TestBridge }).__hexMapTest;
       return t.getTileKeys().length;
+    });
+  }
+
+  /** Return all armies in the current map from the Redux store. */
+  async getArmies(): Promise<
+    Record<string, { id: string; q: number; r: number; name: string; factionId: string | null }>
+  > {
+    await bridge(this.page);
+    return this.page.evaluate(() => {
+      const t = (window as unknown as { __hexMapTest: TestBridge }).__hexMapTest;
+      return t.getArmies();
     });
   }
 

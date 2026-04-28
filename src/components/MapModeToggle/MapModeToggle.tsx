@@ -81,6 +81,7 @@ const MapModeToggle = (): React.ReactElement => {
     <Toggle>
       <ModeBtn
         $active={mapMode === 'terrain'}
+        data-testid="map-mode-terrain"
         onClick={() => {
           return dispatch(setMapMode('terrain'));
         }}
@@ -90,6 +91,7 @@ const MapModeToggle = (): React.ReactElement => {
       </ModeBtn>
       <ModeBtn
         $active={mapMode === 'faction'}
+        data-testid="map-mode-faction"
         onClick={() => {
           return dispatch(setMapMode('faction'));
         }}
@@ -99,6 +101,7 @@ const MapModeToggle = (): React.ReactElement => {
       </ModeBtn>
       <ModeBtn
         $active={mapMode === 'army'}
+        data-testid="map-mode-army"
         onClick={() => {
           return dispatch(setMapMode('army'));
         }}

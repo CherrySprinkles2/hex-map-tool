@@ -264,7 +264,7 @@ const ArmyEditPanel = (): React.ReactElement => {
   );
 
   return (
-    <SidePanel $open={mapMode === 'army'} $desktopSlide $gap="12px">
+    <SidePanel data-testid="army-edit-panel" $open={mapMode === 'army'} $desktopSlide $gap="12px">
       <DragHandle $margin="0 auto -4px" />
       <PanelHeader
         title={t('armyEditPanel.title')}
@@ -273,15 +273,19 @@ const ArmyEditPanel = (): React.ReactElement => {
       />
 
       {movingArmyId && (
-        <MovingHint>{t('armyEditPanel.movingHint', { name: movingArmyName })}</MovingHint>
+        <MovingHint data-testid="army-edit-moving-hint">
+          {t('armyEditPanel.movingHint', { name: movingArmyName })}
+        </MovingHint>
       )}
 
-      {totalArmies === 0 && <EmptyState>{t('armyEditPanel.empty')}</EmptyState>}
+      {totalArmies === 0 && (
+        <EmptyState data-testid="army-edit-empty">{t('armyEditPanel.empty')}</EmptyState>
+      )}
 
       {groups.map((group) => {
         return (
           <GroupSection key={group.factionId ?? '__unassigned__'}>
-            <GroupHeader>
+            <GroupHeader data-testid={`army-edit-group-${group.factionId ?? 'unassigned'}`}>
               {group.factionColor ? <Swatch $color={group.factionColor} /> : <UnassignedDot />}
               {group.factionId ? group.factionName : t('armyEditPanel.unassigned')}
             </GroupHeader>
@@ -292,6 +296,7 @@ const ArmyEditPanel = (): React.ReactElement => {
                   <ArmyName>{army.name}</ArmyName>
                   <ButtonRow>
                     <TextBtn
+                      data-testid={`army-edit-goto-${army.id}`}
                       aria-label={t('armyEditPanel.scrollTo')}
                       onClick={() => {
                         return handleScrollTo(army.q, army.r);
@@ -300,6 +305,7 @@ const ArmyEditPanel = (): React.ReactElement => {
                       {t('armyEditPanel.scrollTo')}
                     </TextBtn>
                     <TextBtn
+                      data-testid={`army-edit-move-${army.id}`}
                       aria-label={t('armyEditPanel.move')}
                       onClick={() => {
                         return handleMove(army.id);
@@ -308,6 +314,7 @@ const ArmyEditPanel = (): React.ReactElement => {
                       {t('armyEditPanel.move')}
                     </TextBtn>
                     <TextBtn
+                      data-testid={`army-edit-edit-${army.id}`}
                       aria-label={t('armyEditPanel.edit')}
                       onClick={() => {
                         return handleEdit(army.id);
