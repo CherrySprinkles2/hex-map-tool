@@ -8,6 +8,10 @@ import { DragHandle } from '../shared/DragHandle';
 import { PanelHeader } from '../shared/PanelHeader';
 import { SectionLabel } from '../shared/SectionLabel';
 import { StyledTextarea } from '../shared/StyledTextarea';
+import { StyledInput } from '../shared/StyledInput';
+import { ButtonGroup } from '../shared/ButtonGroup';
+import { DangerButton } from '../shared/DangerButton';
+import { ConfirmModal } from '../shared/ConfirmModal';
 import { SwordsIcon, MoveArrowIcon, CloseIcon, TrashIcon } from '../../assets/icons/ui';
 import styled from 'styled-components';
 
@@ -20,47 +24,10 @@ const BTN_ICON_PROPS = {
 
 // ── Styled components ──────────────────────────────────────────────────────────
 
-const NameInput = styled.input`
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 2px solid
-    ${({ theme }) => {
-      return theme.surface.border;
-    }};
-  background: ${({ theme }) => {
-    return theme.surface.card;
-  }};
-  color: ${({ theme }) => {
-    return theme.text;
-  }};
-  font-size: 0.9rem;
-  box-sizing: border-box;
-  outline: none;
-  transition: border-color 0.15s;
-
-  &:focus {
-    border-color: ${({ theme }) => {
-      return theme.surface.borderFocus;
-    }};
-  }
-
-  &::placeholder {
-    color: ${({ theme }) => {
-      return theme.textMuted;
-    }};
-  }
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
 const MoveBtn = styled.button<{ $active: boolean }>`
   position: relative;
   padding: 10px;
-  border-radius: 8px 8px 0 0;
+  border-radius: 0;
   border: 2px solid
     ${({ $active, theme }) => {
       return $active ? theme.army.movingColor : theme.surface.borderMedium;
@@ -85,32 +52,6 @@ const MoveBtn = styled.button<{ $active: boolean }>`
     background: ${({ $active, theme }) => {
       return $active ? `${theme.army.movingColor}40` : theme.surface.hover;
     }};
-  }
-`;
-
-const DeleteBtn = styled.button`
-  position: relative;
-  margin-top: -2px;
-  padding: 10px;
-  border-radius: 0 0 8px 8px;
-  border: 2px solid
-    ${({ theme }) => {
-      return theme.accent;
-    }};
-  background: transparent;
-  color: ${({ theme }) => {
-    return theme.accent;
-  }};
-  cursor: pointer;
-  font-size: 0.85rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  transition: background 0.15s;
-  &:hover {
-    z-index: 1;
-    background: ${({ theme }) => {
-      return theme.accent;
-    }}22;
   }
 `;
 
@@ -343,6 +284,7 @@ const ArmyPanel = (): React.ReactElement => {
   const [localName, setLocalName] = useState('');
   const [localComposition, setLocalComposition] = useState('');
   const [localNotes, setLocalNotes] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (army) {
@@ -403,11 +345,15 @@ const ArmyPanel = (): React.ReactElement => {
 
   const handleDelete = useCallback(() => {
     if (!army) return;
-    const hasContent = localComposition.trim().length > 0 || localNotes.trim().length > 0;
-    if (hasContent && !window.confirm(t('armyPanel.deleteConfirm'))) return;
+    setShowDeleteConfirm(true);
+  }, [army]);
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (!army) return;
+    setShowDeleteConfirm(false);
     dispatch(deleteArmy(army.id));
     dispatch(deselectArmy());
-  }, [army, localComposition, localNotes, t, dispatch]);
+  }, [army, dispatch]);
 
   const handleClose = useCallback(() => {
     if (isMoving) dispatch(stopMovingArmy());
@@ -422,90 +368,103 @@ const ArmyPanel = (): React.ReactElement => {
   ];
 
   return (
-    <SidePanel $open={isOpen} $gap="20px">
-      <DragHandle $margin="0 auto -8px" />
-      <PanelHeader
-        title={t('armyPanel.title')}
-        icon={<SwordsIcon aria-hidden />}
-        onClose={handleClose}
+    <>
+      <ConfirmModal
+        open={showDeleteConfirm}
+        title={t('armyPanel.deleteArmy')}
+        message={t('armyPanel.deleteConfirm')}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => {
+          return setShowDeleteConfirm(false);
+        }}
       />
+      <SidePanel $open={isOpen} $gap="20px">
+        <DragHandle $margin="0 auto -8px" />
+        <PanelHeader
+          title={t('armyPanel.title')}
+          icon={<SwordsIcon aria-hidden />}
+          onClose={handleClose}
+        />
 
-      {army && (
-        <>
-          <div>
-            <SectionLabel>{t('armyPanel.name')}</SectionLabel>
-            <NameInput
-              data-testid="army-name-input"
-              value={localName}
-              onChange={(e) => {
-                return setLocalName(e.target.value);
-              }}
-              onBlur={handleNameBlur}
-              onKeyDown={handleNameKeyDown}
-              placeholder={t('armyPanel.namePlaceholder')}
-              maxLength={40}
-            />
-          </div>
-
-          {factions.length > 0 && (
+        {army && (
+          <>
             <div>
-              <SectionLabel>{t('armyPanel.faction')}</SectionLabel>
-              <FactionDropdown
-                value={army.factionId ?? ''}
-                options={factionOptions}
-                onChange={handleFactionChange}
+              <SectionLabel>{t('armyPanel.name')}</SectionLabel>
+              <StyledInput
+                data-testid="army-name-input"
+                value={localName}
+                onChange={(e) => {
+                  return setLocalName(e.target.value);
+                }}
+                onBlur={handleNameBlur}
+                onKeyDown={handleNameKeyDown}
+                placeholder={t('armyPanel.namePlaceholder')}
+                maxLength={40}
               />
             </div>
-          )}
 
-          <ButtonGroup>
-            <MoveBtn data-testid="move-army-btn" $active={isMoving} onClick={handleMoveToggle}>
-              {isMoving ? (
-                <>
-                  <CloseIcon {...BTN_ICON_PROPS} />
-                  {t('armyPanel.cancelMove')}
-                </>
-              ) : (
-                <>
-                  <MoveArrowIcon {...BTN_ICON_PROPS} />
-                  {t('armyPanel.moveArmy')}
-                </>
-              )}
-            </MoveBtn>
-            <DeleteBtn data-testid="delete-army-btn" onClick={handleDelete}>
-              <TrashIcon {...BTN_ICON_PROPS} />
-              {t('armyPanel.deleteArmy')}
-            </DeleteBtn>
-          </ButtonGroup>
+            {factions.length > 0 && (
+              <div>
+                <SectionLabel>{t('armyPanel.faction')}</SectionLabel>
+                <FactionDropdown
+                  value={army.factionId ?? ''}
+                  options={factionOptions}
+                  onChange={handleFactionChange}
+                />
+              </div>
+            )}
 
-          {isMoving && <Hint>{t('armyPanel.moveHint')}</Hint>}
+            <ButtonGroup>
+              <MoveBtn data-testid="move-army-btn" $active={isMoving} onClick={handleMoveToggle}>
+                {isMoving ? (
+                  <>
+                    <CloseIcon {...BTN_ICON_PROPS} />
+                    {t('armyPanel.cancelMove')}
+                  </>
+                ) : (
+                  <>
+                    <MoveArrowIcon {...BTN_ICON_PROPS} />
+                    {t('armyPanel.moveArmy')}
+                  </>
+                )}
+              </MoveBtn>
+              <DangerButton data-testid="delete-army-btn" onClick={handleDelete}>
+                <TrashIcon {...BTN_ICON_PROPS} />
+                {t('armyPanel.deleteArmy')}
+              </DangerButton>
+            </ButtonGroup>
 
-          <div>
-            <SectionLabel>{t('armyPanel.composition')}</SectionLabel>
-            <StyledTextarea
-              value={localComposition}
-              onChange={(e) => {
-                return setLocalComposition(e.target.value);
-              }}
-              onBlur={handleCompositionBlur}
-              placeholder={t('armyPanel.compositionPlaceholder')}
-            />
-          </div>
+            {isMoving && <Hint>{t('armyPanel.moveHint')}</Hint>}
 
-          <div>
-            <SectionLabel>{t('armyPanel.notes')}</SectionLabel>
-            <StyledTextarea
-              value={localNotes}
-              onChange={(e) => {
-                return setLocalNotes(e.target.value);
-              }}
-              onBlur={handleNotesBlur}
-              placeholder={t('armyPanel.notesPlaceholder')}
-            />
-          </div>
-        </>
-      )}
-    </SidePanel>
+            <div>
+              <SectionLabel>{t('armyPanel.composition')}</SectionLabel>
+              <StyledTextarea
+                value={localComposition}
+                onChange={(e) => {
+                  return setLocalComposition(e.target.value);
+                }}
+                onBlur={handleCompositionBlur}
+                placeholder={t('armyPanel.compositionPlaceholder')}
+              />
+            </div>
+
+            <div>
+              <SectionLabel>{t('armyPanel.notes')}</SectionLabel>
+              <StyledTextarea
+                value={localNotes}
+                onChange={(e) => {
+                  return setLocalNotes(e.target.value);
+                }}
+                onBlur={handleNotesBlur}
+                placeholder={t('armyPanel.notesPlaceholder')}
+              />
+            </div>
+          </>
+        )}
+      </SidePanel>
+    </>
   );
 };
 

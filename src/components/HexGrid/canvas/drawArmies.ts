@@ -3,7 +3,8 @@
 //   - circle background
 //   - land or naval icon (drawn from src/assets/army/*.svg at 85% opacity)
 //   - faction dot in the lower-right
-//   - optional haloed name below
+//   - dashed garrison ring when insideTown is true
+//   - name label below (only when this is the sole army on the tile)
 //
 // Icon appearance comes from src/assets/army/{land,naval}.svg — edit those
 // files directly. Naval is used when the tile's terrain is deep water.
@@ -23,8 +24,6 @@ interface DrawArmiesArgs {
   armiesByTile: Record<string, Army[]>;
   factionColorMap: Record<string, string>;
   theme: AppTheme;
-  selectedArmyId: string | null;
-  movingArmyId: string | null;
 }
 
 const ARMY_SVG_SIZE = 24;
@@ -36,8 +35,6 @@ export const drawArmies = ({
   armiesByTile,
   factionColorMap,
   theme,
-  selectedArmyId,
-  movingArmyId,
 }: DrawArmiesArgs): void => {
   const armyCfg = theme.army;
   const iconSize = armyCfg.tokenRadius * 1.1;
@@ -46,10 +43,7 @@ export const drawArmies = ({
     const tileArmies = armiesByTile[tileKey];
     if (!tileArmies || tileArmies.length === 0) return;
 
-    // Skip armies inside town tiles — the kite shield stands in for them.
     const tile = tiles[tileKey];
-    if (tile?.hasTown) return;
-
     const terrain = tile?.terrain ?? 'grass';
     const isNaval = DEEP_WATER.has(terrain);
     const iconCanvas = getSvgCanvas(isNaval ? navalUrl : landUrl, ARMY_SVG_SIZE, ARMY_SVG_SIZE);
@@ -62,19 +56,27 @@ export const drawArmies = ({
       const cx = baseX + offsetX;
       const cy = baseY - 8;
 
-      const isSelected = army.id === selectedArmyId;
-      const isMoving = army.id === movingArmyId;
-      const activeColor = isMoving ? armyCfg.movingColor : armyCfg.selectedColor;
-      const strokeColor = isSelected || isMoving ? activeColor : armyCfg.tokenStroke;
-
       // Token
       ctx.beginPath();
       ctx.arc(cx, cy, armyCfg.tokenRadius, 0, Math.PI * 2);
       ctx.fillStyle = armyCfg.tokenFill;
       ctx.fill();
-      ctx.strokeStyle = strokeColor;
+      ctx.strokeStyle = armyCfg.tokenStroke;
       ctx.lineWidth = 1.5;
       ctx.stroke();
+
+      // Dashed garrison ring for armies inside a town
+      if (army.insideTown && tile?.hasTown) {
+        ctx.save();
+        ctx.strokeStyle = theme.garrison.borderColor;
+        ctx.lineWidth = theme.garrison.borderWidth;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        ctx.arc(cx, cy, armyCfg.tokenRadius + 3, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
 
       // Icon (drawn from the SVG at 85% opacity)
       if (iconCanvas) {
@@ -101,8 +103,8 @@ export const drawArmies = ({
         }
       }
 
-      // Label
-      if (army.name) {
+      // Name label only for the lone army on a tile
+      if (tileArmies.length === 1 && army.name) {
         const labelY = cy + armyCfg.tokenRadius + 14;
         ctx.font = '9px sans-serif';
         ctx.textAlign = 'center';

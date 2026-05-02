@@ -35,6 +35,7 @@
     "notes": "Muistiinpanot",
     "armies": "Armeijat tällä ruudulla",
     "addArmy": "Lisää armeija ruudulle",
+    "arrangeArmies": "Järjestä armeijat",
     "deleteTile": "Poista ruutu",
     "paintTerrain": "Maalaa maasto",
     "paintMode": "Maalausmoodi",
@@ -85,7 +86,13 @@
     "description": "Kuvaus",
     "descriptionPlaceholder": "Muistiinpanoja tästä ryhmittymästä…",
     "addFaction": "＋ Lisää ryhmittymä",
-    "noFactions": "Ei ryhmittymiä. Lisää yksi alta."
+    "noFactions": "Ei ryhmittymiä. Lisää yksi alta.",
+    "deleteFaction": "Poista ryhmittymä",
+    "deleteConfirm": "Poistetaanko tämä ryhmittymä? Toimintoa ei voi kumota."
+  },
+  "common": {
+    "cancel": "Peruuta",
+    "delete": "Poista"
   },
   "armyPanel": {
     "title": "Armeija",
@@ -141,6 +148,7 @@
     "edited": "Muokattu {{time}}",
     "copyOf": "Kopio: {{name}}",
     "imported": "Tuotu",
+    "deleteMap": "Poista kartta",
     "deleteConfirm": "Poistetaanko tämä kartta? Toimintoa ei voi kumota.",
     "justNow": "Juuri nyt",
     "minutesAgo": "{{n}} min sitten",

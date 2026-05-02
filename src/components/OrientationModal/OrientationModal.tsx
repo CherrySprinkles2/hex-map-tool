@@ -3,58 +3,8 @@ import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { setOrientation } from '../../features/currentMap/currentMapSlice';
-import { ModalCard, ModalTitle } from '../shared/modal';
+import { ModalBackdrop, ModalCard, ModalTitle, ModalOptionButton } from '../shared/modal';
 import type { HexOrientation } from '../../types/domain';
-
-const ModalBackdrop = styled.div<{ $open: boolean }>`
-  display: ${({ $open }) => {
-    return $open ? 'flex' : 'none';
-  }};
-  position: fixed;
-  inset: 0;
-  z-index: ${({ theme }) => {
-    return theme.zIndex.langModal;
-  }};
-  align-items: center;
-  justify-content: center;
-  background: ${({ theme }) => {
-    return theme.surface.overlayHeavy;
-  }};
-`;
-
-const OptionBtn = styled.button<{ $active: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 2px solid
-    ${({ $active, theme }) => {
-      return $active ? theme.textMuted : 'transparent';
-    }};
-  background: ${({ $active, theme }) => {
-    return $active ? theme.surface.hoverWeak : theme.surface.base;
-  }};
-  color: ${({ theme }) => {
-    return theme.text;
-  }};
-  font-size: 0.9rem;
-  font-weight: ${({ $active }) => {
-    return $active ? '600' : '400';
-  }};
-  cursor: pointer;
-  text-align: left;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
-
-  &:hover {
-    background: ${({ theme }) => {
-      return theme.surface.hover;
-    }};
-  }
-`;
 
 const HexPreview = styled.svg`
   flex-shrink: 0;
@@ -67,12 +17,17 @@ interface OrientationModalProps {
   onClose: () => void;
 }
 
-export const OrientationModal = ({ open, onClose }: OrientationModalProps): React.ReactElement => {
+export const OrientationModal = ({
+  open,
+  onClose,
+}: OrientationModalProps): React.ReactElement | null => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const current = useAppSelector((state) => {
     return state.currentMap.orientation ?? 'pointy-top';
   });
+
+  if (!open) return null;
 
   const select = (o: HexOrientation) => {
     dispatch(setOrientation(o));
@@ -80,14 +35,14 @@ export const OrientationModal = ({ open, onClose }: OrientationModalProps): Reac
   };
 
   return (
-    <ModalBackdrop $open={open} onClick={onClose}>
+    <ModalBackdrop onClick={onClose}>
       <ModalCard
         onClick={(e) => {
           return e.stopPropagation();
         }}
       >
         <ModalTitle>{t('orientation.title')}</ModalTitle>
-        <OptionBtn
+        <ModalOptionButton
           $active={current === 'pointy-top'}
           onClick={() => {
             return select('pointy-top');
@@ -103,8 +58,8 @@ export const OrientationModal = ({ open, onClose }: OrientationModalProps): Reac
             />
           </HexPreview>
           {t('orientation.pointyTop')}
-        </OptionBtn>
-        <OptionBtn
+        </ModalOptionButton>
+        <ModalOptionButton
           $active={current === 'flat-top'}
           onClick={() => {
             return select('flat-top');
@@ -120,7 +75,7 @@ export const OrientationModal = ({ open, onClose }: OrientationModalProps): Reac
             />
           </HexPreview>
           {t('orientation.flatTop')}
-        </OptionBtn>
+        </ModalOptionButton>
       </ModalCard>
     </ModalBackdrop>
   );

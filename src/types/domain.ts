@@ -62,6 +62,9 @@ export interface Army {
   composition: string;
   notes?: string;
   factionId: string | null;
+  subTileX?: number;
+  subTileY?: number;
+  insideTown?: boolean;
 }
 
 export interface Faction {

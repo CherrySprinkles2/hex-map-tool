@@ -9,6 +9,7 @@ import { SidePanel } from '../shared/SidePanel';
 import { DragHandle } from '../shared/DragHandle';
 import { PanelHeader } from '../shared/PanelHeader';
 import { SectionLabel } from '../shared/SectionLabel';
+import { ConfirmModal } from '../shared/ConfirmModal';
 import { CloseIcon, FlagIcon } from '../../assets/icons/ui';
 
 const FactionList = styled.div`
@@ -185,6 +186,7 @@ const FactionItem = ({ faction }: FactionItemProps): React.ReactElement => {
   const { t } = useTranslation();
   const [localName, setLocalName] = useState(faction.name);
   const [localDesc, setLocalDesc] = useState(faction.description);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const commitName = useCallback(() => {
     const trimmed = localName.trim() || 'New Faction';
@@ -197,63 +199,79 @@ const FactionItem = ({ faction }: FactionItemProps): React.ReactElement => {
   }, [dispatch, faction.id, localDesc]);
 
   return (
-    <FactionCard $color={faction.color}>
-      <CardRow>
-        <NameInput
-          data-testid={`faction-name-${faction.id}`}
-          value={localName}
-          onChange={(e) => {
-            return setLocalName(e.target.value);
-          }}
-          onBlur={commitName}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-          }}
-          maxLength={48}
-        />
-        <DeleteBtn
-          data-testid={`faction-delete-${faction.id}`}
-          onClick={() => {
-            return dispatch(deleteFaction(faction.id));
-          }}
-          title="Delete faction"
-        >
-          <CloseIcon width="1em" height="1em" aria-hidden />
-        </DeleteBtn>
-      </CardRow>
+    <>
+      <ConfirmModal
+        open={showConfirm}
+        title={t('factionsPanel.deleteFaction')}
+        message={t('factionsPanel.deleteConfirm')}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={() => {
+          dispatch(deleteFaction(faction.id));
+          setShowConfirm(false);
+        }}
+        onCancel={() => {
+          return setShowConfirm(false);
+        }}
+      />
+      <FactionCard $color={faction.color}>
+        <CardRow>
+          <NameInput
+            data-testid={`faction-name-${faction.id}`}
+            value={localName}
+            onChange={(e) => {
+              return setLocalName(e.target.value);
+            }}
+            onBlur={commitName}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+            }}
+            maxLength={48}
+          />
+          <DeleteBtn
+            data-testid={`faction-delete-${faction.id}`}
+            onClick={() => {
+              return setShowConfirm(true);
+            }}
+            title={t('factionsPanel.deleteFaction')}
+          >
+            <CloseIcon width="1em" height="1em" aria-hidden />
+          </DeleteBtn>
+        </CardRow>
 
-      <div>
-        <SectionLabel>{t('factionsPanel.colour')}</SectionLabel>
-        <SwatchRow>
-          {theme.factionColors.map((c) => {
-            return (
-              <Swatch
-                key={c}
-                $color={c}
-                $active={faction.color === c}
-                onClick={() => {
-                  return dispatch(updateFaction({ id: faction.id, color: c }));
-                }}
-                title={c}
-              />
-            );
-          })}
-        </SwatchRow>
-      </div>
+        <div>
+          <SectionLabel>{t('factionsPanel.colour')}</SectionLabel>
+          <SwatchRow>
+            {theme.factionColors.map((c) => {
+              return (
+                <Swatch
+                  key={c}
+                  $color={c}
+                  $active={faction.color === c}
+                  onClick={() => {
+                    return dispatch(updateFaction({ id: faction.id, color: c }));
+                  }}
+                  title={c}
+                />
+              );
+            })}
+          </SwatchRow>
+        </div>
 
-      <div>
-        <SectionLabel>{t('factionsPanel.description')}</SectionLabel>
-        <DescInput
-          value={localDesc}
-          onChange={(e) => {
-            return setLocalDesc(e.target.value);
-          }}
-          onBlur={commitDesc}
-          placeholder={t('factionsPanel.descriptionPlaceholder')}
-          maxLength={500}
-        />
-      </div>
-    </FactionCard>
+        <div>
+          <SectionLabel>{t('factionsPanel.description')}</SectionLabel>
+          <DescInput
+            value={localDesc}
+            onChange={(e) => {
+              return setLocalDesc(e.target.value);
+            }}
+            onBlur={commitDesc}
+            placeholder={t('factionsPanel.descriptionPlaceholder')}
+            maxLength={500}
+          />
+        </div>
+      </FactionCard>
+    </>
   );
 };
 

@@ -68,6 +68,15 @@ const HexGrid = (): React.ReactElement => {
   const mapMode = useAppSelector((state) => {
     return state.ui.mapMode;
   });
+  const movingArmyId = useAppSelector((state) => {
+    return state.ui.movingArmyId;
+  });
+  const activePaintBrush = useAppSelector((state) => {
+    return state.ui.activePaintBrush;
+  });
+  const factionBrushActive = useAppSelector((state) => {
+    return state.ui.factionBrushActive;
+  });
 
   const viewportRef = useRef<ViewportState>({ x: 0, y: 0, scale: 1 });
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -567,8 +576,13 @@ const HexGrid = (): React.ReactElement => {
       if (!hit) return;
       if (hit.kind === 'tile' || hit.kind === 'ghost') {
         rendererRef.current?.setHoveredKey(hit.key);
+        rendererRef.current?.setHoveredArmyId(null);
+      } else if (hit.kind === 'army') {
+        rendererRef.current?.setHoveredKey(null);
+        rendererRef.current?.setHoveredArmyId(hit.army.id);
       } else {
         rendererRef.current?.setHoveredKey(null);
+        rendererRef.current?.setHoveredArmyId(null);
       }
     },
     [getHit]
@@ -576,6 +590,7 @@ const HexGrid = (): React.ReactElement => {
 
   const handleCanvasPointerLeave = useCallback(() => {
     rendererRef.current?.setHoveredKey(null);
+    rendererRef.current?.setHoveredArmyId(null);
   }, []);
 
   const handleCanvasClick = useCallback(
@@ -718,8 +733,11 @@ const HexGrid = (): React.ReactElement => {
         ref={interactionLayerRef}
         style={{
           cursor:
-            placingArmy || mapMode === 'terrain-paint' || mapMode === 'faction'
-              ? 'crosshair'
+            placingArmy ||
+            movingArmyId !== null ||
+            (mapMode === 'terrain-paint' && activePaintBrush !== null) ||
+            (mapMode === 'faction' && factionBrushActive)
+              ? 'pointer'
               : undefined,
         }}
         onWheel={handleWheel}

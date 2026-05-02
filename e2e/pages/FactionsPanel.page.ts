@@ -39,10 +39,11 @@ export class FactionsPanelPage {
     await input.press('Enter');
   }
 
-  /** Delete the nth faction (0-based). */
+  /** Delete the nth faction (0-based). Handles the confirm modal. */
   async deleteFaction(index: number): Promise<void> {
     const btns = this.page.locator('[data-testid^="faction-delete-"]');
     await btns.nth(index).click();
+    await this.page.getByTestId('confirm-modal-confirm-btn').click();
   }
 
   async factionCount(): Promise<number> {

@@ -35,6 +35,7 @@
     "notes": "Notes",
     "armies": "Armies on this tile",
     "addArmy": "Add Army to Tile",
+    "arrangeArmies": "Arrange Armies",
     "deleteTile": "Delete Tile",
     "paintTerrain": "Paint Mode",
     "paintMode": "Paint Mode",
@@ -85,7 +86,13 @@
     "description": "Description",
     "descriptionPlaceholder": "Notes about this faction…",
     "addFaction": "＋ Add Faction",
-    "noFactions": "No factions yet. Add one below."
+    "noFactions": "No factions yet. Add one below.",
+    "deleteFaction": "Delete Faction",
+    "deleteConfirm": "Delete this faction? This cannot be undone."
+  },
+  "common": {
+    "cancel": "Cancel",
+    "delete": "Delete"
   },
   "armyPanel": {
     "title": "Army",
@@ -141,6 +148,7 @@
     "edited": "Edited {{time}}",
     "copyOf": "Copy of {{name}}",
     "imported": "Imported",
+    "deleteMap": "Delete Map",
     "deleteConfirm": "Delete this map? This cannot be undone.",
     "justNow": "Just now",
     "minutesAgo": "{{n}}m ago",

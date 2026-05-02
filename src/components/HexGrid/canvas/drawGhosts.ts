@@ -25,7 +25,7 @@ export const drawGhosts = ({ ctx, ghostKeys, theme, hoveredKey }: DrawGhostsArgs
 
     const isHovered = hoveredKey === key;
     tracePath(ctx, cx, cy, HEX_SIZE);
-    ctx.fillStyle = isHovered ? 'rgba(255,255,255,0.15)' : theme.ghostFill;
+    ctx.fillStyle = isHovered ? `rgba(255,255,255,${theme.selection.hoverAlpha})` : theme.ghostFill;
     ctx.fill();
     ctx.strokeStyle = isHovered ? 'rgba(255,255,255,0.6)' : theme.ghostStroke;
     ctx.lineWidth = isHovered ? 2 : 1.5;

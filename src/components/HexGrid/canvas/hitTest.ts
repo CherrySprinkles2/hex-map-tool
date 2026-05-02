@@ -3,7 +3,7 @@
 // returns the entity under the cursor.
 //
 // Entity priority (matches the paint order on canvas):
-//   1. Army tokens (skipping armies inside town tiles — the town shield stands in)
+//   1. Army tokens (including those on town tiles)
 //   2. Placed tiles via axial projection
 //   3. Ghost tiles (neighbours of placed tiles, from a pre-computed set)
 //   4. Background (outside everything)
@@ -50,8 +50,6 @@ export const hitTest = ({ state, ghostKeys, worldX, worldY }: HitTestOpts): HitR
     grouped[k].push(army);
   });
   for (const tileKey of Object.keys(grouped)) {
-    const tile = state.tiles[tileKey];
-    if (tile?.hasTown) continue; // town shield takes over — no army token to hit
     const [qS, rS] = tileKey.split(',');
     const { x: baseX, y: baseY } = axialToPixel(Number(qS), Number(rS));
     const tileArmies = grouped[tileKey];

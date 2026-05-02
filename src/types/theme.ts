@@ -163,17 +163,21 @@ export interface AppTheme {
 
   factionColors: string[];
 
+  selection: {
+    fillColor: string;
+    hoverAlpha: number;
+    pulseMaxAlpha: number;
+    pulsePeriodMs: number;
+  };
+
   army: {
     tokenFill: string;
     tokenStroke: string;
-    selectedColor: string;
     movingColor: string;
     labelFill: string;
     labelStroke: string;
     labelStrokeWidth: number;
-    ringDash: string;
     tokenRadius: number;
-    ringRadius: number;
     stackSpacing: number;
   };
 

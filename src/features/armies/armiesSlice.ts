@@ -41,6 +41,20 @@ const armiesSlice = createSlice({
       const { id, factionId } = action.payload;
       if (state[id]) state[id].factionId = factionId;
     },
+    setArmySubTilePosition: (
+      state,
+      action: PayloadAction<{ id: string; subTileX: number; subTileY: number }>
+    ) => {
+      const { id, subTileX, subTileY } = action.payload;
+      if (state[id]) {
+        state[id].subTileX = subTileX;
+        state[id].subTileY = subTileY;
+      }
+    },
+    setArmyInsideTown: (state, action: PayloadAction<{ id: string; insideTown: boolean }>) => {
+      const { id, insideTown } = action.payload;
+      if (state[id]) state[id].insideTown = insideTown;
+    },
     importArmies: (_state, action: PayloadAction<ArmiesState>) => {
       return action.payload ?? {};
     },
@@ -52,6 +66,14 @@ const armiesSlice = createSlice({
   },
 });
 
-export const { addArmy, deleteArmy, moveArmy, updateArmy, setArmyFaction, importArmies } =
-  armiesSlice.actions;
+export const {
+  addArmy,
+  deleteArmy,
+  moveArmy,
+  updateArmy,
+  setArmyFaction,
+  setArmySubTilePosition,
+  setArmyInsideTown,
+  importArmies,
+} = armiesSlice.actions;
 export default armiesSlice.reducer;

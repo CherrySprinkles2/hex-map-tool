@@ -6,6 +6,7 @@ const initialState: UiState = {
   selectedArmyId: null,
   placingArmy: false,
   movingArmyId: null,
+  flashingArmyId: null,
   factionsOpen: false,
   mapMode: 'terrain',
   activeFactionId: null,
@@ -55,6 +56,12 @@ const uiSlice = createSlice({
     },
     stopMovingArmy: (state) => {
       state.movingArmyId = null;
+    },
+    setFlashingArmy: (state, action: PayloadAction<string>) => {
+      state.flashingArmyId = action.payload;
+    },
+    clearFlashingArmy: (state) => {
+      state.flashingArmyId = null;
     },
     toggleFactionsPanel: (state) => {
       state.factionsOpen = !state.factionsOpen;
@@ -126,6 +133,8 @@ export const {
   setPlacingArmy,
   startMovingArmy,
   stopMovingArmy,
+  setFlashingArmy,
+  clearFlashingArmy,
   toggleFactionsPanel,
   closeFactionsPanel,
   setMapMode,

@@ -7,6 +7,7 @@ import type { TFunction } from 'i18next';
 import { Backdrop, SheetItem, SheetIcon } from '../shared/sheet';
 import { LanguageToggle } from '../shared/LanguageToggle';
 import { LanguageModal } from '../shared/LanguageModal';
+import { ConfirmModal } from '../shared/ConfirmModal';
 import { SettingsButton } from '../shared/SettingsButton';
 import {
   SettingsIcon,
@@ -510,6 +511,7 @@ const HomeScreen = (): React.ReactElement => {
   const [thumbnailCache, setThumbnailCache] = useState<Record<string, string | undefined>>({});
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [langModalOpen, setLangModalOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [newlyImportedId, setNewlyImportedId] = useState<string | null>(null);
   const [loadingExampleId, setLoadingExampleId] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement | null>(null);
@@ -533,7 +535,9 @@ const HomeScreen = (): React.ReactElement => {
         }
       }
     });
-    setThumbnailCache(thumbCache);
+    setThumbnailCache((prev) => {
+      return { ...prev, ...thumbCache };
+    });
   }, []);
 
   useEffect(() => {
@@ -609,8 +613,13 @@ const HomeScreen = (): React.ReactElement => {
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (!window.confirm(t('home.deleteConfirm'))) return;
-    deleteMap(id);
+    setPendingDeleteId(id);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!pendingDeleteId) return;
+    deleteMap(pendingDeleteId);
+    setPendingDeleteId(null);
     refreshMaps();
   };
 
@@ -859,6 +868,18 @@ const HomeScreen = (): React.ReactElement => {
         }}
         onAfterSelect={() => {
           return setSettingsOpen(false);
+        }}
+      />
+
+      <ConfirmModal
+        open={pendingDeleteId !== null}
+        title={t('home.deleteMap')}
+        message={t('home.deleteConfirm')}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => {
+          return setPendingDeleteId(null);
         }}
       />
     </Shell>

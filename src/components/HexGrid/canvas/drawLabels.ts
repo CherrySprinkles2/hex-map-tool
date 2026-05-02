@@ -1,17 +1,14 @@
-// Town name below the icon + single-garrisoned-army name above, both drawn
-// with a stroke halo via strokeText-before-fillText.
+// Town name below the icon, drawn with a stroke halo via strokeText-before-fillText.
 
-import { axialToPixel, toKey } from '../../../utils/hexUtils';
+import { axialToPixel } from '../../../utils/hexUtils';
 import type { TilesState } from '../../../types/state';
 import type { AppTheme } from '../../../types/theme';
-import type { Army } from '../../../types/domain';
 
 interface DrawLabelsArgs {
   ctx: CanvasRenderingContext2D;
   tiles: TilesState;
   iterateKeys: Set<string>;
   deepWaterSet: Set<string>;
-  armiesByTile: Record<string, Army[]>;
   theme: AppTheme;
 }
 
@@ -40,7 +37,6 @@ export const drawLabels = ({
   tiles,
   iterateKeys,
   deepWaterSet,
-  armiesByTile,
   theme,
 }: DrawLabelsArgs): void => {
   iterateKeys.forEach((key) => {
@@ -49,26 +45,12 @@ export const drawLabels = ({
     if (deepWaterSet.has(tile.terrain)) return;
 
     const { q, r, townName } = tile;
-    const tileKey = toKey(q, r);
     const { x: cx, y: cy } = axialToPixel(q, r);
 
-    const armies = armiesByTile[tileKey] ?? [];
     const fortification = tile.fortification ?? 'none';
     const wallW = fortification === 'none' ? 0 : theme.town.fortification[fortification].wallWidth;
     const radius = theme.town.size[tile.townSize ?? 'town'].radius;
     const outerR = radius + wallW / 2;
-
-    if (armies.length === 1 && armies[0].name) {
-      drawHaloedText(
-        ctx,
-        armies[0].name,
-        cx,
-        cy - outerR - 8,
-        9,
-        theme.garrison.nameColor,
-        theme.garrison.nameShadow
-      );
-    }
 
     if (townName) {
       drawHaloedText(

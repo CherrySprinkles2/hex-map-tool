@@ -26,12 +26,10 @@ export class HomeScreenPage {
     await this.page.waitForSelector('[data-testid="back-btn"]');
   }
 
-  /** Delete a saved map by its card testid. Handles the confirm dialog. */
+  /** Delete a saved map by its card testid. Handles the confirm modal. */
   async deleteMapById(mapId: string): Promise<void> {
-    this.page.once('dialog', (dialog) => {
-      return dialog.accept();
-    });
     await this.page.getByTestId(`delete-map-${mapId}`).click({ force: true });
+    await this.page.getByTestId('confirm-modal-confirm-btn').click();
   }
 
   /** Return whether a saved map card is visible by map id. */

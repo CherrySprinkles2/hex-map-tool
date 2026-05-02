@@ -29,6 +29,7 @@ export class ArmyPanelPage {
 
   async deleteArmy(): Promise<void> {
     await this.page.getByTestId('delete-army-btn').click();
+    await this.page.getByTestId('confirm-modal-confirm-btn').click();
   }
 
   async isVisible(): Promise<boolean> {

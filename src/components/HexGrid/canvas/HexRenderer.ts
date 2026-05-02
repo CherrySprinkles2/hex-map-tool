@@ -4,11 +4,9 @@
 // so that pan/zoom and data changes never cause React to re-render.
 //
 // Main canvas: base tiles, ghosts, overlays (rivers, roads, causeways, ports),
-//   towns (+ walls + kite shield), town/army labels, army tokens.
-// Overlay canvas: marching-ants selection/move rings, driven by a continuous
-//   rAF loop that runs only while there's something selected/moving.
-//
-// Phase 6 removes the SVG stack entirely and moves hit-testing into this class.
+//   towns (+ walls), town name labels, army tokens.
+// Overlay canvas: marching-ants selection/move rings and hovered-army name label,
+//   driven by a continuous rAF loop that runs only while something is active.
 
 import { theme } from '../../../styles/theme';
 import { createPatternCache, type PatternCache } from './patternCache';
@@ -22,7 +20,13 @@ import { drawTowns } from './drawTowns';
 import { drawLabels } from './drawLabels';
 import { drawArmies } from './drawArmies';
 import { drawOverlay } from './drawOverlay';
-import { buildDeepWaterSet, getNeighbors, toKey, setHexOrientation } from '../../../utils/hexUtils';
+import {
+  axialToPixel,
+  buildDeepWaterSet,
+  getNeighbors,
+  toKey,
+  setHexOrientation,
+} from '../../../utils/hexUtils';
 import { registerRepaintOnLoad } from '../../../utils/svgCache';
 import type { store as appStore } from '../../../app/store';
 import type { ViewportState } from '../../../types/state';
@@ -48,6 +52,7 @@ export class HexRenderer {
   private visibleKeys: Set<string> = new Set();
   private ghostKeys: Set<string> = new Set();
   private hoveredKey: string | null = null;
+  private hoveredArmyId: string | null = null;
   private cssWidth = 0;
   private cssHeight = 0;
   private dpr = 1;
@@ -66,6 +71,7 @@ export class HexRenderer {
   private lastSelectedTile: string | null = null;
   private lastSelectedArmyId: string | null = null;
   private lastMovingArmyId: string | null = null;
+  private lastFlashingArmyId: string | null = null;
   private lastOrientation: string = 'pointy-top';
 
   constructor(opts: HexRendererOptions) {
@@ -93,6 +99,7 @@ export class HexRenderer {
     this.lastSelectedTile = state.ui.selectedTile;
     this.lastSelectedArmyId = state.ui.selectedArmyId;
     this.lastMovingArmyId = state.ui.movingArmyId;
+    this.lastFlashingArmyId = state.ui.flashingArmyId;
     this.lastOrientation = state.currentMap.orientation ?? 'pointy-top';
     setHexOrientation(state.currentMap.orientation ?? 'pointy-top');
 
@@ -139,12 +146,14 @@ export class HexRenderer {
       if (s.ui.selectedArmyId !== this.lastSelectedArmyId) {
         this.lastSelectedArmyId = s.ui.selectedArmyId;
         needsOverlay = true;
-        needsMain = true; // army token stroke colour depends on selection
       }
       if (s.ui.movingArmyId !== this.lastMovingArmyId) {
         this.lastMovingArmyId = s.ui.movingArmyId;
         needsOverlay = true;
-        needsMain = true;
+      }
+      if (s.ui.flashingArmyId !== this.lastFlashingArmyId) {
+        this.lastFlashingArmyId = s.ui.flashingArmyId;
+        needsOverlay = true;
       }
       const newOrientation = s.currentMap.orientation ?? 'pointy-top';
       if (newOrientation !== this.lastOrientation) {
@@ -211,6 +220,12 @@ export class HexRenderer {
     this.scheduleRepaint();
   }
 
+  setHoveredArmyId(id: string | null): void {
+    if (this.hoveredArmyId === id) return;
+    this.hoveredArmyId = id;
+    this.scheduleOverlay();
+  }
+
   // Called by HexGrid on every pan/zoom frame from the same rAF loop that
   // updates the SVG <g> transform, so canvas and SVG layers stay in sync.
   onViewportChanged(): void {
@@ -251,7 +266,7 @@ export class HexRenderer {
       this.paintOverlay(t);
       // If anything is still active, keep the loop going.
       const s = this.store.getState();
-      if (s.ui.selectedTile || s.ui.selectedArmyId || s.ui.movingArmyId) {
+      if (s.ui.selectedTile || s.ui.selectedArmyId || s.ui.movingArmyId || s.ui.flashingArmyId) {
         this.scheduleOverlay();
       }
     });
@@ -357,8 +372,6 @@ export class HexRenderer {
       tiles: state.tiles,
       iterateKeys: expanded,
       deepWaterSet,
-      armiesByTile,
-      factionColorMap,
       theme,
     });
     drawPorts({
@@ -373,11 +386,10 @@ export class HexRenderer {
       tiles: state.tiles,
       iterateKeys: expanded,
       deepWaterSet,
-      armiesByTile,
       theme,
     });
 
-    // 4. Army tokens (static parts; animated ring lives on overlay canvas)
+    // 4. Army tokens (selection pulse lives on overlay canvas)
     drawArmies({
       ctx,
       tiles: state.tiles,
@@ -385,8 +397,6 @@ export class HexRenderer {
       armiesByTile,
       factionColorMap,
       theme,
-      selectedArmyId: state.ui.selectedArmyId,
-      movingArmyId: state.ui.movingArmyId,
     });
   }
 
@@ -399,17 +409,46 @@ export class HexRenderer {
     this.applyViewportTransform(ctx);
 
     const state = this.store.getState();
-    const armiesByTile = this.groupArmiesByTile(state);
 
     drawOverlay({
       ctx,
-      tiles: state.tiles,
-      armiesByTile,
+      armies: state.armies,
       selectedTile: state.ui.selectedTile,
       selectedArmyId: state.ui.selectedArmyId,
       movingArmyId: state.ui.movingArmyId,
+      flashingArmyId: state.ui.flashingArmyId,
       nowMs,
       theme,
     });
+
+    // Hovered army name — shown when 2+ armies share a tile and one is hovered.
+    if (this.hoveredArmyId) {
+      const army = state.armies[this.hoveredArmyId];
+      if (army) {
+        const tileKey = toKey(army.q, army.r);
+        const armiesByTile = this.groupArmiesByTile(state);
+        const tileArmies = armiesByTile[tileKey] ?? [];
+        if (tileArmies.length >= 2) {
+          const idx = tileArmies.findIndex((a) => {
+            return a.id === this.hoveredArmyId;
+          });
+          if (idx >= 0) {
+            const offsetX = (idx - (tileArmies.length - 1) / 2) * theme.army.stackSpacing;
+            const { x: baseX, y: baseY } = axialToPixel(army.q, army.r);
+            const cx = baseX + offsetX;
+            const labelY = baseY - 8 - theme.army.tokenRadius - 8;
+            ctx.font = 'bold 9px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.lineWidth = 2.5;
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = theme.army.labelStroke;
+            ctx.strokeText(army.name, cx, labelY);
+            ctx.fillStyle = theme.army.labelFill;
+            ctx.fillText(army.name, cx, labelY);
+          }
+        }
+      }
+    }
   }
 }

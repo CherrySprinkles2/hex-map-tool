@@ -99,7 +99,7 @@ export const drawTiles = ({
     // Hover highlight
     if (hoveredKey === key) {
       tracePath(ctx, cx, cy, HEX_SIZE);
-      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.fillStyle = `rgba(255,255,255,${theme.selection.hoverAlpha})`;
       ctx.fill();
     }
   });

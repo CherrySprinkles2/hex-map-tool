@@ -165,18 +165,23 @@ export const theme: AppTheme = {
     '#90a4ae',
   ],
 
+  // ── Selection / hover overlay ─────────────────────────────────────────────────
+  selection: {
+    fillColor: '#ffffff',
+    hoverAlpha: 0.35,
+    pulseMaxAlpha: 0.35,
+    pulsePeriodMs: 800,
+  },
+
   // ── Army tokens ───────────────────────────────────────────────────────────────
   army: {
     tokenFill: 'rgba(0,0,0,0.7)',
     tokenStroke: 'rgba(255,255,255,0.35)',
-    selectedColor: '#e94560',
     movingColor: '#ffaa00',
     labelFill: '#e0e0e0',
     labelStroke: '#000',
     labelStrokeWidth: 2.5,
-    ringDash: '5 3',
     tokenRadius: 14,
-    ringRadius: 18,
     stackSpacing: 24,
   },
 

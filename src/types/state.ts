@@ -18,6 +18,7 @@ export interface UiState {
   selectedArmyId: string | null;
   placingArmy: boolean;
   movingArmyId: string | null;
+  flashingArmyId: string | null;
   mapMode: MapMode;
   factionsOpen: boolean;
   activeFactionId: string | null;

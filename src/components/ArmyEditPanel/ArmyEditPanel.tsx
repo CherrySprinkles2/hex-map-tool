@@ -2,7 +2,13 @@ import React, { useCallback } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { createSelector } from '@reduxjs/toolkit';
-import { setMapMode, selectArmy, startMovingArmy } from '../../features/ui/uiSlice';
+import {
+  setMapMode,
+  selectArmy,
+  startMovingArmy,
+  setFlashingArmy,
+  clearFlashingArmy,
+} from '../../features/ui/uiSlice';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { axialToPixel } from '../../utils/hexUtils';
 import { animateViewportTo } from '../../utils/viewportAnimator';
@@ -243,10 +249,17 @@ const ArmyEditPanel = (): React.ReactElement => {
     dispatch(setMapMode('terrain'));
   }, [dispatch]);
 
-  const handleScrollTo = useCallback((q: number, r: number) => {
-    const { x: px, y: py } = axialToPixel(q, r);
-    animateViewportTo(px, py);
-  }, []);
+  const handleScrollTo = useCallback(
+    (armyId: string, q: number, r: number) => {
+      const { x: px, y: py } = axialToPixel(q, r);
+      animateViewportTo(px, py);
+      dispatch(setFlashingArmy(armyId));
+      setTimeout(() => {
+        dispatch(clearFlashingArmy());
+      }, 1800);
+    },
+    [dispatch]
+  );
 
   const handleMove = useCallback(
     (id: string) => {
@@ -299,7 +312,7 @@ const ArmyEditPanel = (): React.ReactElement => {
                       data-testid={`army-edit-goto-${army.id}`}
                       aria-label={t('armyEditPanel.scrollTo')}
                       onClick={() => {
-                        return handleScrollTo(army.q, army.r);
+                        return handleScrollTo(army.id, army.q, army.r);
                       }}
                     >
                       {t('armyEditPanel.scrollTo')}

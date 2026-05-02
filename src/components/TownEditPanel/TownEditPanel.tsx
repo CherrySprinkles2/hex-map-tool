@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { SidePanel } from '../shared/SidePanel';
 import { DragHandle } from '../shared/DragHandle';
 import { SectionLabel } from '../shared/SectionLabel';
+import { ButtonGroup } from '../shared/ButtonGroup';
 import FortificationPreview from './FortificationPreview';
 import TownSizePreview from './TownSizePreview';
 import type { Fortification, TownSize } from '../../types/domain';
@@ -93,11 +94,6 @@ const NameInput = styled.input`
   }
 `;
 
-const OptionGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
 const OptionBtn = styled.button<{ $active: boolean }>`
   position: relative;
   display: flex;
@@ -119,18 +115,6 @@ const OptionBtn = styled.button<{ $active: boolean }>`
     border-color 0.15s,
     background 0.15s;
 
-  &:first-child {
-    border-radius: 8px 8px 0 0;
-  }
-  &:last-child {
-    border-radius: 0 0 8px 8px;
-  }
-  &:first-child:last-child {
-    border-radius: 8px;
-  }
-  & + & {
-    margin-top: -2px;
-  }
   &:hover {
     z-index: 1;
     border-color: ${({ $active, theme }) => {
@@ -227,7 +211,7 @@ const TownEditPanel = (): React.ReactElement => {
 
       <div>
         <SectionLabel>{t('townPanel.fortification')}</SectionLabel>
-        <OptionGroup>
+        <ButtonGroup>
           {FORTIFICATION_OPTIONS.map((level) => {
             return (
               <OptionBtn
@@ -247,12 +231,12 @@ const TownEditPanel = (): React.ReactElement => {
               </OptionBtn>
             );
           })}
-        </OptionGroup>
+        </ButtonGroup>
       </div>
 
       <div>
         <SectionLabel>{t('townPanel.sizeLabel')}</SectionLabel>
-        <OptionGroup>
+        <ButtonGroup>
           {SIZE_OPTIONS.map((size) => {
             return (
               <OptionBtn
@@ -272,7 +256,7 @@ const TownEditPanel = (): React.ReactElement => {
               </OptionBtn>
             );
           })}
-        </OptionGroup>
+        </ButtonGroup>
       </div>
     </SidePanel>
   );
