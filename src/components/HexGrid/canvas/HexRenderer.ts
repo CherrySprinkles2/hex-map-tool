@@ -68,6 +68,7 @@ export class HexRenderer {
   private lastCustomRef: unknown = null;
   private lastFactionsRef: unknown = null;
   private lastUiMode: string | null = null;
+  private lastFactionBordersOnly = false;
   private lastSelectedTile: string | null = null;
   private lastSelectedArmyId: string | null = null;
   private lastMovingArmyId: string | null = null;
@@ -96,6 +97,7 @@ export class HexRenderer {
     this.lastArmiesRef = state.armies;
     this.lastFactionsRef = state.factions;
     this.lastUiMode = state.ui.mapMode;
+    this.lastFactionBordersOnly = state.ui.factionBordersOnly;
     this.lastSelectedTile = state.ui.selectedTile;
     this.lastSelectedArmyId = state.ui.selectedArmyId;
     this.lastMovingArmyId = state.ui.movingArmyId;
@@ -137,6 +139,10 @@ export class HexRenderer {
       }
       if (s.ui.mapMode !== this.lastUiMode) {
         this.lastUiMode = s.ui.mapMode;
+        needsMain = true;
+      }
+      if (s.ui.factionBordersOnly !== this.lastFactionBordersOnly) {
+        this.lastFactionBordersOnly = s.ui.factionBordersOnly;
         needsMain = true;
       }
       if (s.ui.selectedTile !== this.lastSelectedTile) {
@@ -342,6 +348,7 @@ export class HexRenderer {
       patternCache: this.patternCache!,
       mapMode: state.ui.mapMode,
       hoveredKey: this.hoveredKey,
+      factionBordersOnly: state.ui.factionBordersOnly,
     });
 
     // 3. Overlays (rivers under roads; causeways and ports)

@@ -78,6 +78,7 @@
     "hint": "Select a faction below, then click or drag tiles to assign it.",
     "hintTouch": "Select a faction below, then tap tiles to assign it.",
     "unassigned": "Unassigned",
+    "bordersOnly": "Show borders only",
     "noFactions": "No factions yet.\nAdd some via Factions in the settings menu."
   },
   "factionsPanel": {
@@ -115,9 +116,17 @@
     "factions": "Factions",
     "keyboardShortcuts": "Keyboard Shortcuts",
     "exportJSON": "Export map",
+    "exportPNG": "Export PNG",
     "importJSON": "Import map",
     "languageLabel": "Language",
     "nameTaken": "A map with that name already exists."
+  },
+  "exportPng": {
+    "title": "Export PNG",
+    "fullMap": "Entire map",
+    "currentView": "Current view",
+    "includeFactionBorders": "Include faction borders",
+    "download": "Download"
   },
   "mapModeToggle": {
     "terrain": "Terrain",

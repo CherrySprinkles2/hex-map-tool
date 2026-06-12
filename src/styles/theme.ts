@@ -165,6 +165,13 @@ export const theme: AppTheme = {
     '#90a4ae',
   ],
 
+  // ── Faction territory borders (borders-only toggle in faction mode) ──────────
+  factionBorder: {
+    width: 5, // visible stroke width inside the territory edge
+    fadeRadius: 40, // inner-glow reach in world px (~half a tile)
+    fadeAlpha: 0.9, // glow strength at the territory edge
+  },
+
   // ── Selection / hover overlay ─────────────────────────────────────────────────
   selection: {
     fillColor: '#ffffff',

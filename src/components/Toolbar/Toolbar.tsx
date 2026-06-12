@@ -30,6 +30,7 @@ import { captureThumbnail } from '../../utils/captureThumbnail';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../app/hooks';
 import TerrainConfigModal from '../TerrainConfigModal/TerrainConfigModal';
 import { OrientationModal } from '../OrientationModal/OrientationModal';
+import { ExportPngModal } from '../ExportPngModal/ExportPngModal';
 
 const Bar = styled.div<{ $rightPanelOpen: boolean }>`
   display: flex;
@@ -140,7 +141,7 @@ const MapNameWrapper = styled.div`
   }
 `;
 
-const DesktopFactionsBtn = styled.button<{ $active: boolean }>`
+const DesktopBarBtn = styled.button<{ $active: boolean }>`
   display: none;
 
   @media (min-width: 601px) {
@@ -340,6 +341,7 @@ const Toolbar = (): React.ReactElement => {
   const [langModalOpen, setLangModalOpen] = useState(false);
   const [terrainConfigOpen, setTerrainConfigOpen] = useState(false);
   const [orientationModalOpen, setOrientationModalOpen] = useState(false);
+  const [exportPngOpen, setExportPngOpen] = useState(false);
   const store = useAppStore();
 
   const rightPanelOpen =
@@ -455,14 +457,24 @@ const Toolbar = (): React.ReactElement => {
           />
           {nameError && <NameError>{nameError}</NameError>}
         </MapNameWrapper>
-        <DesktopFactionsBtn
+        <DesktopBarBtn
           data-testid="factions-btn"
           $active={factionsOpen}
           onClick={handleFactionsClick}
         >
           <FlagIcon width="1em" height="1em" aria-hidden />
           {t('toolbar.factions')}
-        </DesktopFactionsBtn>
+        </DesktopBarBtn>
+        <DesktopBarBtn
+          data-testid="export-png-btn"
+          $active={exportPngOpen}
+          onClick={() => {
+            return setExportPngOpen(true);
+          }}
+        >
+          <DownloadIcon width="1em" height="1em" aria-hidden />
+          PNG
+        </DesktopBarBtn>
         <ShortcutsBtn
           $active={showShortcuts}
           onClick={handleShortcutsToggle}
@@ -552,6 +564,19 @@ const Toolbar = (): React.ReactElement => {
           {t('toolbar.exportJSON')}
         </SheetItem>
         <SheetItem
+          data-testid="mobile-export-png-btn"
+          $desktopHide
+          onClick={() => {
+            setSettingsOpen(false);
+            setExportPngOpen(true);
+          }}
+        >
+          <SheetIcon>
+            <DownloadIcon aria-hidden />
+          </SheetIcon>
+          {t('toolbar.exportPNG')}
+        </SheetItem>
+        <SheetItem
           $desktopHide
           onClick={() => {
             setSettingsOpen(false);
@@ -586,6 +611,12 @@ const Toolbar = (): React.ReactElement => {
         open={orientationModalOpen}
         onClose={() => {
           return setOrientationModalOpen(false);
+        }}
+      />
+      <ExportPngModal
+        open={exportPngOpen}
+        onClose={() => {
+          return setExportPngOpen(false);
         }}
       />
     </>

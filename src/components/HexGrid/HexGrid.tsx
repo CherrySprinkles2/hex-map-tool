@@ -24,6 +24,7 @@ import { addArmy, deleteArmy, moveArmy } from '../../features/armies/armiesSlice
 import { getNeighbors, toKey, pixelToAxial, hexLine, axialToPixel } from '../../utils/hexUtils';
 import { inferTerrain } from '../../utils/inferTerrain';
 import { registerViewportAnimator, unregisterViewportAnimator } from '../../utils/viewportAnimator';
+import { registerMapView, unregisterMapView } from '../../utils/mapViewMetrics';
 import { theme } from '../../styles/theme';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../app/hooks';
 import useViewportCulling from '../../hooks/useViewportCulling';
@@ -129,6 +130,20 @@ const HexGrid = (): React.ReactElement => {
       ro?.disconnect();
     };
   }, [store, applyTransform]);
+
+  // Lets the PNG export (triggered from the Toolbar) read the live map-view
+  // size and viewport without going through React or Redux.
+  useEffect(() => {
+    registerMapView(() => {
+      const el = containerRef.current;
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      return { width: rect.width, height: rect.height, viewport: { ...viewportRef.current } };
+    });
+    return () => {
+      return unregisterMapView();
+    };
+  }, []);
 
   const dragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
@@ -520,6 +535,9 @@ const HexGrid = (): React.ReactElement => {
       tileExists: (q: number, r: number): boolean => {
         return !!store.getState().tiles[toKey(q, r)];
       },
+      getTileFaction: (q: number, r: number): string | null => {
+        return store.getState().tiles[toKey(q, r)]?.factionId ?? null;
+      },
       getArmies: (): Record<
         string,
         { id: string; q: number; r: number; name: string; factionId: string | null }
@@ -718,6 +736,15 @@ const HexGrid = (): React.ReactElement => {
       }
 
       if (hit.kind === 'tile') {
+        if (ui.mapMode === 'faction') {
+          // Faction mode: right-click unassigns the tile's faction; the tile
+          // itself (terrain, features) is never deleted in this mode.
+          const tile = store.getState().tiles[hit.key];
+          if (tile?.factionId) {
+            dispatch(setTileFaction({ q: hit.q, r: hit.r, factionId: null }));
+          }
+          return;
+        }
         if (ui.selectedTile === hit.key) dispatch(deselectTile());
         dispatch(deleteTile({ q: hit.q, r: hit.r }));
       }

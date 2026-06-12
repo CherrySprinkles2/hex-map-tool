@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { setFactionBrush, setMapMode } from '../../features/ui/uiSlice';
+import { setFactionBrush, setMapMode, toggleFactionBorders } from '../../features/ui/uiSlice';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { SidePanel } from '../shared/SidePanel';
 import { DragHandle } from '../shared/DragHandle';
@@ -17,6 +17,23 @@ const Hint = styled.p`
   }};
   margin: 0 0 12px;
   line-height: 1.5;
+`;
+
+const BordersToggle = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px 10px;
+  font-size: 0.8rem;
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
+  cursor: pointer;
+  user-select: none;
+
+  input {
+    cursor: pointer;
+  }
 `;
 
 const FactionBtn = styled.button<{ $active: boolean; $color: string | null }>`
@@ -110,6 +127,9 @@ const FactionPaintPanel = ({ suppressed }: FactionPaintPanelProps): React.ReactE
   const mapMode = useAppSelector((state) => {
     return state.ui.mapMode;
   });
+  const factionBordersOnly = useAppSelector((state) => {
+    return state.ui.factionBordersOnly;
+  });
 
   const isOpen = mapMode === 'faction';
 
@@ -126,7 +146,20 @@ const FactionPaintPanel = ({ suppressed }: FactionPaintPanelProps): React.ReactE
       />
       <Hint>{isTouchDevice ? t('factionPaintPanel.hintTouch') : t('factionPaintPanel.hint')}</Hint>
 
+      <BordersToggle>
+        <input
+          type="checkbox"
+          data-testid="faction-borders-toggle"
+          checked={factionBordersOnly}
+          onChange={() => {
+            return dispatch(toggleFactionBorders());
+          }}
+        />
+        {t('factionPaintPanel.bordersOnly')}
+      </BordersToggle>
+
       <FactionBtn
+        data-testid="faction-brush-unassigned"
         $active={factionBrushActive && activeFactionId === null}
         $color={null}
         onClick={() => {
@@ -156,6 +189,7 @@ const FactionPaintPanel = ({ suppressed }: FactionPaintPanelProps): React.ReactE
         return (
           <FactionBtn
             key={faction.id}
+            data-testid={`faction-brush-${faction.id}`}
             $active={factionBrushActive && activeFactionId === faction.id}
             $color={faction.color}
             onClick={() => {

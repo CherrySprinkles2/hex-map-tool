@@ -11,6 +11,7 @@ interface TestBridge {
   firstGhostKey: () => string | null;
   getTileKeys: () => string[];
   tileExists: (q: number, r: number) => boolean;
+  getTileFaction: (q: number, r: number) => string | null;
   getArmies: () => Record<
     string,
     { id: string; q: number; r: number; name: string; factionId: string | null }
@@ -86,6 +87,18 @@ export class EditorPage {
       ({ q: _q, r: _r }) => {
         const t = (window as unknown as { __hexMapTest: TestBridge }).__hexMapTest;
         return t.tileExists(_q, _r);
+      },
+      { q, r }
+    );
+  }
+
+  /** Return a tile's assigned faction id (or null) from the Redux store. */
+  async getTileFaction(q: number, r: number): Promise<string | null> {
+    await bridge(this.page);
+    return this.page.evaluate(
+      ({ q: _q, r: _r }) => {
+        const t = (window as unknown as { __hexMapTest: TestBridge }).__hexMapTest;
+        return t.getTileFaction(_q, _r);
       },
       { q, r }
     );

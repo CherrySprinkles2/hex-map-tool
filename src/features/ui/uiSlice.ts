@@ -11,6 +11,7 @@ const initialState: UiState = {
   mapMode: 'terrain',
   activeFactionId: null,
   factionBrushActive: false,
+  factionBordersOnly: false,
   showShortcuts: false,
   activePaintBrush: null,
   editingTownTile: null,
@@ -91,6 +92,9 @@ const uiSlice = createSlice({
     setActiveFaction: (state, action: PayloadAction<string | null>) => {
       state.activeFactionId = action.payload;
     },
+    toggleFactionBorders: (state) => {
+      state.factionBordersOnly = !state.factionBordersOnly;
+    },
     setFactionBrush: (state, action: PayloadAction<string | null>) => {
       if (state.factionBrushActive && state.activeFactionId === action.payload) {
         state.factionBrushActive = false;
@@ -139,6 +143,7 @@ export const {
   closeFactionsPanel,
   setMapMode,
   setActiveFaction,
+  toggleFactionBorders,
   setFactionBrush,
   enterTerrainPaint,
   exitTerrainPaint,

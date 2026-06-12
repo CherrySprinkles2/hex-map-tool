@@ -78,6 +78,7 @@
     "hint": "Valitse alla oleva ryhmittymä ja klikkaa tai vedä ruutuja sen nimeämiseksi.",
     "hintTouch": "Valitse alla oleva ryhmittymä ja napauta ruutuja sen nimeämiseksi.",
     "unassigned": "Ei ryhmittymää",
+    "bordersOnly": "Näytä vain rajat",
     "noFactions": "Ei ryhmittymiä.\nLisää niitä Ryhmittymät-valikosta."
   },
   "factionsPanel": {
@@ -115,9 +116,17 @@
     "factions": "Ryhmittymät",
     "keyboardShortcuts": "Näppäinoikotiet",
     "exportJSON": "Vie kartta",
+    "exportPNG": "Vie PNG",
     "importJSON": "Tuo kartta",
     "languageLabel": "Kieli",
     "nameTaken": "Tällä nimellä on jo olemassa kartta."
+  },
+  "exportPng": {
+    "title": "Vie PNG-kuva",
+    "fullMap": "Koko kartta",
+    "currentView": "Nykyinen näkymä",
+    "includeFactionBorders": "Sisällytä ryhmittymien rajat",
+    "download": "Lataa"
   },
   "mapModeToggle": {
     "terrain": "Maasto",

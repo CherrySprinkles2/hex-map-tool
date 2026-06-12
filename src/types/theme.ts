@@ -163,6 +163,12 @@ export interface AppTheme {
 
   factionColors: string[];
 
+  factionBorder: {
+    width: number;
+    fadeRadius: number;
+    fadeAlpha: number;
+  };
+
   selection: {
     fillColor: string;
     hoverAlpha: number;

@@ -23,6 +23,7 @@ export interface UiState {
   factionsOpen: boolean;
   activeFactionId: string | null;
   factionBrushActive: boolean;
+  factionBordersOnly: boolean;
   activePaintBrush: string | null;
   showShortcuts: boolean;
   editingTownTile: string | null;
