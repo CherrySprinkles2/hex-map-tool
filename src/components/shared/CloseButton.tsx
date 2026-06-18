@@ -4,7 +4,13 @@ import { CloseIcon } from '../../assets/icons/ui';
 
 type Variant = 'simple' | 'bordered';
 
-const SimpleBtn = styled.button`
+const desktopHiddenCss = `
+  @media (min-width: 601px) {
+    display: none;
+  }
+`;
+
+const SimpleBtn = styled.button<{ $desktopHidden?: boolean }>`
   background: none;
   border: none;
   color: ${({ theme }) => {
@@ -23,9 +29,12 @@ const SimpleBtn = styled.button`
       return theme.text;
     }};
   }
+  ${({ $desktopHidden }) => {
+    return $desktopHidden ? desktopHiddenCss : '';
+  }}
 `;
 
-const BorderedBtn = styled.button`
+const BorderedBtn = styled.button<{ $desktopHidden?: boolean }>`
   padding: 4px 8px;
   border-radius: 6px;
   border: 1.5px solid
@@ -53,6 +62,9 @@ const BorderedBtn = styled.button`
       return theme.text;
     }};
   }
+  ${({ $desktopHidden }) => {
+    return $desktopHidden ? desktopHiddenCss : '';
+  }}
 `;
 
 interface CloseButtonProps {
@@ -60,6 +72,8 @@ interface CloseButtonProps {
   variant?: Variant;
   title?: string;
   'aria-label'?: string;
+  /** Hide the button on desktop (≥601px); used by always-visible side panels. */
+  desktopHidden?: boolean;
 }
 
 export const CloseButton = ({
@@ -67,10 +81,11 @@ export const CloseButton = ({
   variant = 'simple',
   title,
   'aria-label': ariaLabel,
+  desktopHidden,
 }: CloseButtonProps): React.ReactElement => {
   const Btn = variant === 'bordered' ? BorderedBtn : SimpleBtn;
   return (
-    <Btn onClick={onClick} title={title} aria-label={ariaLabel}>
+    <Btn onClick={onClick} title={title} aria-label={ariaLabel} $desktopHidden={desktopHidden}>
       <CloseIcon width="1em" height="1em" aria-hidden />
     </Btn>
   );

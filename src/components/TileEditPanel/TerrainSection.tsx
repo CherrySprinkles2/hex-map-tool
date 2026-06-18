@@ -182,6 +182,7 @@ const FeatureBrushLabel = styled.span`
 
 const FeatureBrushBtnGroup = styled.div`
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   flex: 1;
 `;
@@ -225,8 +226,8 @@ const TerrainSection = (): React.ReactElement => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
   const terrainList = useTerrainList();
-  const mapMode = useAppSelector((state) => {
-    return state.ui.mapMode;
+  const paintActive = useAppSelector((state) => {
+    return state.ui.paintActive;
   });
   const activePaintBrush = useAppSelector((state) => {
     return state.ui.activePaintBrush;
@@ -235,8 +236,14 @@ const TerrainSection = (): React.ReactElement => {
     const key = state.ui.selectedTile;
     return key ? (state.tiles[key] ?? null) : null;
   });
+  const riverTypes = useAppSelector((state) => {
+    return state.terrainConfig.riverTypes;
+  });
+  const roadTypes = useAppSelector((state) => {
+    return state.terrainConfig.roadTypes;
+  });
 
-  const isPaint = mapMode === 'terrain-paint';
+  const isPaint = paintActive;
 
   const terrainGrid = (
     <TerrainGrid>
@@ -330,17 +337,24 @@ const TerrainSection = (): React.ReactElement => {
                 {t('features.river')}
               </FeatureBrushLabel>
               <FeatureBrushBtnGroup>
-                <FeatureBrushBtn
-                  $active={activePaintBrush === 'river-on'}
-                  $color={theme.river.color}
-                  onClick={() => {
-                    return dispatch(
-                      setActivePaintBrush(activePaintBrush === 'river-on' ? null : 'river-on')
-                    );
-                  }}
-                >
-                  {t('tilePanel.riverAdd')}
-                </FeatureBrushBtn>
+                {riverTypes.map((v) => {
+                  const brushId = `river-on:${v.id}`;
+                  return (
+                    <FeatureBrushBtn
+                      key={v.id}
+                      data-testid={`paint-brush-${brushId}`}
+                      $active={activePaintBrush === brushId}
+                      $color={v.color}
+                      onClick={() => {
+                        return dispatch(
+                          setActivePaintBrush(activePaintBrush === brushId ? null : brushId)
+                        );
+                      }}
+                    >
+                      {v.name}
+                    </FeatureBrushBtn>
+                  );
+                })}
                 <FeatureBrushBtn
                   $active={activePaintBrush === 'river-off'}
                   $color={theme.textMuted}
@@ -368,17 +382,24 @@ const TerrainSection = (): React.ReactElement => {
                 {t('features.road')}
               </FeatureBrushLabel>
               <FeatureBrushBtnGroup>
-                <FeatureBrushBtn
-                  $active={activePaintBrush === 'road-on'}
-                  $color={theme.road.color}
-                  onClick={() => {
-                    return dispatch(
-                      setActivePaintBrush(activePaintBrush === 'road-on' ? null : 'road-on')
-                    );
-                  }}
-                >
-                  {t('tilePanel.roadAdd')}
-                </FeatureBrushBtn>
+                {roadTypes.map((v) => {
+                  const brushId = `road-on:${v.id}`;
+                  return (
+                    <FeatureBrushBtn
+                      key={v.id}
+                      data-testid={`paint-brush-${brushId}`}
+                      $active={activePaintBrush === brushId}
+                      $color={v.color}
+                      onClick={() => {
+                        return dispatch(
+                          setActivePaintBrush(activePaintBrush === brushId ? null : brushId)
+                        );
+                      }}
+                    >
+                      {v.name}
+                    </FeatureBrushBtn>
+                  );
+                })}
                 <FeatureBrushBtn
                   $active={activePaintBrush === 'road-off'}
                   $color={theme.textMuted}

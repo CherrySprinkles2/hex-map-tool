@@ -12,6 +12,8 @@ interface TestBridge {
   getTileKeys: () => string[];
   tileExists: (q: number, r: number) => boolean;
   getTileFaction: (q: number, r: number) => string | null;
+  getForageLevel: (q: number, r: number) => number;
+  getTileNotes: (q: number, r: number) => string;
   getArmies: () => Record<
     string,
     { id: string; q: number; r: number; name: string; factionId: string | null }
@@ -99,6 +101,30 @@ export class EditorPage {
       ({ q: _q, r: _r }) => {
         const t = (window as unknown as { __hexMapTest: TestBridge }).__hexMapTest;
         return t.getTileFaction(_q, _r);
+      },
+      { q, r }
+    );
+  }
+
+  /** Return a tile's forage level from the Redux store. */
+  async getForageLevel(q: number, r: number): Promise<number> {
+    await bridge(this.page);
+    return this.page.evaluate(
+      ({ q: _q, r: _r }) => {
+        const t = (window as unknown as { __hexMapTest: TestBridge }).__hexMapTest;
+        return t.getForageLevel(_q, _r);
+      },
+      { q, r }
+    );
+  }
+
+  /** Return a tile's notes string from the Redux store. */
+  async getTileNotes(q: number, r: number): Promise<string> {
+    await bridge(this.page);
+    return this.page.evaluate(
+      ({ q: _q, r: _r }) => {
+        const t = (window as unknown as { __hexMapTest: TestBridge }).__hexMapTest;
+        return t.getTileNotes(_q, _r);
       },
       { q, r }
     );

@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { toKey } from '../../utils/hexUtils';
+import { clampForage } from '../../utils/forage';
 import { deleteFaction } from '../factions/factionsSlice';
 import { restoreSnapshot } from '../history/historyActions';
 import type { Tile, TileFlag, Fortification, TownSize } from '../../types/domain';
@@ -31,6 +32,7 @@ const initialState: TilesState = {
     portBlocked: [],
     notes: '',
     factionId: null,
+    forageLevel: 0,
   },
 };
 
@@ -67,6 +69,7 @@ const tilesSlice = createSlice({
           portBlocked: [],
           notes,
           factionId,
+          forageLevel: 0,
         };
       }
     },
@@ -83,7 +86,14 @@ const tilesSlice = createSlice({
         Array<
           | { type: 'add'; q: number; r: number; terrain: string }
           | { type: 'update'; q: number; r: number; terrain: string }
-          | { type: 'feature'; q: number; r: number; flag: TileFlag; value: boolean }
+          | {
+              type: 'feature';
+              q: number;
+              r: number;
+              flag: TileFlag;
+              value: boolean;
+              varietyId?: string;
+            }
           | { type: 'faction'; q: number; r: number; factionId: string | null }
         >
       >
@@ -107,6 +117,7 @@ const tilesSlice = createSlice({
                 portBlocked: [],
                 notes: '',
                 factionId: null,
+                forageLevel: 0,
               };
             }
             break;
@@ -118,6 +129,10 @@ const tilesSlice = createSlice({
           case 'feature':
             if (state[key]) {
               state[key][op.flag] = op.value;
+              if (op.value && op.varietyId) {
+                if (op.flag === 'hasRiver') state[key].riverTypeId = op.varietyId;
+                else if (op.flag === 'hasRoad') state[key].roadTypeId = op.varietyId;
+              }
               if (!op.value && op.flag in BLOCKED_KEY) {
                 const blockedKey = BLOCKED_KEY[op.flag as BlockedFlagKey];
                 (state[key][blockedKey] || []).forEach((nk) => {
@@ -141,13 +156,17 @@ const tilesSlice = createSlice({
     },
     toggleTileFlag: (
       state,
-      action: PayloadAction<{ q: number; r: number; flag: BlockedFlagKey }>
+      action: PayloadAction<{ q: number; r: number; flag: BlockedFlagKey; varietyId?: string }>
     ) => {
-      const { q, r, flag } = action.payload;
+      const { q, r, flag, varietyId } = action.payload;
       const key = toKey(q, r);
       if (!state[key]) return;
       const wasActive = state[key][flag];
       state[key][flag] = !wasActive;
+      if (!wasActive && varietyId) {
+        if (flag === 'hasRiver') state[key].riverTypeId = varietyId;
+        else if (flag === 'hasRoad') state[key].roadTypeId = varietyId;
+      }
       if (wasActive) {
         const blockedKey = BLOCKED_KEY[flag];
         (state[key][blockedKey] || []).forEach((nk) => {
@@ -228,6 +247,13 @@ const tilesSlice = createSlice({
         state[key].townName = name;
       }
     },
+    setTileRazed: (state, action: PayloadAction<{ q: number; r: number; razed: boolean }>) => {
+      const { q, r, razed } = action.payload;
+      const key = toKey(q, r);
+      if (state[key]) {
+        state[key].razed = razed;
+      }
+    },
     setTileNotes: (state, action: PayloadAction<{ q: number; r: number; notes: string }>) => {
       const { q, r, notes } = action.payload;
       const key = toKey(q, r);
@@ -245,18 +271,42 @@ const tilesSlice = createSlice({
         state[key].factionId = factionId ?? null;
       }
     },
+    adjustForage: (state, action: PayloadAction<{ q: number; r: number; delta: number }>) => {
+      const { q, r, delta } = action.payload;
+      const key = toKey(q, r);
+      if (state[key]) {
+        state[key].forageLevel = clampForage((state[key].forageLevel ?? 0) + delta);
+      }
+    },
+    setForageLevel: (state, action: PayloadAction<{ q: number; r: number; level: number }>) => {
+      const { q, r, level } = action.payload;
+      const key = toKey(q, r);
+      if (state[key]) {
+        state[key].forageLevel = clampForage(level);
+      }
+    },
     deleteTile: (state, action: PayloadAction<{ q: number; r: number }>) => {
       const { q, r } = action.payload;
       delete state[toKey(q, r)];
     },
     setTileFeature: (
       state,
-      action: PayloadAction<{ q: number; r: number; flag: TileFlag; value: boolean }>
+      action: PayloadAction<{
+        q: number;
+        r: number;
+        flag: TileFlag;
+        value: boolean;
+        varietyId?: string;
+      }>
     ) => {
-      const { q, r, flag, value } = action.payload;
+      const { q, r, flag, value, varietyId } = action.payload;
       const key = toKey(q, r);
       if (!state[key]) return;
       state[key][flag] = value;
+      if (value && varietyId) {
+        if (flag === 'hasRiver') state[key].riverTypeId = varietyId;
+        else if (flag === 'hasRoad') state[key].roadTypeId = varietyId;
+      }
       if (!value && flag in BLOCKED_KEY) {
         const blockedKey = BLOCKED_KEY[flag as BlockedFlagKey];
         (state[key][blockedKey] || []).forEach((nk) => {
@@ -278,6 +328,33 @@ const tilesSlice = createSlice({
         if (state[key].terrain === terrainId) {
           delete state[key];
         }
+      });
+    },
+    setTileVariety: (
+      state,
+      action: PayloadAction<{
+        q: number;
+        r: number;
+        flag: 'hasRiver' | 'hasRoad';
+        varietyId: string;
+      }>
+    ) => {
+      const { q, r, flag, varietyId } = action.payload;
+      const key = toKey(q, r);
+      if (!state[key]) return;
+      if (flag === 'hasRiver') state[key].riverTypeId = varietyId;
+      else state[key].roadTypeId = varietyId;
+    },
+    // Reassign every tile using `fromId` to `toId` — used when a variety is
+    // deleted so its tiles fall back to the default variety.
+    reassignFeatureVariety: (
+      state,
+      action: PayloadAction<{ flag: 'hasRiver' | 'hasRoad'; fromId: string; toId: string }>
+    ) => {
+      const { flag, fromId, toId } = action.payload;
+      const prop = flag === 'hasRiver' ? 'riverTypeId' : 'roadTypeId';
+      Object.values(state).forEach((tile) => {
+        if (tile[prop] === fromId) tile[prop] = toId;
       });
     },
   },
@@ -306,11 +383,16 @@ export const {
   setFortification,
   setTownSize,
   setTownName,
+  setTileRazed,
   setTileNotes,
   setTileFaction,
+  adjustForage,
+  setForageLevel,
   setTileFeature,
   deleteTile,
   importTiles,
   deleteTilesByTerrain,
+  setTileVariety,
+  reassignFeatureVariety,
 } = tilesSlice.actions;
 export default tilesSlice.reducer;

@@ -5,6 +5,7 @@ import { TileEditPanelPage } from '../pages/TileEditPanel.page';
 import { ArmyPanelPage } from '../pages/ArmyPanel.page';
 import { ArmyEditPanelPage } from '../pages/ArmyEditPanel.page';
 import { FactionsPanelPage } from '../pages/FactionsPanel.page';
+import { OverlayPanelPage } from '../pages/OverlayPanel.page';
 
 test.describe('Army Edit Mode', () => {
   let tileQ: number;
@@ -25,14 +26,14 @@ test.describe('Army Edit Mode', () => {
   });
 
   test('switching to army mode opens the panel', async ({ appPage }) => {
-    await appPage.getByTestId('map-mode-army').click();
+    await new OverlayPanelPage(appPage).select('army');
     const armyEdit = new ArmyEditPanelPage(appPage);
     await armyEdit.waitForPanel();
     await expect(appPage.getByTestId('army-edit-panel')).toBeVisible();
   });
 
   test('empty state is shown when no armies exist', async ({ appPage }) => {
-    await appPage.getByTestId('map-mode-army').click();
+    await new OverlayPanelPage(appPage).select('army');
     const armyEdit = new ArmyEditPanelPage(appPage);
     await armyEdit.waitForPanel();
     await expect(appPage.getByTestId('army-edit-empty')).toBeVisible();
@@ -74,7 +75,7 @@ test.describe('Army Edit Mode', () => {
     expect(assignedArmy).toBeDefined();
 
     // Enter army mode
-    await appPage.getByTestId('map-mode-army').click();
+    await new OverlayPanelPage(appPage).select('army');
     const armyEdit = new ArmyEditPanelPage(appPage);
     await armyEdit.waitForPanel();
 
@@ -104,7 +105,7 @@ test.describe('Army Edit Mode', () => {
     const [armyId] = Object.keys(armies);
 
     // Enter army mode and click Move
-    await appPage.getByTestId('map-mode-army').click();
+    await new OverlayPanelPage(appPage).select('army');
     const armyEdit = new ArmyEditPanelPage(appPage);
     await armyEdit.waitForPanel();
 
@@ -138,7 +139,7 @@ test.describe('Army Edit Mode', () => {
     const [armyId] = Object.keys(armies);
 
     // Enter army mode and click Edit
-    await appPage.getByTestId('map-mode-army').click();
+    await new OverlayPanelPage(appPage).select('army');
     const armyEdit = new ArmyEditPanelPage(appPage);
     await armyEdit.waitForPanel();
 

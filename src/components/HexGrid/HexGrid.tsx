@@ -19,6 +19,7 @@ import {
   batchUpdateTiles,
   deleteTile,
   setTileFaction,
+  adjustForage,
 } from '../../features/tiles/tilesSlice';
 import { addArmy, deleteArmy, moveArmy } from '../../features/armies/armiesSlice';
 import { getNeighbors, toKey, pixelToAxial, hexLine, axialToPixel } from '../../utils/hexUtils';
@@ -66,8 +67,11 @@ const HexGrid = (): React.ReactElement => {
   const placingArmy = useAppSelector((state) => {
     return state.ui.placingArmy;
   });
-  const mapMode = useAppSelector((state) => {
-    return state.ui.mapMode;
+  const overlay = useAppSelector((state) => {
+    return state.ui.overlay;
+  });
+  const paintActive = useAppSelector((state) => {
+    return state.ui.paintActive;
   });
   const movingArmyId = useAppSelector((state) => {
     return state.ui.movingArmyId;
@@ -205,7 +209,8 @@ const HexGrid = (): React.ReactElement => {
       const measureEl = containerRef.current;
       if (!measureEl) return;
       const ui = store.getState().ui;
-      if (ui.mapMode !== 'terrain-paint' && ui.mapMode !== 'faction') return;
+      const terrainPaint = ui.overlay === 'terrain' && ui.paintActive;
+      if (!terrainPaint && ui.overlay !== 'faction') return;
 
       const rect = measureEl.getBoundingClientRect();
       const { x, y, scale } = viewportRef.current;
@@ -220,7 +225,7 @@ const HexGrid = (): React.ReactElement => {
 
       const tilesState = store.getState().tiles;
 
-      if (ui.mapMode === 'faction') {
+      if (ui.overlay === 'faction') {
         const ops: Array<{ type: 'faction'; q: number; r: number; factionId: string | null }> = [];
         coords.forEach(({ q, r }) => {
           if (tilesState[toKey(q, r)]) {
@@ -244,9 +249,19 @@ const HexGrid = (): React.ReactElement => {
       type BatchOp =
         | { type: 'add'; q: number; r: number; terrain: string }
         | { type: 'update'; q: number; r: number; terrain: string }
-        | { type: 'feature'; q: number; r: number; flag: TileFlag; value: boolean };
+        | {
+            type: 'feature';
+            q: number;
+            r: number;
+            flag: TileFlag;
+            value: boolean;
+            varietyId?: string;
+          };
 
       const ops: BatchOp[] = [];
+
+      // Feature brushes carry the chosen variety as a suffix: `river-on:<id>`.
+      const [brushKind, brushVariety] = brush.split(':');
 
       coords.forEach(({ q, r }) => {
         const tileExists = !!tilesState[toKey(q, r)];
@@ -259,12 +274,26 @@ const HexGrid = (): React.ReactElement => {
           }
         } else if (!tileExists) {
           return;
-        } else if (brush === 'river-on') {
-          ops.push({ type: 'feature', q, r, flag: 'hasRiver' as TileFlag, value: true });
+        } else if (brushKind === 'river-on') {
+          ops.push({
+            type: 'feature',
+            q,
+            r,
+            flag: 'hasRiver' as TileFlag,
+            value: true,
+            varietyId: brushVariety,
+          });
         } else if (brush === 'river-off') {
           ops.push({ type: 'feature', q, r, flag: 'hasRiver' as TileFlag, value: false });
-        } else if (brush === 'road-on') {
-          ops.push({ type: 'feature', q, r, flag: 'hasRoad' as TileFlag, value: true });
+        } else if (brushKind === 'road-on') {
+          ops.push({
+            type: 'feature',
+            q,
+            r,
+            flag: 'hasRoad' as TileFlag,
+            value: true,
+            varietyId: brushVariety,
+          });
         } else if (brush === 'road-off') {
           ops.push({ type: 'feature', q, r, flag: 'hasRoad' as TileFlag, value: false });
         }
@@ -339,7 +368,7 @@ const HexGrid = (): React.ReactElement => {
 
   const handleBackgroundClear = useCallback(() => {
     const ui = store.getState().ui;
-    if (ui.mapMode === 'terrain-paint') return;
+    if (ui.overlay === 'terrain' && ui.paintActive) return;
     dispatch(deselectTile());
     if (ui.selectedArmyId) dispatch(deselectArmy());
     if (ui.placingArmy) dispatch(setPlacingArmy(false));
@@ -422,7 +451,8 @@ const HexGrid = (): React.ReactElement => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      if (store.getState().ui.mapMode === 'terrain-paint') {
+      const ui = store.getState().ui;
+      if (ui.overlay === 'terrain' && ui.paintActive) {
         dispatch(exitTerrainPaint());
       }
     };
@@ -538,6 +568,12 @@ const HexGrid = (): React.ReactElement => {
       getTileFaction: (q: number, r: number): string | null => {
         return store.getState().tiles[toKey(q, r)]?.factionId ?? null;
       },
+      getForageLevel: (q: number, r: number): number => {
+        return store.getState().tiles[toKey(q, r)]?.forageLevel ?? 0;
+      },
+      getTileNotes: (q: number, r: number): string => {
+        return store.getState().tiles[toKey(q, r)]?.notes ?? '';
+      },
       getArmies: (): Record<
         string,
         { id: string; q: number; r: number; name: string; factionId: string | null }
@@ -575,11 +611,11 @@ const HexGrid = (): React.ReactElement => {
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (e.button !== 0) return;
       const ui = store.getState().ui;
-      if (ui.mapMode === 'terrain-paint') {
+      if (ui.overlay === 'terrain' && ui.paintActive) {
         if (!ui.activePaintBrush) return;
         isPaintingRef.current = true;
         applyBrushAtScreenPos(e.clientX, e.clientY);
-      } else if (ui.mapMode === 'faction') {
+      } else if (ui.overlay === 'faction') {
         if (!ui.factionBrushActive) return;
         isPaintingRef.current = true;
         applyBrushAtScreenPos(e.clientX, e.clientY);
@@ -615,12 +651,12 @@ const HexGrid = (): React.ReactElement => {
     (e: React.MouseEvent<HTMLDivElement>) => {
       const state = store.getState();
       const ui = state.ui;
-      if (ui.mapMode === 'terrain-paint') return;
+      if (ui.overlay === 'terrain' && ui.paintActive) return;
 
       const hit = getHit(e.clientX, e.clientY);
       if (!hit) return;
 
-      if (ui.mapMode === 'army') {
+      if (ui.overlay === 'army') {
         if (hit.kind === 'army') {
           if (ui.movingArmyId === hit.army.id) {
             dispatch(stopMovingArmy());
@@ -661,6 +697,17 @@ const HexGrid = (): React.ReactElement => {
         return;
       }
 
+      if (ui.overlay === 'forage') {
+        if (hit.kind === 'tile') {
+          dispatch(adjustForage({ q: hit.q, r: hit.r, delta: 1 }));
+          const hasTown = state.tiles[hit.key]?.hasTown ?? false;
+          dispatch(selectTile({ key: hit.key, hasTown }));
+        } else {
+          handleBackgroundClear();
+        }
+        return;
+      }
+
       if (hit.kind === 'army') {
         if (ui.selectedArmyId === hit.army.id) dispatch(deselectArmy());
         else dispatch(selectArmy(hit.army.id));
@@ -668,7 +715,7 @@ const HexGrid = (): React.ReactElement => {
       }
 
       if (hit.kind === 'tile') {
-        if (ui.mapMode === 'faction') {
+        if (ui.overlay === 'faction') {
           if (!ui.factionBrushActive) return;
           dispatch(setTileFaction({ q: hit.q, r: hit.r, factionId: ui.activeFactionId }));
           return;
@@ -706,7 +753,7 @@ const HexGrid = (): React.ReactElement => {
           dispatch(setPlacingArmy(false));
           return;
         }
-        if (ui.mapMode === 'faction') {
+        if (ui.overlay === 'faction') {
           if (!ui.factionBrushActive) return;
           dispatch(addTile({ q: hit.q, r: hit.r, terrain }));
           dispatch(setTileFaction({ q: hit.q, r: hit.r, factionId: ui.activeFactionId }));
@@ -735,8 +782,16 @@ const HexGrid = (): React.ReactElement => {
         return;
       }
 
+      if (ui.overlay === 'forage') {
+        // Right-click decrements the forage level instead of deleting the tile.
+        if (hit.kind === 'tile') {
+          dispatch(adjustForage({ q: hit.q, r: hit.r, delta: -1 }));
+        }
+        return;
+      }
+
       if (hit.kind === 'tile') {
-        if (ui.mapMode === 'faction') {
+        if (ui.overlay === 'faction') {
           // Faction mode: right-click unassigns the tile's faction; the tile
           // itself (terrain, features) is never deleted in this mode.
           const tile = store.getState().tiles[hit.key];
@@ -762,8 +817,8 @@ const HexGrid = (): React.ReactElement => {
           cursor:
             placingArmy ||
             movingArmyId !== null ||
-            (mapMode === 'terrain-paint' && activePaintBrush !== null) ||
-            (mapMode === 'faction' && factionBrushActive)
+            (overlay === 'terrain' && paintActive && activePaintBrush !== null) ||
+            (overlay === 'faction' && factionBrushActive)
               ? 'pointer'
               : undefined,
         }}

@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { createSelector } from '@reduxjs/toolkit';
 import {
-  setMapMode,
+  setOverlay,
   selectArmy,
   startMovingArmy,
   setFlashingArmy,
@@ -227,8 +227,8 @@ const ArmyEditPanel = (): React.ReactElement => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
 
-  const mapMode = useAppSelector((state) => {
-    return state.ui.mapMode;
+  const overlay = useAppSelector((state) => {
+    return state.ui.overlay;
   });
   const movingArmyId = useAppSelector((state) => {
     return state.ui.movingArmyId;
@@ -246,7 +246,7 @@ const ArmyEditPanel = (): React.ReactElement => {
   }, 0);
 
   const handleClose = useCallback(() => {
-    dispatch(setMapMode('terrain'));
+    dispatch(setOverlay('terrain'));
   }, [dispatch]);
 
   const handleScrollTo = useCallback(
@@ -277,12 +277,13 @@ const ArmyEditPanel = (): React.ReactElement => {
   );
 
   return (
-    <SidePanel data-testid="army-edit-panel" $open={mapMode === 'army'} $desktopSlide $gap="12px">
+    <SidePanel data-testid="army-edit-panel" $open={overlay === 'army'} $desktopSlide $gap="12px">
       <DragHandle $margin="0 auto -4px" />
       <PanelHeader
         title={t('armyEditPanel.title')}
         icon={<SwordsIcon aria-hidden />}
         onClose={handleClose}
+        closeDesktopHidden
       />
 
       {movingArmyId && (

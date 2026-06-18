@@ -1,13 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { setMapMode } from '../../features/ui/uiSlice';
+import { setOverlay } from '../../features/ui/uiSlice';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { MapIcon, FlagIcon, SwordsIcon } from '../../assets/icons/ui';
+import { MapIcon, FlagIcon, SwordsIcon, LeafIcon, NoteIcon } from '../../assets/icons/ui';
+import type { Overlay } from '../../types/state';
 
 const PANEL_OFFSET = '300px';
 
-const Toggle = styled.div`
+type OverlayLabelKey = `overlayPanel.${Overlay}`;
+
+type OverlayDef = {
+  id: Overlay;
+  Icon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>;
+  labelKey: OverlayLabelKey;
+};
+
+const OVERLAYS: OverlayDef[] = [
+  { id: 'terrain', Icon: MapIcon, labelKey: 'overlayPanel.terrain' },
+  { id: 'faction', Icon: FlagIcon, labelKey: 'overlayPanel.faction' },
+  { id: 'army', Icon: SwordsIcon, labelKey: 'overlayPanel.army' },
+  { id: 'forage', Icon: LeafIcon, labelKey: 'overlayPanel.forage' },
+  { id: 'notes', Icon: NoteIcon, labelKey: 'overlayPanel.notes' },
+];
+
+const Panel = styled.div`
   position: absolute;
   bottom: 20px;
   right: 20px;
@@ -15,7 +32,8 @@ const Toggle = styled.div`
     return theme.zIndex.toggle;
   }};
   display: flex;
-  border-radius: 24px;
+  flex-direction: column;
+  border-radius: 16px;
   border: 2px solid
     ${({ theme }) => {
       return theme.panelBorder;
@@ -34,11 +52,22 @@ const Toggle = styled.div`
   }
 `;
 
-const ModeBtn = styled.button<{ $active: boolean }>`
+const List = styled.div<{ $expanded: boolean }>`
+  display: ${({ $expanded }) => {
+    return $expanded ? 'flex' : 'none';
+  }};
+  flex-direction: column;
+
+  @media (min-width: 601px) {
+    display: flex;
+  }
+`;
+
+const OverlayBtn = styled.button<{ $active: boolean }>`
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
+  gap: 8px;
+  padding: 9px 16px;
   border: none;
   background: ${({ $active, theme }) => {
     return $active ? theme.panelBorder : 'transparent';
@@ -56,10 +85,11 @@ const ModeBtn = styled.button<{ $active: boolean }>`
     background 0.15s,
     color 0.15s;
   white-space: nowrap;
+  text-align: left;
 
   & > svg {
-    width: 1em;
-    height: 1em;
+    width: 1.05em;
+    height: 1.05em;
     flex-shrink: 0;
   }
 
@@ -70,46 +100,64 @@ const ModeBtn = styled.button<{ $active: boolean }>`
   }
 `;
 
+// Mobile-only header: shows the active overlay and toggles the list open/closed.
+const CollapsedToggle = styled(OverlayBtn)`
+  @media (min-width: 601px) {
+    display: none;
+  }
+`;
+
 const MapModeToggle = (): React.ReactElement => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
-  const mapMode = useAppSelector((state) => {
-    return state.ui.mapMode;
+  const overlay = useAppSelector((state) => {
+    return state.ui.overlay;
   });
+  const [expanded, setExpanded] = useState(false);
+
+  const active = OVERLAYS.find((o) => {
+    return o.id === overlay;
+  })!;
+  const ActiveIcon = active.Icon;
+
+  const handlePick = (id: Overlay) => {
+    dispatch(setOverlay(id));
+    setExpanded(false);
+  };
 
   return (
-    <Toggle>
-      <ModeBtn
-        $active={mapMode === 'terrain'}
-        data-testid="map-mode-terrain"
+    <Panel>
+      <CollapsedToggle
+        $active
+        aria-expanded={expanded}
+        data-testid="overlay-panel-toggle"
         onClick={() => {
-          return dispatch(setMapMode('terrain'));
+          return setExpanded((v) => {
+            return !v;
+          });
         }}
       >
-        <MapIcon aria-hidden />
-        {t('mapModeToggle.terrain')}
-      </ModeBtn>
-      <ModeBtn
-        $active={mapMode === 'faction'}
-        data-testid="map-mode-faction"
-        onClick={() => {
-          return dispatch(setMapMode('faction'));
-        }}
-      >
-        <FlagIcon aria-hidden />
-        {t('mapModeToggle.faction')}
-      </ModeBtn>
-      <ModeBtn
-        $active={mapMode === 'army'}
-        data-testid="map-mode-army"
-        onClick={() => {
-          return dispatch(setMapMode('army'));
-        }}
-      >
-        <SwordsIcon aria-hidden />
-        {t('mapModeToggle.army')}
-      </ModeBtn>
-    </Toggle>
+        <ActiveIcon aria-hidden />
+        {t(active.labelKey)}
+      </CollapsedToggle>
+      <List $expanded={expanded}>
+        {OVERLAYS.map(({ id, Icon, labelKey }) => {
+          return (
+            <OverlayBtn
+              key={id}
+              $active={overlay === id}
+              data-testid={`map-mode-${id}`}
+              onClick={() => {
+                return handlePick(id);
+              }}
+            >
+              <Icon aria-hidden />
+              {t(labelKey)}
+            </OverlayBtn>
+          );
+        })}
+      </List>
+    </Panel>
   );
 };
 

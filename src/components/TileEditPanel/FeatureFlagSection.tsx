@@ -6,7 +6,12 @@ import {
   toggleTileFlag,
   blockConnection,
   unblockConnection,
+  setTileVariety,
 } from '../../features/tiles/tilesSlice';
+import {
+  DEFAULT_RIVER_TYPE_ID,
+  DEFAULT_ROAD_TYPE_ID,
+} from '../../features/terrainConfig/terrainConfigSlice';
 import { enterTownEdit } from '../../features/ui/uiSlice';
 import { theme } from '../../styles/theme';
 import { NEIGHBOR_DIRS, toKey, DEEP_WATER } from '../../utils/hexUtils';
@@ -150,6 +155,60 @@ const EditTownBtn = styled.button`
   }
 `;
 
+const VarietyPicker = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-left: 4px;
+`;
+
+const VarietyLabel = styled.span`
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: ${({ theme: t }) => {
+    return t.textMuted;
+  }};
+  margin-right: 2px;
+`;
+
+const VarietyBtn = styled.button<{ $active: boolean; $color: string }>`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 2px solid
+    ${({ $active, $color }) => {
+      return $active ? $color : theme.surface.borderFaint;
+    }};
+  background: ${({ $active, $color }) => {
+    return $active ? `${$color}22` : theme.surface.base;
+  }};
+  color: ${({ theme: t }) => {
+    return t.text;
+  }};
+  cursor: pointer;
+  font-size: 0.75rem;
+  &:hover {
+    border-color: ${({ $color }) => {
+      return $color;
+    }}99;
+  }
+`;
+
+const VarietyDot = styled.span<{ $color: string }>`
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: ${({ $color }) => {
+    return $color;
+  }};
+`;
+
 const DIR_LABELS = ['E', 'NE', 'NW', 'W', 'SW', 'SE'] as const;
 
 const FLAG_BLOCKED_KEY: Record<
@@ -200,6 +259,12 @@ const FeatureFlagSection = (): React.ReactElement | null => {
   const allTiles = useAppSelector((state) => {
     return state.tiles;
   });
+  const riverTypes = useAppSelector((state) => {
+    return state.terrainConfig.riverTypes;
+  });
+  const roadTypes = useAppSelector((state) => {
+    return state.terrainConfig.roadTypes;
+  });
 
   if (!tile) return null;
 
@@ -238,6 +303,54 @@ const FeatureFlagSection = (): React.ReactElement | null => {
           );
         })}
       </ButtonGroup>
+
+      {tile.hasRiver && riverTypes.length > 1 && (
+        <VarietyPicker>
+          <VarietyLabel>{t('tilePanel.featureStyle')}</VarietyLabel>
+          {riverTypes.map((v) => {
+            const active = (tile.riverTypeId ?? DEFAULT_RIVER_TYPE_ID) === v.id;
+            return (
+              <VarietyBtn
+                key={v.id}
+                $active={active}
+                $color={v.color}
+                onClick={() => {
+                  return dispatch(
+                    setTileVariety({ q: tile.q, r: tile.r, flag: 'hasRiver', varietyId: v.id })
+                  );
+                }}
+              >
+                <VarietyDot $color={v.color} />
+                {v.name}
+              </VarietyBtn>
+            );
+          })}
+        </VarietyPicker>
+      )}
+
+      {tile.hasRoad && roadTypes.length > 1 && (
+        <VarietyPicker>
+          <VarietyLabel>{t('tilePanel.featureStyle')}</VarietyLabel>
+          {roadTypes.map((v) => {
+            const active = (tile.roadTypeId ?? DEFAULT_ROAD_TYPE_ID) === v.id;
+            return (
+              <VarietyBtn
+                key={v.id}
+                $active={active}
+                $color={v.color}
+                onClick={() => {
+                  return dispatch(
+                    setTileVariety({ q: tile.q, r: tile.r, flag: 'hasRoad', varietyId: v.id })
+                  );
+                }}
+              >
+                <VarietyDot $color={v.color} />
+                {v.name}
+              </VarietyBtn>
+            );
+          })}
+        </VarietyPicker>
+      )}
 
       {FLAGS.map(({ key, labelKey: _labelKey, color }) => {
         const active = !!tile[key];

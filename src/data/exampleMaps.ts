@@ -44,9 +44,11 @@ const normalizeTile = (t: RawTile): Tile => {
     townName: t.townName ?? '',
     townSize: t.townSize,
     fortification: t.fortification,
+    razed: t.razed,
     portBlocked: t.portBlocked ?? [],
     notes: t.notes ?? '',
     factionId: t.factionId ?? null,
+    forageLevel: t.forageLevel ?? 0,
   };
 };
 

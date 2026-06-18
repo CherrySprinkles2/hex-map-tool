@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { UiState, MapMode } from '../../types/state';
+import type { UiState, Overlay } from '../../types/state';
 
 const initialState: UiState = {
   selectedTile: null,
@@ -8,10 +8,10 @@ const initialState: UiState = {
   movingArmyId: null,
   flashingArmyId: null,
   factionsOpen: false,
-  mapMode: 'terrain',
+  overlay: 'terrain',
+  paintActive: false,
   activeFactionId: null,
   factionBrushActive: false,
-  factionBordersOnly: false,
   showShortcuts: false,
   activePaintBrush: null,
   editingTownTile: null,
@@ -73,27 +73,25 @@ const uiSlice = createSlice({
     closeFactionsPanel: (state) => {
       state.factionsOpen = false;
     },
-    setMapMode: (state, action: PayloadAction<MapMode>) => {
-      state.mapMode = action.payload;
+    setOverlay: (state, action: PayloadAction<Overlay>) => {
+      state.overlay = action.payload;
+      // Switching overlay always exits the terrain-paint and faction-paint
+      // sub-modes — those brushes belong to a specific overlay.
+      state.paintActive = false;
+      state.activePaintBrush = null;
+      state.factionBrushActive = false;
       if (action.payload === 'faction') {
         state.factionsOpen = false;
-        state.factionBrushActive = false;
-      } else {
-        state.factionBrushActive = false;
       }
       if (action.payload === 'army') {
         state.selectedTile = null;
         state.selectedArmyId = null;
         state.movingArmyId = null;
         state.editingTownTile = null;
-        state.activePaintBrush = null;
       }
     },
     setActiveFaction: (state, action: PayloadAction<string | null>) => {
       state.activeFactionId = action.payload;
-    },
-    toggleFactionBorders: (state) => {
-      state.factionBordersOnly = !state.factionBordersOnly;
     },
     setFactionBrush: (state, action: PayloadAction<string | null>) => {
       if (state.factionBrushActive && state.activeFactionId === action.payload) {
@@ -104,11 +102,12 @@ const uiSlice = createSlice({
       }
     },
     enterTerrainPaint: (state, action: PayloadAction<string | null>) => {
-      state.mapMode = 'terrain-paint';
+      state.overlay = 'terrain';
+      state.paintActive = true;
       state.activePaintBrush = action.payload ?? null;
     },
     exitTerrainPaint: (state) => {
-      state.mapMode = 'terrain';
+      state.paintActive = false;
       state.activePaintBrush = null;
     },
     setActivePaintBrush: (state, action: PayloadAction<string | null>) => {
@@ -141,9 +140,8 @@ export const {
   clearFlashingArmy,
   toggleFactionsPanel,
   closeFactionsPanel,
-  setMapMode,
+  setOverlay,
   setActiveFaction,
-  toggleFactionBorders,
   setFactionBrush,
   enterTerrainPaint,
   exitTerrainPaint,

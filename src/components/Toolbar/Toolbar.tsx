@@ -325,8 +325,8 @@ const Toolbar = (): React.ReactElement => {
   const factionsOpen = useAppSelector((state) => {
     return state.ui.factionsOpen;
   });
-  const mapMode = useAppSelector((state) => {
-    return state.ui.mapMode;
+  const overlay = useAppSelector((state) => {
+    return state.ui.overlay;
   });
   const showShortcuts = useAppSelector((state) => {
     return state.ui.showShortcuts;
@@ -345,9 +345,10 @@ const Toolbar = (): React.ReactElement => {
   const store = useAppStore();
 
   const rightPanelOpen =
-    mapMode === 'terrain' ||
-    mapMode === 'terrain-paint' ||
-    mapMode === 'faction' ||
+    overlay === 'terrain' ||
+    overlay === 'faction' ||
+    overlay === 'forage' ||
+    overlay === 'notes' ||
     showShortcuts ||
     selectedArmyId !== null;
 
@@ -536,6 +537,7 @@ const Toolbar = (): React.ReactElement => {
           {t('help.helpButtonLabel')}
         </SheetItem>
         <SheetItem
+          data-testid="terrain-config-btn"
           onClick={() => {
             setSettingsOpen(false);
             setTerrainConfigOpen(true);

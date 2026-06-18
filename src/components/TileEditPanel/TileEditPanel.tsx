@@ -6,11 +6,12 @@ import { deselectTile } from '../../features/ui/uiSlice';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { SidePanel } from '../shared/SidePanel';
 import { DragHandle } from '../shared/DragHandle';
+import { PanelEmptyState } from '../shared/PanelEmptyState';
 import { SectionLabel } from '../shared/SectionLabel';
 import { StyledTextarea } from '../shared/StyledTextarea';
 import { Divider } from '../shared/Divider';
 import { DangerButton } from '../shared/DangerButton';
-import { CloseIcon, HexIcon, TrashIcon } from '../../assets/icons/ui';
+import { CloseIcon, TrashIcon } from '../../assets/icons/ui';
 import TerrainSection from './TerrainSection';
 import FeatureFlagSection from './FeatureFlagSection';
 import TileArmySection from './TileArmySection';
@@ -55,44 +56,17 @@ const CloseBtn = styled.button`
   }
 `;
 
-const EmptyState = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 32px 16px;
-  opacity: 0.45;
-`;
-
-const EmptyHexIcon = styled.div`
-  width: 3.5rem;
-  height: 3.5rem;
-  color: ${({ theme }) => {
-    return theme.textMuted;
-  }};
-  opacity: 0.45;
-`;
-
-const EmptyText = styled.p`
-  font-size: 0.85rem;
-  text-align: center;
-  color: ${({ theme }) => {
-    return theme.textMuted;
-  }};
-  line-height: 1.5;
-  margin: 0;
-`;
-
 const TileEditPanel = (): React.ReactElement => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
   const selectedKey = useAppSelector((state) => {
     return state.ui.selectedTile;
   });
-  const mapMode = useAppSelector((state) => {
-    return state.ui.mapMode;
+  const overlay = useAppSelector((state) => {
+    return state.ui.overlay;
+  });
+  const paintActive = useAppSelector((state) => {
+    return state.ui.paintActive;
   });
   const showShortcuts = useAppSelector((state) => {
     return state.ui.showShortcuts;
@@ -125,22 +99,20 @@ const TileEditPanel = (): React.ReactElement => {
   return (
     <SidePanel
       $open={
-        (!!selectedKey || mapMode === 'terrain-paint') &&
+        overlay === 'terrain' &&
+        (!!selectedKey || paintActive) &&
         !showShortcuts &&
         !selectedArmyId &&
         !editingTownTile
       }
       $desktopVisible={
-        (mapMode === 'terrain' || mapMode === 'terrain-paint') &&
-        !showShortcuts &&
-        !selectedArmyId &&
-        !editingTownTile
+        overlay === 'terrain' && !showShortcuts && !selectedArmyId && !editingTownTile
       }
       $gap="20px"
     >
       <DragHandle $margin="0 auto -8px" />
 
-      {mapMode === 'terrain-paint' ? (
+      {paintActive ? (
         <TerrainSection />
       ) : (
         <>
@@ -150,10 +122,7 @@ const TileEditPanel = (): React.ReactElement => {
           </CloseBtn>
 
           {!selectedKey ? (
-            <EmptyState>
-              <EmptyHexIcon as={HexIcon} />
-              <EmptyText>{t('tilePanel.noTileSelected')}</EmptyText>
-            </EmptyState>
+            <PanelEmptyState text={t('tilePanel.noTileSelected')} />
           ) : (
             <>
               <TerrainSection />

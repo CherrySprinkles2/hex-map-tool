@@ -9,15 +9,26 @@ import {
   updateCustomTerrain,
   removeCustomTerrain,
   reorderTerrains,
+  addRiverType,
+  updateRiverType,
+  removeRiverType,
+  addRoadType,
+  updateRoadType,
+  removeRoadType,
+  DEFAULT_RIVER_TYPE_ID,
+  DEFAULT_ROAD_TYPE_ID,
 } from '../../features/terrainConfig/terrainConfigSlice';
-import { deleteTilesByTerrain } from '../../features/tiles/tilesSlice';
+import { deleteTilesByTerrain, reassignFeatureVariety } from '../../features/tiles/tilesSlice';
 import { generateId } from '../../utils/generateId';
 import { theme } from '../../styles/theme';
-import type { CustomTerrainType, PatternKey } from '../../types/domain';
+import type { CustomTerrainType, FeatureVariety, PatternKey } from '../../types/domain';
 import { CloseIcon } from '../../assets/icons/ui';
 import { ModalBackdrop } from '../shared/modal';
 import TerrainListView from './TerrainListView';
 import TerrainFormView from './TerrainFormView';
+import FeatureVarietySection from './FeatureVarietySection';
+import FeatureVarietyForm from './FeatureVarietyForm';
+import type { FeatureFormState } from './FeatureVarietyForm';
 import type { OrderedEntry } from './TerrainListView';
 import type { FormState } from './TerrainFormView';
 
@@ -58,6 +69,17 @@ const ModalTitle = styled.h2`
   letter-spacing: 0.08em;
 `;
 
+const SectionHeading = styled.h3`
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: ${({ theme: t }) => {
+    return t.textMuted;
+  }};
+  margin: 8px 0 2px;
+`;
+
 const IconBtn = styled.button`
   background: none;
   border: none;
@@ -83,8 +105,15 @@ const DEFAULT_FORM: FormState = {
   icon: '',
 };
 
-type ModalView = 'list' | 'form';
+const DEFAULT_FEATURE_FORM: FeatureFormState = {
+  name: 'New Style',
+  color: '#4499cc',
+  width: 6,
+};
+
+type ModalView = 'list' | 'form' | 'feature-form';
 type FormMode = 'add' | 'edit';
+type FeatureKind = 'river' | 'road';
 
 interface Props {
   onClose: () => void;
@@ -93,7 +122,7 @@ interface Props {
 const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const { disabled, custom, order } = useAppSelector((state) => {
+  const { disabled, custom, order, riverTypes, roadTypes } = useAppSelector((state) => {
     return state.terrainConfig;
   });
   const tiles = useAppSelector((state) => {
@@ -104,6 +133,8 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
   const [formMode, setFormMode] = useState<FormMode>('add');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
+  const [featureKind, setFeatureKind] = useState<FeatureKind>('river');
+  const [featureForm, setFeatureForm] = useState<FeatureFormState>(DEFAULT_FEATURE_FORM);
 
   const orderedList: OrderedEntry[] = order
     .map((id): OrderedEntry | null => {
@@ -248,6 +279,53 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
     setView('list');
   };
 
+  const openAddFeature = (kind: FeatureKind): void => {
+    setFeatureKind(kind);
+    setFormMode('add');
+    setEditingId(null);
+    setFeatureForm({
+      ...DEFAULT_FEATURE_FORM,
+      color: kind === 'river' ? '#4499cc' : '#8B7355',
+      width: kind === 'river' ? 6 : 3,
+    });
+    setView('feature-form');
+  };
+
+  const openEditFeature = (kind: FeatureKind, v: FeatureVariety): void => {
+    setFeatureKind(kind);
+    setFormMode('edit');
+    setEditingId(v.id);
+    setFeatureForm({ name: v.name, color: v.color, width: v.width });
+    setView('feature-form');
+  };
+
+  const handleSaveFeature = (): void => {
+    const sanitised = { ...featureForm, color: featureForm.color.trim() };
+    const addAction = featureKind === 'river' ? addRiverType : addRoadType;
+    const updateAction = featureKind === 'river' ? updateRiverType : updateRoadType;
+    if (formMode === 'edit' && editingId) {
+      dispatch(updateAction({ id: editingId, ...sanitised }));
+    } else {
+      dispatch(addAction({ id: generateId(featureKind), ...sanitised }));
+    }
+    setView('list');
+  };
+
+  const handleDeleteFeature = (kind: FeatureKind, id: string): void => {
+    const flag = kind === 'river' ? 'hasRiver' : 'hasRoad';
+    const prop = kind === 'river' ? 'riverTypeId' : 'roadTypeId';
+    const defaultId = kind === 'river' ? DEFAULT_RIVER_TYPE_ID : DEFAULT_ROAD_TYPE_ID;
+    const count = Object.values(tiles).filter((tile) => {
+      return tile[prop] === id;
+    }).length;
+    if (count > 0) {
+      const ok = window.confirm(t('terrainConfig.deleteVarietyWarning', { count }));
+      if (!ok) return;
+      dispatch(reassignFeatureVariety({ flag, fromId: id, toId: defaultId }));
+    }
+    dispatch(kind === 'river' ? removeRiverType(id) : removeRoadType(id));
+  };
+
   return (
     <ModalBackdrop onClick={onClose}>
       <ModalCard
@@ -255,7 +333,7 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
           e.stopPropagation();
         }}
       >
-        {view === 'list' ? (
+        {view === 'list' && (
           <>
             <ModalHeader>
               <ModalTitle>{t('terrainConfig.title')}</ModalTitle>
@@ -263,6 +341,7 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
                 <CloseIcon width="1em" height="1em" aria-hidden />
               </IconBtn>
             </ModalHeader>
+            <SectionHeading>{t('terrainConfig.sectionTerrain')}</SectionHeading>
             <TerrainListView
               orderedList={orderedList}
               disabled={disabled}
@@ -274,8 +353,39 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
               onOpenEditForm={openEditForm}
               onOpenAddForm={openAddForm}
             />
+            <FeatureVarietySection
+              title={t('terrainConfig.sectionRivers')}
+              varieties={riverTypes}
+              defaultId={DEFAULT_RIVER_TYPE_ID}
+              addLabel={t('terrainConfig.addRiver')}
+              onAdd={() => {
+                openAddFeature('river');
+              }}
+              onEdit={(v) => {
+                openEditFeature('river', v);
+              }}
+              onDelete={(id) => {
+                handleDeleteFeature('river', id);
+              }}
+            />
+            <FeatureVarietySection
+              title={t('terrainConfig.sectionRoads')}
+              varieties={roadTypes}
+              defaultId={DEFAULT_ROAD_TYPE_ID}
+              addLabel={t('terrainConfig.addRoad')}
+              onAdd={() => {
+                openAddFeature('road');
+              }}
+              onEdit={(v) => {
+                openEditFeature('road', v);
+              }}
+              onDelete={(id) => {
+                handleDeleteFeature('road', id);
+              }}
+            />
           </>
-        ) : (
+        )}
+        {view === 'form' && (
           <>
             <ModalHeader>
               <IconBtn
@@ -299,6 +409,39 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
               setForm={setForm}
               formMode={formMode}
               onSave={handleSave}
+            />
+          </>
+        )}
+        {view === 'feature-form' && (
+          <>
+            <ModalHeader>
+              <IconBtn
+                onClick={() => {
+                  setView('list');
+                }}
+              >
+                {t('terrainConfig.back')}
+              </IconBtn>
+              <ModalTitle>
+                {(() => {
+                  if (featureKind === 'river') {
+                    return formMode === 'add'
+                      ? t('terrainConfig.newRiverTitle')
+                      : t('terrainConfig.editRiverTitle');
+                  }
+                  return formMode === 'add'
+                    ? t('terrainConfig.newRoadTitle')
+                    : t('terrainConfig.editRoadTitle');
+                })()}
+              </ModalTitle>
+              <IconBtn onClick={onClose}>
+                <CloseIcon width="1em" height="1em" aria-hidden />
+              </IconBtn>
+            </ModalHeader>
+            <FeatureVarietyForm
+              form={featureForm}
+              setForm={setFeatureForm}
+              onSave={handleSaveFeature}
             />
           </>
         )}

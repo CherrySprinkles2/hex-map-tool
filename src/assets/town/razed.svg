@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" fill="none">
+  <!-- left flame tongue -->
+  <path d="M16 30 C12 38 13 46 18 51 C16 44 19 40 22 37 C20 43 23 47 25 48 C22 41 24 35 19 26 C19 31 17 32 16 30 Z" fill="#e8632a"/>
+  <!-- right flame tongue -->
+  <path d="M45 28 C49 36 49 45 43 51 C45 44 42 40 39 38 C41 44 38 47 36 48 C39 41 37 34 42 25 C42 30 44 31 45 28 Z" fill="#e8632a"/>
+  <!-- central main flame -->
+  <path d="M31 4 C38 18 49 24 45 39 C42 51 35 56 30 56 C24 56 14 51 14 38 C14 28 21 27 23 19 C28 25 25 32 30 32 C35 32 35 21 31 4 Z" fill="#f0763a"/>
+  <!-- inner yellow flame -->
+  <path d="M30 23 C34 30 40 34 37 43 C36 50 32 53 30 53 C27 53 22 50 22 43 C22 36 27 34 30 23 Z" fill="#ffce3f"/>
+  <!-- hot core -->
+  <path d="M30 35 C32 39 35 41 33 46 C32 49 31 50 30 50 C28 50 26 49 26 46 C26 42 28 40 30 35 Z" fill="#fff1a8"/>
+</svg>

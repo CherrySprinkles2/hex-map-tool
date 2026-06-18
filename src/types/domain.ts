@@ -25,10 +25,22 @@ export interface CustomTerrainType {
   icon: string;
 }
 
+/** A named river or road style — colour + stroke width. */
+export interface FeatureVariety {
+  id: string;
+  name: string;
+  color: string;
+  width: number;
+}
+
 export interface TerrainConfig {
   disabled: string[];
   custom: CustomTerrainType[];
   order: string[];
+  /** Named river styles; always includes the reserved `river-default` entry. */
+  riverTypes: FeatureVariety[];
+  /** Named road styles; always includes the reserved `road-default` entry. */
+  roadTypes: FeatureVariety[];
 }
 
 export type TileFlag = 'hasRiver' | 'hasRoad' | 'hasTown';
@@ -43,15 +55,23 @@ export interface Tile {
   terrain: TerrainType;
   hasRiver: boolean;
   hasRoad: boolean;
+  /** River variety id; absent → the default river style. */
+  riverTypeId?: string;
+  /** Road variety id; absent → the default road style. */
+  roadTypeId?: string;
   riverBlocked: string[];
   roadBlocked: string[];
   hasTown: boolean;
   townName: string;
   fortification?: Fortification;
   townSize?: TownSize;
+  /** Settlement has been razed — draws a flame over the town icon (cosmetic). */
+  razed?: boolean;
   portBlocked: string[];
   notes: string;
   factionId: string | null;
+  /** Foraging level (0–FORAGE_MAX); 0 = unforaged. */
+  forageLevel: number;
 }
 
 export interface Army {

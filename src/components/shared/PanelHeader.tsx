@@ -37,6 +37,8 @@ interface PanelHeaderProps {
   onClose: () => void;
   icon?: React.ReactNode;
   closeVariant?: 'simple' | 'bordered';
+  /** Hide the close button on desktop (≥601px); used by always-visible side panels. */
+  closeDesktopHidden?: boolean;
   $marginBottom?: string;
 }
 
@@ -45,6 +47,7 @@ export const PanelHeader = ({
   onClose,
   icon,
   closeVariant = 'simple',
+  closeDesktopHidden,
   $marginBottom,
 }: PanelHeaderProps): React.ReactElement => {
   return (
@@ -53,7 +56,7 @@ export const PanelHeader = ({
         {icon}
         {title}
       </Title>
-      <CloseButton onClick={onClose} variant={closeVariant} />
+      <CloseButton onClick={onClose} variant={closeVariant} desktopHidden={closeDesktopHidden} />
     </HeaderRow>
   );
 };

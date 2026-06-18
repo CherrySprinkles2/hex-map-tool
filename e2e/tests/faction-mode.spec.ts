@@ -54,14 +54,4 @@ test.describe('Faction mode', () => {
     await editor.rightClickTile(0, 0);
     expect(await editor.tileExists(0, 0)).toBe(true);
   });
-
-  test('borders-only toggle flips on and off', async ({ appPage }) => {
-    await appPage.getByTestId('map-mode-faction').click();
-    const toggle = appPage.getByTestId('faction-borders-toggle');
-    await expect(toggle).not.toBeChecked();
-    await toggle.click();
-    await expect(toggle).toBeChecked();
-    await toggle.click();
-    await expect(toggle).not.toBeChecked();
-  });
 });

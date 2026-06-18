@@ -49,6 +49,8 @@
     "riverRemove": "− Remove",
     "roadAdd": "+ Add",
     "roadRemove": "− Remove",
+    "remove": "Remove",
+    "featureStyle": "Style",
     "editTown": "Edit Town"
   },
   "townPanel": {
@@ -69,7 +71,9 @@
     "size_town": "Town",
     "size_town_desc": "A busy medium-size settlement with a sizable population",
     "size_city": "City",
-    "size_city_desc": "A major urban centre with a long history."
+    "size_city_desc": "A major urban centre with a long history.",
+    "status": "Status",
+    "razed": "Razed"
   },
   "factionPaintPanel": {
     "title": "Paint Faction",
@@ -78,7 +82,6 @@
     "hint": "Select a faction below, then click or drag tiles to assign it.",
     "hintTouch": "Select a faction below, then tap tiles to assign it.",
     "unassigned": "Unassigned",
-    "bordersOnly": "Show borders only",
     "noFactions": "No factions yet.\nAdd some via Factions in the settings menu."
   },
   "factionsPanel": {
@@ -125,13 +128,34 @@
     "title": "Export PNG",
     "fullMap": "Entire map",
     "currentView": "Current view",
-    "includeFactionBorders": "Include faction borders",
+    "exportingAs": "Exporting: {{overlay}} view",
     "download": "Download"
   },
   "mapModeToggle": {
     "terrain": "Terrain",
     "faction": "Faction",
     "army": "Army"
+  },
+  "overlayPanel": {
+    "terrain": "Terrain",
+    "faction": "Factions",
+    "army": "Army",
+    "forage": "Forage",
+    "notes": "Notes"
+  },
+  "foragePanel": {
+    "title": "Forage",
+    "hint": "Left-click a tile to forage (+1), right-click to reduce (−1).",
+    "noTile": "Click a tile to forage it, or select one to adjust its level.",
+    "increase": "Increase forage level",
+    "decrease": "Decrease forage level",
+    "clear": "Clear foraging"
+  },
+  "notesPanel": {
+    "title": "Notes",
+    "label": "Tile notes",
+    "noTile": "Click a tile to view and edit its notes.",
+    "placeholder": "Write notes for this tile…"
   },
   "armyEditPanel": {
     "title": "Armies",
@@ -175,11 +199,12 @@
     "resetViewport": "Reset viewport to centre"
   },
   "terrainConfig": {
-    "title": "Terrain Types",
+    "title": "Terrain & Features",
     "fieldName": "Name",
     "fieldColor": "Color",
     "fieldPattern": "Pattern",
     "fieldIcon": "Icon",
+    "fieldWidth": "Width",
     "fieldDeepWater": "Deep Water",
     "iconHint": "Upload an SVG file to use as the icon for this terrain type.",
     "deepWaterHint": "Merges edges with adjacent water tiles, suppresses river and road visuals, and enables ports on neighbouring town tiles.",
@@ -191,7 +216,17 @@
     "newTerrainTitle": "New Terrain",
     "editTerrainTitle": "Edit Terrain",
     "disableWarning": "{{count}} tile(s) use this terrain. Disabling will hide it from the picker but won't delete tiles. Continue?",
-    "deleteWarning": "{{count}} tile(s) use this terrain. Delete those tiles too?"
+    "deleteWarning": "{{count}} tile(s) use this terrain. Delete those tiles too?",
+    "sectionTerrain": "Terrain",
+    "sectionRivers": "Rivers",
+    "sectionRoads": "Roads",
+    "addRiver": "＋ Add River Style",
+    "addRoad": "＋ Add Road Style",
+    "newRiverTitle": "New River Style",
+    "editRiverTitle": "Edit River Style",
+    "newRoadTitle": "New Road Style",
+    "editRoadTitle": "Edit Road Style",
+    "deleteVarietyWarning": "{{count}} tile(s) use this style. They will revert to the default style. Continue?"
   },
   "help": {
     "pageTitle": "Help",

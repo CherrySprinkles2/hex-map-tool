@@ -8,6 +8,8 @@ import ArmyEditPanel from '../ArmyEditPanel/ArmyEditPanel';
 import Toolbar from '../Toolbar/Toolbar';
 import FactionsPanel from '../FactionsPanel/FactionsPanel';
 import FactionPaintPanel from '../FactionPaintPanel/FactionPaintPanel';
+import ForagePanel from '../ForagePanel/ForagePanel';
+import NotesPanel from '../NotesPanel/NotesPanel';
 import MapModeToggle from '../MapModeToggle/MapModeToggle';
 import KeyboardShortcutsPanel from '../KeyboardShortcutsPanel/KeyboardShortcutsPanel';
 import useLocalStorageSync from '../../hooks/useLocalStorageSync';
@@ -45,6 +47,8 @@ const Editor = (): React.ReactElement => {
         <TileEditPanel />
         <TownEditPanel />
         <FactionPaintPanel suppressed={selectedArmyId !== null} />
+        <ForagePanel />
+        <NotesPanel />
         <FactionsPanel />
         <KeyboardShortcutsPanel />
       </CanvasArea>

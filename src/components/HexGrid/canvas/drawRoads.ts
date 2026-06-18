@@ -6,6 +6,7 @@ import { computeConnectedDirs, buildRoadPaths } from '../../../utils/pathGenerat
 import type { TilesState } from '../../../types/state';
 import type { AppTheme } from '../../../types/theme';
 import type { CubicBezier } from '../../../utils/pathGenerator';
+import type { VarietyStyle } from './drawRivers';
 
 interface DrawRoadsArgs {
   ctx: CanvasRenderingContext2D;
@@ -14,6 +15,9 @@ interface DrawRoadsArgs {
   deepWaterSet: Set<string>;
   riverCurvesByTile: Map<string, CubicBezier[]>;
   theme: AppTheme;
+  /** id → { color, width }. Tiles resolve via their roadTypeId. */
+  varieties: Map<string, VarietyStyle>;
+  defaultId: string;
 }
 
 export const drawRoads = ({
@@ -23,20 +27,31 @@ export const drawRoads = ({
   deepWaterSet,
   riverCurvesByTile,
   theme,
+  varieties,
+  defaultId,
 }: DrawRoadsArgs): void => {
   const style = theme.road;
   ctx.save();
   ctx.globalAlpha = 0.9;
-  ctx.strokeStyle = style.color;
-  ctx.lineWidth = style.width;
   ctx.lineCap = style.linecap as CanvasLineCap;
   ctx.lineJoin = 'miter';
-  ctx.fillStyle = style.color;
+
+  const fallback: VarietyStyle = { color: style.color, width: style.width };
+  let currentId: string | null = null;
 
   iterateKeys.forEach((key) => {
     const tile = tiles[key];
     if (!tile || !tile.hasRoad) return;
     if (deepWaterSet.has(tile.terrain)) return;
+
+    const varietyId = tile.roadTypeId ?? defaultId;
+    if (varietyId !== currentId) {
+      currentId = varietyId;
+      const v = varieties.get(varietyId) ?? varieties.get(defaultId) ?? fallback;
+      ctx.strokeStyle = v.color;
+      ctx.lineWidth = v.width;
+      ctx.fillStyle = v.color;
+    }
 
     const { q, r, hasTown } = tile;
     const { x: cx, y: cy } = axialToPixel(q, r);

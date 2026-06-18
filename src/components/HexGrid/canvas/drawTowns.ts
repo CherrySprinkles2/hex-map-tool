@@ -13,6 +13,7 @@ import type { AppTheme } from '../../../types/theme';
 import villageUrl from '../../../assets/town/village.svg';
 import townUrl from '../../../assets/town/town.svg';
 import cityUrl from '../../../assets/town/city.svg';
+import razedUrl from '../../../assets/town/razed.svg';
 
 interface DrawTownsArgs {
   ctx: CanvasRenderingContext2D;
@@ -23,6 +24,7 @@ interface DrawTownsArgs {
 }
 
 const TOWN_SVG_SIZE = 60;
+const RAZED_SVG_SIZE = 60;
 const TOWN_URLS: Record<'village' | 'town' | 'city', string> = {
   village: villageUrl,
   town: townUrl,
@@ -86,6 +88,17 @@ export const drawTowns = ({
         ctx.stroke();
       }
       ctx.restore();
+    }
+
+    // Razed flame over the town icon (cosmetic).
+    if (tile.razed) {
+      const flameCanvas = getSvgCanvas(razedUrl, RAZED_SVG_SIZE, RAZED_SVG_SIZE);
+      if (flameCanvas) {
+        const size = radius * theme.razed.sizeFactor;
+        const fx = cx - size / 2;
+        const fy = cy - size / 2 + size * theme.razed.yOffsetFactor;
+        ctx.drawImage(flameCanvas, fx, fy, size, size);
+      }
     }
   });
 };

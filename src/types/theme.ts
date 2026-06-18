@@ -161,12 +161,32 @@ export interface AppTheme {
     notchWidth: number;
   };
 
+  foraging: {
+    /** Heatmap tint colour drawn over the greyscaled base in the Forage overlay. */
+    tint: string;
+    /** Fill alpha per forage level; index 0 = level 1 … up to FORAGE_MAX. */
+    alphaByLevel: number[];
+    /** Fill colour for the per-tile forage count label (e.g. "1x"). */
+    labelColor: string;
+    /** Halo/stroke colour behind the forage count label. */
+    labelShadow: string;
+  };
+
+  razed: {
+    /** Flame size as a multiple of the town radius. */
+    sizeFactor: number;
+    /** Vertical offset of the flame centre as a multiple of its size (negative = up). */
+    yOffsetFactor: number;
+  };
+
   factionColors: string[];
+
+  faction: {
+    tintAlpha: number;
+  };
 
   factionBorder: {
     width: number;
-    fadeRadius: number;
-    fadeAlpha: number;
   };
 
   selection: {

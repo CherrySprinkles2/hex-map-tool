@@ -42,12 +42,4 @@ test.describe('PNG export', () => {
     ]);
     expect(download.suggestedFilename()).toMatch(/\.png$/);
   });
-
-  test('faction borders checkbox appears only when factions exist', async ({
-    appPage,
-    isMobile,
-  }) => {
-    await openExportPngModal(appPage, isMobile);
-    await expect(appPage.getByTestId('export-png-borders-checkbox')).toHaveCount(0);
-  });
 });

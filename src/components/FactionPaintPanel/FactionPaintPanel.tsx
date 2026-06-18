@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { setFactionBrush, setMapMode, toggleFactionBorders } from '../../features/ui/uiSlice';
+import { setFactionBrush, setOverlay } from '../../features/ui/uiSlice';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { SidePanel } from '../shared/SidePanel';
 import { DragHandle } from '../shared/DragHandle';
@@ -17,23 +17,6 @@ const Hint = styled.p`
   }};
   margin: 0 0 12px;
   line-height: 1.5;
-`;
-
-const BordersToggle = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 2px 10px;
-  font-size: 0.8rem;
-  color: ${({ theme }) => {
-    return theme.text;
-  }};
-  cursor: pointer;
-  user-select: none;
-
-  input {
-    cursor: pointer;
-  }
 `;
 
 const FactionBtn = styled.button<{ $active: boolean; $color: string | null }>`
@@ -124,14 +107,10 @@ const FactionPaintPanel = ({ suppressed }: FactionPaintPanelProps): React.ReactE
   const factionBrushActive = useAppSelector((state) => {
     return state.ui.factionBrushActive;
   });
-  const mapMode = useAppSelector((state) => {
-    return state.ui.mapMode;
+  const overlay = useAppSelector((state) => {
+    return state.ui.overlay;
   });
-  const factionBordersOnly = useAppSelector((state) => {
-    return state.ui.factionBordersOnly;
-  });
-
-  const isOpen = mapMode === 'faction';
+  const isOpen = overlay === 'faction';
 
   return (
     <SidePanel $open={isOpen && !suppressed} $gap="8px">
@@ -140,23 +119,12 @@ const FactionPaintPanel = ({ suppressed }: FactionPaintPanelProps): React.ReactE
         title={t('factionPaintPanel.title')}
         icon={<FlagIcon aria-hidden />}
         onClose={() => {
-          return dispatch(setMapMode('terrain'));
+          return dispatch(setOverlay('terrain'));
         }}
+        closeDesktopHidden
         $marginBottom="4px"
       />
       <Hint>{isTouchDevice ? t('factionPaintPanel.hintTouch') : t('factionPaintPanel.hint')}</Hint>
-
-      <BordersToggle>
-        <input
-          type="checkbox"
-          data-testid="faction-borders-toggle"
-          checked={factionBordersOnly}
-          onChange={() => {
-            return dispatch(toggleFactionBorders());
-          }}
-        />
-        {t('factionPaintPanel.bordersOnly')}
-      </BordersToggle>
 
       <FactionBtn
         data-testid="faction-brush-unassigned"

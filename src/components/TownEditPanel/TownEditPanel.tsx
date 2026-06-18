@@ -1,7 +1,12 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { setTownName, setFortification, setTownSize } from '../../features/tiles/tilesSlice';
+import {
+  setTownName,
+  setFortification,
+  setTownSize,
+  setTileRazed,
+} from '../../features/tiles/tilesSlice';
 import { exitTownEdit } from '../../features/ui/uiSlice';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { SidePanel } from '../shared/SidePanel';
@@ -150,6 +155,25 @@ const OptionDesc = styled.span`
   line-height: 1.4;
 `;
 
+const RazedRow = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px;
+  font-size: 0.85rem;
+  color: ${({ theme }) => {
+    return theme.text;
+  }};
+  cursor: pointer;
+  user-select: none;
+
+  input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+`;
+
 const FORTIFICATION_OPTIONS: Fortification[] = ['none', 'palisade', 'stone'];
 const SIZE_OPTIONS: TownSize[] = ['village', 'town', 'city'];
 
@@ -181,6 +205,11 @@ const TownEditPanel = (): React.ReactElement => {
   const handleSizeChange = (townSize: TownSize) => {
     if (!tile) return;
     dispatch(setTownSize({ q: tile.q, r: tile.r, townSize }));
+  };
+
+  const handleRazedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!tile) return;
+    dispatch(setTileRazed({ q: tile.q, r: tile.r, razed: e.target.checked }));
   };
 
   const currentFortification = tile?.fortification ?? 'none';
@@ -257,6 +286,19 @@ const TownEditPanel = (): React.ReactElement => {
             );
           })}
         </ButtonGroup>
+      </div>
+
+      <div>
+        <SectionLabel>{t('townPanel.status')}</SectionLabel>
+        <RazedRow>
+          <input
+            type="checkbox"
+            data-testid="razed-checkbox"
+            checked={tile?.razed ?? false}
+            onChange={handleRazedChange}
+          />
+          {t('townPanel.razed')}
+        </RazedRow>
       </div>
     </SidePanel>
   );

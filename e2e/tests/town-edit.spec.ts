@@ -95,6 +95,19 @@ test.describe('Town Edit Panel', () => {
     expect(await townPanel.isSizeActive('city')).toBe(true);
   });
 
+  test('razed checkbox toggles and survives back-and-reopen', async ({ appPage }) => {
+    const townPanel = new TownEditPanelPage(appPage);
+    const razed = appPage.getByTestId('razed-checkbox');
+    await expect(razed).not.toBeChecked();
+    await razed.check();
+    await expect(razed).toBeChecked();
+    // Back to tile edit panel then re-open town edit — state should persist.
+    await townPanel.back();
+    await appPage.getByTestId('edit-town-btn').click();
+    await townPanel.waitForPanel();
+    await expect(appPage.getByTestId('razed-checkbox')).toBeChecked();
+  });
+
   test('town with fortification persists in store', async ({ appPage }) => {
     const townPanel = new TownEditPanelPage(appPage);
     await townPanel.setFortification('stone');

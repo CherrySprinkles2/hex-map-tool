@@ -15,3 +15,5 @@ export { default as UploadIcon } from './upload.svg?react';
 export { default as DownloadIcon } from './download.svg?react';
 export { default as PencilIcon } from './pencil.svg?react';
 export { default as QuestionIcon } from './question.svg?react';
+export { default as LeafIcon } from './leaf.svg?react';
+export { default as NoteIcon } from './note.svg?react';

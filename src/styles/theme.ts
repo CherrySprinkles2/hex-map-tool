@@ -149,6 +149,20 @@ export const theme: AppTheme = {
     notchWidth: 2.5,
   },
 
+  // ── Foraging heatmap (Forage overlay) ─────────────────────────────────────────
+  foraging: {
+    tint: '#e8632a', // warm orange reads clearly over a greyscaled base
+    alphaByLevel: [0.18, 0.34, 0.5, 0.66, 0.82], // level 1 → 5, deepening
+    labelColor: '#ffffff', // forage count text (e.g. "1x")
+    labelShadow: '#5a1e00', // dark halo so the count reads over any tint depth
+  },
+
+  // ── Razed settlement flame ────────────────────────────────────────────────────
+  razed: {
+    sizeFactor: 2.25, // flame is 2.25× the town radius
+    yOffsetFactor: -0.05, // nudged slightly upward over the icon
+  },
+
   // ── Faction colour palette ────────────────────────────────────────────────────
   factionColors: [
     '#e94560',
@@ -165,11 +179,14 @@ export const theme: AppTheme = {
     '#90a4ae',
   ],
 
-  // ── Faction territory borders (borders-only toggle in faction mode) ──────────
+  // ── Faction overlay tint (faction-colour wash over the greyscaled base) ──────
+  faction: {
+    tintAlpha: 0.35, // strength of the faction-colour fill on owned tiles
+  },
+
+  // ── Faction territory borders (crisp outline drawn in faction mode) ──────────
   factionBorder: {
     width: 5, // visible stroke width inside the territory edge
-    fadeRadius: 40, // inner-glow reach in world px (~half a tile)
-    fadeAlpha: 0.9, // glow strength at the territory edge
   },
 
   // ── Selection / hover overlay ─────────────────────────────────────────────────

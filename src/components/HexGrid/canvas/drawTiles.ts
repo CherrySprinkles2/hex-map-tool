@@ -1,6 +1,7 @@
 // Canvas rendering for the base-tile layer.
 // Mirrors the output of HexTile.tsx: base fill color + pattern overlay + tile
-// stroke, plus optional faction-mode inner ring and hover highlight.
+// stroke. The faction overlay is drawn separately (greyscale + faction tint +
+// territory borders); the hover highlight lives on the overlay canvas.
 
 import {
   hexCorners,
@@ -11,8 +12,8 @@ import {
   toKey,
 } from '../../../utils/hexUtils';
 import type { PixelCoord } from '../../../utils/hexUtils';
-import type { TilesState, MapMode } from '../../../types/state';
-import type { CustomTerrainType, Faction } from '../../../types/domain';
+import type { TilesState } from '../../../types/state';
+import type { CustomTerrainType } from '../../../types/domain';
 import type { AppTheme } from '../../../types/theme';
 import type { PatternCache } from './patternCache';
 
@@ -21,13 +22,8 @@ interface DrawTilesArgs {
   tiles: TilesState;
   visibleKeys: Set<string>;
   customTerrains: CustomTerrainType[];
-  factions: Faction[];
   theme: AppTheme;
   patternCache: PatternCache;
-  mapMode: MapMode;
-  hoveredKey: string | null;
-  /** Faction mode: draw territory outlines instead of a ring on every owned tile. */
-  factionBordersOnly?: boolean;
 }
 
 const tracePath = (ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number): void => {
@@ -70,26 +66,13 @@ const resolveBaseColor = (
   return theme.terrain.grass.color.trim();
 };
 
-// Faction colours are 6-digit hex strings; falls back to fully transparent
-// for anything else so a bad colour never paints an opaque glow.
-const hexWithAlpha = (hex: string, alpha: number): string => {
-  const match = /^#([0-9a-f]{6})$/i.exec(hex.trim());
-  if (!match) return 'rgba(0,0,0,0)';
-  const a = Math.round(alpha * 255)
-    .toString(16)
-    .padStart(2, '0');
-  return `#${match[1]}${a}`;
-};
-
-// Draws each faction's territory as a single outline with a smooth inner glow.
+// Draws each faction's territory as a single crisp outline.
 //
 // Border edges (edges whose neighbour belongs to a different or no faction) are
-// grouped per faction and stroked once with a blurred shadow, clipped to the
-// union of the faction's tiles. The clip keeps the stroke's outer half and the
-// glow inside the territory — two factions sharing an edge each keep their own
-// colour on their own side — and a single blurred stroke fades evenly around
-// corners instead of banding per tile edge.
-const drawTerritoryBorders = (
+// grouped per faction and stroked once, clipped to the union of the faction's
+// tiles. The clip keeps the inner half of the stroke inside the territory — two
+// factions sharing an edge each keep their own colour on their own side.
+export const drawTerritoryBorders = (
   ctx: CanvasRenderingContext2D,
   tiles: TilesState,
   visibleKeys: Set<string>,
@@ -142,10 +125,6 @@ const drawTerritoryBorders = (
     });
   });
 
-  // shadowBlur works in device pixels, unaffected by the canvas transform —
-  // scale it so the glow keeps the same world size at every zoom level.
-  const deviceScale = ctx.getTransform().a;
-
   groups.forEach((group) => {
     ctx.save();
 
@@ -167,10 +146,7 @@ const drawTerritoryBorders = (
     ctx.lineJoin = 'round';
     ctx.strokeStyle = group.color;
     ctx.lineWidth = theme.factionBorder.width * 2;
-    ctx.shadowColor = hexWithAlpha(group.color, theme.factionBorder.fadeAlpha);
-    ctx.shadowBlur = theme.factionBorder.fadeRadius * deviceScale;
     ctx.stroke();
-    ctx.stroke(); // second pass deepens the glow
 
     ctx.restore();
   });
@@ -181,18 +157,9 @@ export const drawTiles = ({
   tiles,
   visibleKeys,
   customTerrains,
-  factions,
   theme,
   patternCache,
-  mapMode,
-  hoveredKey,
-  factionBordersOnly = false,
 }: DrawTilesArgs): void => {
-  const factionColorMap: Record<string, string> = {};
-  factions.forEach((f) => {
-    factionColorMap[f.id] = f.color;
-  });
-
   ctx.lineCap = 'butt';
   ctx.lineJoin = 'miter';
 
@@ -217,30 +184,7 @@ export const drawTiles = ({
     ctx.strokeStyle = theme.tileStroke;
     ctx.lineWidth = 1.5;
     ctx.stroke();
-
-    // Faction overlay (only in faction mode; borders-only mode paints
-    // territory outlines in a separate pass after the tile loop)
-    if (mapMode === 'faction' && !factionBordersOnly && tile.factionId) {
-      const color = factionColorMap[tile.factionId];
-      if (color) {
-        tracePath(ctx, cx, cy, HEX_SIZE - 5);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 5;
-        ctx.stroke();
-      }
-    }
-
-    // Hover highlight
-    if (hoveredKey === key) {
-      tracePath(ctx, cx, cy, HEX_SIZE);
-      ctx.fillStyle = `rgba(255,255,255,${theme.selection.hoverAlpha})`;
-      ctx.fill();
-    }
   });
-
-  if (mapMode === 'faction' && factionBordersOnly) {
-    drawTerritoryBorders(ctx, tiles, visibleKeys, factionColorMap, theme);
-  }
 
   // Avoid leaking pattern fillStyle into later paint passes.
   ctx.fillStyle = '#000';

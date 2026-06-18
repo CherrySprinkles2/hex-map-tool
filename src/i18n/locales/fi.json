@@ -49,6 +49,8 @@
     "riverRemove": "− Poista",
     "roadAdd": "+ Lisää",
     "roadRemove": "− Poista",
+    "remove": "Poista",
+    "featureStyle": "Tyyli",
     "editTown": "Muokkaa kaupunkia"
   },
   "townPanel": {
@@ -60,16 +62,18 @@
     "fortification_none": "Ei muuria",
     "fortification_none_desc": "Avoin asutus — ei puolustusta, helposti vallattavissa.",
     "fortification_palisade": "Palisadi",
-    "fortification_palisade_desc": "Rengas teroitettuja puupaaluja. Nopea rakentaa, helppo polttaa.",
+    "fortification_palisade_desc": "Ympäröity teroitetulla paaluaidalla. Nopea rakentaa, helppo polttaa.",
     "fortification_stone": "Kivimuri",
     "fortification_stone_desc": "Hakattu kiviverhomuri. Kallis rakentaa, kallis murtaa.",
     "sizeLabel": "Koko",
     "size_village": "Kylä",
-    "size_village_desc": "Pieni kylä, jossa on kourallinen rakennuksia ja markkinat.",
+    "size_village_desc": "Pieni kylä, jossa on kourallinen rakennuksia ja kauppatori.",
     "size_town": "Kaupunki",
     "size_town_desc": "Vilkas keskikokoinen taajama, jossa on huomattava väestö.",
     "size_city": "Suurkaupunki",
-    "size_city_desc": "Merkittävä kaupunkikeskus, jolla on pitkä historia."
+    "size_city_desc": "Merkittävä kaupunkikeskus, jolla on pitkä historia.",
+    "status": "Tila",
+    "razed": "Poltettu"
   },
   "factionPaintPanel": {
     "title": "Maalaa ryhmittymä",
@@ -78,7 +82,6 @@
     "hint": "Valitse alla oleva ryhmittymä ja klikkaa tai vedä ruutuja sen nimeämiseksi.",
     "hintTouch": "Valitse alla oleva ryhmittymä ja napauta ruutuja sen nimeämiseksi.",
     "unassigned": "Ei ryhmittymää",
-    "bordersOnly": "Näytä vain rajat",
     "noFactions": "Ei ryhmittymiä.\nLisää niitä Ryhmittymät-valikosta."
   },
   "factionsPanel": {
@@ -125,13 +128,34 @@
     "title": "Vie PNG-kuva",
     "fullMap": "Koko kartta",
     "currentView": "Nykyinen näkymä",
-    "includeFactionBorders": "Sisällytä ryhmittymien rajat",
+    "exportingAs": "Viedään: {{overlay}}-näkymä",
     "download": "Lataa"
   },
   "mapModeToggle": {
     "terrain": "Maasto",
     "faction": "Ryhmittymä",
     "army": "Armeijat"
+  },
+  "overlayPanel": {
+    "terrain": "Maasto",
+    "faction": "Ryhmittymät",
+    "army": "Armeijat",
+    "forage": "Ravinnonhaku",
+    "notes": "Muistiinpanot"
+  },
+  "foragePanel": {
+    "title": "Ravinnonhaku",
+    "hint": "Napsauta ruutua kerätäksesi (+1), oikea napsautus vähentää (−1).",
+    "noTile": "Napsauta ruutua kerätäksesi tai valitse ruutu säätääksesi tasoa.",
+    "increase": "Lisää ravinnonhaun tasoa",
+    "decrease": "Vähennä ravinnonhaun tasoa",
+    "clear": "Tyhjennä ravinnonhaku"
+  },
+  "notesPanel": {
+    "title": "Muistiinpanot",
+    "label": "Ruudun muistiinpanot",
+    "noTile": "Napsauta ruutua nähdäksesi ja muokataksesi sen muistiinpanoja.",
+    "placeholder": "Kirjoita muistiinpanoja tälle ruudulle…"
   },
   "armyEditPanel": {
     "title": "Armeijat",
@@ -175,11 +199,12 @@
     "resetViewport": "Nollaa näkymä keskelle"
   },
   "terrainConfig": {
-    "title": "Maastotyypit",
+    "title": "Maasto ja kohteet",
     "fieldName": "Nimi",
     "fieldColor": "Väri",
     "fieldPattern": "Kuvio",
     "fieldIcon": "Kuvake",
+    "fieldWidth": "Leveys",
     "fieldDeepWater": "Syvä vesi",
     "iconHint": "Lataa SVG-tiedosto käytettäväksi tämän maastotyypin kuvakkeena.",
     "deepWaterHint": "Yhdistää reunat viereisten vesialueiden kanssa, piilottaa joki- ja tievisualisoinnit sekä mahdollistaa satamat viereisten kaupunkien ruuduissa.",
@@ -191,7 +216,17 @@
     "newTerrainTitle": "Uusi maastotyyppi",
     "editTerrainTitle": "Muokkaa maastotyyppiä",
     "disableWarning": "{{count}} ruutu(a) käyttää tätä maastotyyppiä. Poistaminen käytöstä piilottaa sen valitsimesta muttei poista ruutuja. Jatketaanko?",
-    "deleteWarning": "{{count}} ruutu(a) käyttää tätä maastotyyppiä. Poistetaanko nämä ruudutkin?"
+    "deleteWarning": "{{count}} ruutu(a) käyttää tätä maastotyyppiä. Poistetaanko nämä ruudutkin?",
+    "sectionTerrain": "Maasto",
+    "sectionRivers": "Joet",
+    "sectionRoads": "Tiet",
+    "addRiver": "＋ Lisää jokityyli",
+    "addRoad": "＋ Lisää tietyyli",
+    "newRiverTitle": "Uusi jokityyli",
+    "editRiverTitle": "Muokkaa jokityyliä",
+    "newRoadTitle": "Uusi tietyyli",
+    "editRoadTitle": "Muokkaa tietyyliä",
+    "deleteVarietyWarning": "{{count}} ruutu(a) käyttää tätä tyyliä. Ne palautuvat oletustyyliin. Jatketaanko?"
   },
   "help": {
     "pageTitle": "Ohje",

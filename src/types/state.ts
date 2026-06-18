@@ -5,7 +5,7 @@ export type ArmiesState = Record<string, Army>;
 export type FactionsState = Faction[];
 export type TerrainConfigState = TerrainConfig;
 
-export type MapMode = 'terrain' | 'faction' | 'terrain-paint' | 'army';
+export type Overlay = 'terrain' | 'faction' | 'army' | 'forage' | 'notes';
 
 export interface ViewportState {
   x: number;
@@ -19,11 +19,12 @@ export interface UiState {
   placingArmy: boolean;
   movingArmyId: string | null;
   flashingArmyId: string | null;
-  mapMode: MapMode;
+  overlay: Overlay;
+  /** Terrain-paint sub-mode of the terrain overlay (drag-to-paint brush active). */
+  paintActive: boolean;
   factionsOpen: boolean;
   activeFactionId: string | null;
   factionBrushActive: boolean;
-  factionBordersOnly: boolean;
   activePaintBrush: string | null;
   showShortcuts: boolean;
   editingTownTile: string | null;

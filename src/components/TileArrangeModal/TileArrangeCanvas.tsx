@@ -4,6 +4,10 @@ import { axialToPixel, toKey, buildDeepWaterSet, HEX_SIZE } from '../../utils/he
 import { theme } from '../../styles/theme';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { setArmySubTilePosition, setArmyInsideTown } from '../../features/armies/armiesSlice';
+import {
+  DEFAULT_RIVER_TYPE_ID,
+  DEFAULT_ROAD_TYPE_ID,
+} from '../../features/terrainConfig/terrainConfigSlice';
 import { createPatternCache } from '../HexGrid/canvas/patternCache';
 import type { PatternCache } from '../HexGrid/canvas/patternCache';
 import { registerRepaintOnLoad } from '../../utils/svgCache';
@@ -72,6 +76,12 @@ const TileArrangeCanvas = ({
   });
   const customTerrains = useAppSelector((s) => {
     return s.terrainConfig.custom;
+  });
+  const riverTypes = useAppSelector((s) => {
+    return s.terrainConfig.riverTypes;
+  });
+  const roadTypes = useAppSelector((s) => {
+    return s.terrainConfig.roadTypes;
   });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const patternCacheRef = useRef<PatternCache | null>(null);
@@ -188,15 +198,37 @@ const TileArrangeCanvas = ({
       tiles,
       visibleKeys: iterateKeys,
       customTerrains,
-      factions,
       theme,
       patternCache: patternCacheRef.current,
-      mapMode: 'terrain',
-      hoveredKey: null,
     });
 
-    const riverCurvesByTile = drawRivers({ ctx, tiles, iterateKeys, deepWaterSet, theme });
-    drawRoads({ ctx, tiles, iterateKeys, deepWaterSet, riverCurvesByTile, theme });
+    const riverCurvesByTile = drawRivers({
+      ctx,
+      tiles,
+      iterateKeys,
+      deepWaterSet,
+      theme,
+      varieties: new Map(
+        riverTypes.map((v) => {
+          return [v.id, { color: v.color, width: v.width }];
+        })
+      ),
+      defaultId: DEFAULT_RIVER_TYPE_ID,
+    });
+    drawRoads({
+      ctx,
+      tiles,
+      iterateKeys,
+      deepWaterSet,
+      riverCurvesByTile,
+      theme,
+      varieties: new Map(
+        roadTypes.map((v) => {
+          return [v.id, { color: v.color, width: v.width }];
+        })
+      ),
+      defaultId: DEFAULT_ROAD_TYPE_ID,
+    });
     drawCauseways({ ctx, tiles, iterateKeys, deepWaterSet, theme });
     drawTowns({ ctx, tiles, iterateKeys, deepWaterSet, theme });
     drawPorts({ ctx, tiles, iterateKeys, deepWaterSet, theme });
@@ -302,6 +334,8 @@ const TileArrangeCanvas = ({
     repaintToken,
     tiles,
     customTerrains,
+    riverTypes,
+    roadTypes,
     canvasSize,
     CENTER,
     MODAL_HEX_SIZE,

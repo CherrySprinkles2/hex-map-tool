@@ -10,16 +10,24 @@
 
 import { theme } from '../../../styles/theme';
 import { createPatternCache, type PatternCache } from './patternCache';
-import { drawTiles } from './drawTiles';
+import { drawTiles, drawTerritoryBorders } from './drawTiles';
 import { drawGhosts } from './drawGhosts';
+import { drawHover } from './drawHover';
 import { drawRivers } from './drawRivers';
 import { drawRoads } from './drawRoads';
+import {
+  DEFAULT_RIVER_TYPE_ID,
+  DEFAULT_ROAD_TYPE_ID,
+} from '../../../features/terrainConfig/terrainConfigSlice';
 import { drawCauseways } from './drawCauseways';
 import { drawPorts } from './drawPorts';
 import { drawTowns } from './drawTowns';
 import { drawLabels } from './drawLabels';
 import { drawArmies } from './drawArmies';
 import { drawOverlay } from './drawOverlay';
+import { applyOverlayGreyscale } from './overlayGreyscale';
+import { drawForaging } from './drawForaging';
+import { drawFactionTint } from './drawFactionTint';
 import {
   axialToPixel,
   buildDeepWaterSet,
@@ -66,9 +74,10 @@ export class HexRenderer {
   private lastTilesRef: unknown = null;
   private lastArmiesRef: unknown = null;
   private lastCustomRef: unknown = null;
+  private lastRiverTypesRef: unknown = null;
+  private lastRoadTypesRef: unknown = null;
   private lastFactionsRef: unknown = null;
   private lastUiMode: string | null = null;
-  private lastFactionBordersOnly = false;
   private lastSelectedTile: string | null = null;
   private lastSelectedArmyId: string | null = null;
   private lastMovingArmyId: string | null = null;
@@ -93,11 +102,12 @@ export class HexRenderer {
     const state = this.store.getState();
     this.patternCache.syncCustom(state.terrainConfig.custom);
     this.lastCustomRef = state.terrainConfig.custom;
+    this.lastRiverTypesRef = state.terrainConfig.riverTypes;
+    this.lastRoadTypesRef = state.terrainConfig.roadTypes;
     this.lastTilesRef = state.tiles;
     this.lastArmiesRef = state.armies;
     this.lastFactionsRef = state.factions;
-    this.lastUiMode = state.ui.mapMode;
-    this.lastFactionBordersOnly = state.ui.factionBordersOnly;
+    this.lastUiMode = state.ui.overlay;
     this.lastSelectedTile = state.ui.selectedTile;
     this.lastSelectedArmyId = state.ui.selectedArmyId;
     this.lastMovingArmyId = state.ui.movingArmyId;
@@ -133,16 +143,20 @@ export class HexRenderer {
         this.patternCache?.syncCustom(s.terrainConfig.custom);
         needsMain = true;
       }
+      if (s.terrainConfig.riverTypes !== this.lastRiverTypesRef) {
+        this.lastRiverTypesRef = s.terrainConfig.riverTypes;
+        needsMain = true;
+      }
+      if (s.terrainConfig.roadTypes !== this.lastRoadTypesRef) {
+        this.lastRoadTypesRef = s.terrainConfig.roadTypes;
+        needsMain = true;
+      }
       if (s.factions !== this.lastFactionsRef) {
         this.lastFactionsRef = s.factions;
         needsMain = true;
       }
-      if (s.ui.mapMode !== this.lastUiMode) {
-        this.lastUiMode = s.ui.mapMode;
-        needsMain = true;
-      }
-      if (s.ui.factionBordersOnly !== this.lastFactionBordersOnly) {
-        this.lastFactionBordersOnly = s.ui.factionBordersOnly;
+      if (s.ui.overlay !== this.lastUiMode) {
+        this.lastUiMode = s.ui.overlay;
         needsMain = true;
       }
       if (s.ui.selectedTile !== this.lastSelectedTile) {
@@ -223,7 +237,9 @@ export class HexRenderer {
   setHoveredKey(key: string | null): void {
     if (this.hoveredKey === key) return;
     this.hoveredKey = key;
-    this.scheduleRepaint();
+    // The hover highlight lives on the overlay canvas, so mouse-move never
+    // forces a full (faction-border) main repaint.
+    this.scheduleOverlay();
   }
 
   setHoveredArmyId(id: string | null): void {
@@ -335,7 +351,7 @@ export class HexRenderer {
     const expanded = this.expandKeys();
 
     // 1. Ghost outlines (below tiles)
-    drawGhosts({ ctx, ghostKeys: this.ghostKeys, theme, hoveredKey: this.hoveredKey });
+    drawGhosts({ ctx, ghostKeys: this.ghostKeys, theme });
 
     // 2. Base tiles
     drawTiles({
@@ -343,21 +359,29 @@ export class HexRenderer {
       tiles: state.tiles,
       visibleKeys: this.visibleKeys,
       customTerrains: state.terrainConfig.custom,
-      factions: state.factions,
       theme,
       patternCache: this.patternCache!,
-      mapMode: state.ui.mapMode,
-      hoveredKey: this.hoveredKey,
-      factionBordersOnly: state.ui.factionBordersOnly,
     });
 
     // 3. Overlays (rivers under roads; causeways and ports)
+    const riverVarieties = new Map(
+      state.terrainConfig.riverTypes.map((v) => {
+        return [v.id, { color: v.color, width: v.width }];
+      })
+    );
+    const roadVarieties = new Map(
+      state.terrainConfig.roadTypes.map((v) => {
+        return [v.id, { color: v.color, width: v.width }];
+      })
+    );
     const riverCurvesByTile = drawRivers({
       ctx,
       tiles: state.tiles,
       iterateKeys: expanded,
       deepWaterSet,
       theme,
+      varieties: riverVarieties,
+      defaultId: DEFAULT_RIVER_TYPE_ID,
     });
     drawRoads({
       ctx,
@@ -366,6 +390,8 @@ export class HexRenderer {
       deepWaterSet,
       riverCurvesByTile,
       theme,
+      varieties: roadVarieties,
+      defaultId: DEFAULT_ROAD_TYPE_ID,
     });
     drawCauseways({
       ctx,
@@ -405,6 +431,34 @@ export class HexRenderer {
       factionColorMap,
       theme,
     });
+
+    // 5. Overlay greyscale — desaturate tiles not relevant to the active
+    // overlay (army / notes / forage / faction). No-op for terrain.
+    applyOverlayGreyscale({
+      ctx,
+      overlay: state.ui.overlay,
+      tiles: state.tiles,
+      visibleKeys: this.visibleKeys,
+      armiesByTile,
+    });
+
+    // 6. Forage heatmap tint over the greyscaled base.
+    if (state.ui.overlay === 'forage') {
+      drawForaging({ ctx, tiles: state.tiles, visibleKeys: this.visibleKeys, theme });
+    }
+
+    // 7. Faction overlay: faction-colour tint over the greyscaled base, then the
+    // crisp territory border outlines on top.
+    if (state.ui.overlay === 'faction') {
+      drawFactionTint({
+        ctx,
+        tiles: state.tiles,
+        visibleKeys: this.visibleKeys,
+        factionColorMap,
+        theme,
+      });
+      drawTerritoryBorders(ctx, state.tiles, this.visibleKeys, factionColorMap, theme);
+    }
   }
 
   private paintOverlay(nowMs: number): void {
@@ -416,6 +470,15 @@ export class HexRenderer {
     this.applyViewportTransform(ctx);
 
     const state = this.store.getState();
+
+    // Hover highlight (kept off the main canvas so mouse-move stays cheap).
+    drawHover({
+      ctx,
+      hoveredKey: this.hoveredKey,
+      tiles: state.tiles,
+      ghostKeys: this.ghostKeys,
+      theme,
+    });
 
     drawOverlay({
       ctx,

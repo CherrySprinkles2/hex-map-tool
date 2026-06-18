@@ -199,7 +199,7 @@ const useLocalStorageSync = (): void => {
         return;
       }
 
-      const isPaintMode = ui.mapMode === 'terrain-paint' || ui.mapMode === 'faction';
+      const isPaintMode = (ui.overlay === 'terrain' && ui.paintActive) || ui.overlay === 'faction';
 
       if (isPaintMode && !terrainConfigChanged) {
         // Capture the pre-stroke state once; subsequent paints in the same stroke are suppressed
