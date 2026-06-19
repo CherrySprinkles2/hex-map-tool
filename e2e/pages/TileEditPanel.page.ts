@@ -34,7 +34,11 @@ export class TileEditPanelPage {
     await this.page.getByTestId('exit-paint-btn').click();
   }
 
-  /** Select a paint brush by type (terrain key or 'river-on'/'river-off'/'road-on'/'road-off'). */
+  /**
+   * Select a paint brush by type. Terrain brushes use the terrain key; river/road
+   * brushes use 'river-on:<varietyId>' / 'road-on:<varietyId>' (off brushes have
+   * no testid and are targeted by text).
+   */
   async selectBrush(brush: string): Promise<void> {
     await this.page.getByTestId(`paint-brush-${brush}`).click();
   }

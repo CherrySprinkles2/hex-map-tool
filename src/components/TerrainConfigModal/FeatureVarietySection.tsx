@@ -148,7 +148,9 @@ const FeatureVarietySection = ({
           </Row>
         );
       })}
-      <AddBtn onClick={onAdd}>{addLabel}</AddBtn>
+      <AddBtn data-testid={addTestId} onClick={onAdd}>
+        {addLabel}
+      </AddBtn>
     </>
   );
 };

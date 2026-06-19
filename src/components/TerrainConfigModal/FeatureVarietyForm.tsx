@@ -102,6 +102,7 @@ const FeatureVarietyForm = ({
       <FormRow>
         <FormLabel>{t('terrainConfig.fieldName')}</FormLabel>
         <FormInput
+          data-testid="variety-name-input"
           value={form.name}
           onChange={(e) => {
             setForm((f) => {
@@ -166,7 +167,9 @@ const FeatureVarietyForm = ({
         </svg>
       </Preview>
 
-      <SaveBtn onClick={onSave}>{t('terrainConfig.save')}</SaveBtn>
+      <SaveBtn data-testid="variety-save-btn" onClick={onSave}>
+        {t('terrainConfig.save')}
+      </SaveBtn>
     </>
   );
 };

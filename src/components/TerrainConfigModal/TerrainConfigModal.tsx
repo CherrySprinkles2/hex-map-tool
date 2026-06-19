@@ -337,7 +337,7 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
           <>
             <ModalHeader>
               <ModalTitle>{t('terrainConfig.title')}</ModalTitle>
-              <IconBtn onClick={onClose}>
+              <IconBtn data-testid="close-terrain-config-btn" onClick={onClose}>
                 <CloseIcon width="1em" height="1em" aria-hidden />
               </IconBtn>
             </ModalHeader>
@@ -358,6 +358,7 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
               varieties={riverTypes}
               defaultId={DEFAULT_RIVER_TYPE_ID}
               addLabel={t('terrainConfig.addRiver')}
+              addTestId="add-river-btn"
               onAdd={() => {
                 openAddFeature('river');
               }}
@@ -373,6 +374,7 @@ const TerrainConfigModal = ({ onClose }: Props): React.ReactElement => {
               varieties={roadTypes}
               defaultId={DEFAULT_ROAD_TYPE_ID}
               addLabel={t('terrainConfig.addRoad')}
+              addTestId="add-road-btn"
               onAdd={() => {
                 openAddFeature('road');
               }}
