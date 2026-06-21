@@ -6,7 +6,7 @@ import { resetViewport } from '../features/viewport/viewportSlice';
 import { restoreSnapshot } from '../features/history/historyActions';
 import * as historyManager from '../utils/historyManager';
 
-const useKeyboardShortcuts = (): void => {
+const useKeyboardShortcuts = (enabled = true): void => {
   const dispatch = useAppDispatch();
   const store = useAppStore();
 
@@ -62,11 +62,12 @@ const useKeyboardShortcuts = (): void => {
   );
 
   useEffect(() => {
+    if (!enabled) return;
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       return window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleKeyDown]);
+  }, [handleKeyDown, enabled]);
 };
 
 export default useKeyboardShortcuts;

@@ -126,10 +126,20 @@
   },
   "exportPng": {
     "title": "Export PNG",
+    "area": "Export area",
     "fullMap": "Entire map",
     "currentView": "Current view",
+    "overlayLabel": "Overlay",
     "exportingAs": "Exporting: {{overlay}} view",
-    "download": "Download"
+    "download": "Download",
+    "annotate": "Annotate",
+    "undo": "Undo",
+    "redo": "Redo",
+    "clear": "Clear",
+    "width": "Width",
+    "switchAreaTitle": "Switch export area?",
+    "switchAreaMessage": "Switching the export area will clear your annotations. Continue?",
+    "switchAreaConfirm": "Discard"
   },
   "mapModeToggle": {
     "terrain": "Terrain",

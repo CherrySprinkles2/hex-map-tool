@@ -121,7 +121,7 @@ const ForagePanel = (): React.ReactElement => {
         onClose={() => {
           return dispatch(deselectTile());
         }}
-        closeDesktopHidden
+        closeDesktopHidden={!tile}
         $marginBottom="4px"
       />
 

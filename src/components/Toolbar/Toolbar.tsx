@@ -23,14 +23,15 @@ import {
   toggleFactionsPanel,
   openShortcuts,
   closeShortcuts,
+  startPngExport,
 } from '../../features/ui/uiSlice';
 import { renameCurrentMap, unloadMap } from '../../features/currentMap/currentMapSlice';
 import { renameMap } from '../../utils/mapsStorage';
 import { captureThumbnail } from '../../utils/captureThumbnail';
+import { captureMapViewMetrics } from '../../utils/mapViewMetrics';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../app/hooks';
 import TerrainConfigModal from '../TerrainConfigModal/TerrainConfigModal';
 import { OrientationModal } from '../OrientationModal/OrientationModal';
-import { ExportPngModal } from '../ExportPngModal/ExportPngModal';
 
 const Bar = styled.div<{ $rightPanelOpen: boolean }>`
   display: flex;
@@ -341,7 +342,6 @@ const Toolbar = (): React.ReactElement => {
   const [langModalOpen, setLangModalOpen] = useState(false);
   const [terrainConfigOpen, setTerrainConfigOpen] = useState(false);
   const [orientationModalOpen, setOrientationModalOpen] = useState(false);
-  const [exportPngOpen, setExportPngOpen] = useState(false);
   const store = useAppStore();
 
   const rightPanelOpen =
@@ -414,6 +414,14 @@ const Toolbar = (): React.ReactElement => {
     URL.revokeObjectURL(url);
   };
 
+  const handleStartPngExport = () => {
+    // Snapshot the live map view before HexGrid unmounts so the export view's
+    // "current view" option has metrics to render from.
+    captureMapViewMetrics();
+    setSettingsOpen(false);
+    dispatch(startPngExport());
+  };
+
   const handleFactionsClick = () => {
     setSettingsOpen(false);
     dispatch(toggleFactionsPanel());
@@ -466,13 +474,7 @@ const Toolbar = (): React.ReactElement => {
           <FlagIcon width="1em" height="1em" aria-hidden />
           {t('toolbar.factions')}
         </DesktopBarBtn>
-        <DesktopBarBtn
-          data-testid="export-png-btn"
-          $active={exportPngOpen}
-          onClick={() => {
-            return setExportPngOpen(true);
-          }}
-        >
+        <DesktopBarBtn data-testid="export-png-btn" $active={false} onClick={handleStartPngExport}>
           <DownloadIcon width="1em" height="1em" aria-hidden />
           PNG
         </DesktopBarBtn>
@@ -565,14 +567,7 @@ const Toolbar = (): React.ReactElement => {
           </SheetIcon>
           {t('toolbar.exportJSON')}
         </SheetItem>
-        <SheetItem
-          data-testid="mobile-export-png-btn"
-          $desktopHide
-          onClick={() => {
-            setSettingsOpen(false);
-            setExportPngOpen(true);
-          }}
-        >
+        <SheetItem data-testid="mobile-export-png-btn" $desktopHide onClick={handleStartPngExport}>
           <SheetIcon>
             <DownloadIcon aria-hidden />
           </SheetIcon>
@@ -613,12 +608,6 @@ const Toolbar = (): React.ReactElement => {
         open={orientationModalOpen}
         onClose={() => {
           return setOrientationModalOpen(false);
-        }}
-      />
-      <ExportPngModal
-        open={exportPngOpen}
-        onClose={() => {
-          return setExportPngOpen(false);
         }}
       />
     </>

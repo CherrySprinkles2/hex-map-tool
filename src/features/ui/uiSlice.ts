@@ -15,6 +15,7 @@ const initialState: UiState = {
   showShortcuts: false,
   activePaintBrush: null,
   editingTownTile: null,
+  exporting: false,
 };
 
 const uiSlice = createSlice({
@@ -125,6 +126,19 @@ const uiSlice = createSlice({
     exitTownEdit: (state) => {
       state.editingTownTile = null;
     },
+    startPngExport: (state) => {
+      state.exporting = true;
+      // Clear editor selections so nothing lingers behind the export view.
+      state.selectedTile = null;
+      state.selectedArmyId = null;
+      state.movingArmyId = null;
+      state.editingTownTile = null;
+      state.factionsOpen = false;
+      state.showShortcuts = false;
+    },
+    stopPngExport: (state) => {
+      state.exporting = false;
+    },
   },
 });
 
@@ -150,5 +164,7 @@ export const {
   closeShortcuts,
   enterTownEdit,
   exitTownEdit,
+  startPngExport,
+  stopPngExport,
 } = uiSlice.actions;
 export default uiSlice.reducer;

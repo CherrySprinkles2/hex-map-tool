@@ -18,7 +18,7 @@ import { applyOverlayGreyscale } from '../components/HexGrid/canvas/overlayGreys
 import { drawForaging } from '../components/HexGrid/canvas/drawForaging';
 import { drawFactionTint } from '../components/HexGrid/canvas/drawFactionTint';
 import { axialToPixel, buildDeepWaterSet, toKey, HEX_SIZE } from './hexUtils';
-import { getMapViewMetrics } from './mapViewMetrics';
+import { getCapturedMapViewMetrics } from './mapViewMetrics';
 import { theme } from '../styles/theme';
 import {
   DEFAULT_RIVER_TYPE_ID,
@@ -33,6 +33,19 @@ const MAX_SIDE = 8192;
 
 export type PngExportArea = 'full' | 'viewport';
 
+/**
+ * A freehand annotation stroke drawn over the export in the fullscreen draw
+ * view. Coordinates are normalised (0–1) relative to the rendered base canvas
+ * so the same stroke composites correctly onto the preview, the draw-view
+ * background, and the full-resolution download. `width` is a fraction of the
+ * canvas width so the line scales proportionally with the render.
+ */
+export interface DrawStroke {
+  color: string;
+  width: number;
+  points: { x: number; y: number }[];
+}
+
 export interface ExportMapPngOptions {
   tiles: TilesState;
   armies: ArmiesState;
@@ -43,8 +56,46 @@ export interface ExportMapPngOptions {
   area: PngExportArea;
   /** Active overlay — the export mirrors its on-screen appearance. */
   overlay: Overlay;
+  /** Freehand annotations, composited last (normalised coordinates). */
+  strokes?: DrawStroke[];
   fileName: string;
 }
+
+/**
+ * Composites freehand annotation strokes onto a canvas. Expects the context
+ * transform to be the identity; scales each stroke's normalised points and
+ * width up to the target canvas dimensions.
+ */
+export const drawAnnotations = (
+  ctx: CanvasRenderingContext2D,
+  strokes: DrawStroke[],
+  width: number,
+  height: number
+): void => {
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  strokes.forEach((stroke) => {
+    if (stroke.points.length === 0) return;
+    ctx.strokeStyle = stroke.color;
+    ctx.lineWidth = Math.max(1, stroke.width * width);
+    ctx.beginPath();
+    stroke.points.forEach((p, i) => {
+      const x = p.x * width;
+      const y = p.y * height;
+      if (i === 0) {
+        ctx.moveTo(x, y);
+        // A single-point stroke (a tap) renders as a dot.
+        if (stroke.points.length === 1) ctx.lineTo(x + 0.01, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    });
+    ctx.stroke();
+  });
+  ctx.restore();
+};
 
 /**
  * Renders the map to an offscreen canvas in the given overlay's appearance
@@ -61,6 +112,7 @@ export const renderMapPngCanvas = ({
   roadTypes,
   area,
   overlay,
+  strokes,
 }: Omit<ExportMapPngOptions, 'fileName'>): HTMLCanvasElement | null => {
   const tileValues = Object.values(tiles);
   if (tileValues.length === 0) return null;
@@ -72,7 +124,7 @@ export const renderMapPngCanvas = ({
   let ty: number;
 
   if (area === 'viewport') {
-    const view = getMapViewMetrics();
+    const view = getCapturedMapViewMetrics();
     if (!view || view.width <= 0 || view.height <= 0) return null;
     const dpr = Math.min(
       window.devicePixelRatio || 1,
@@ -186,6 +238,11 @@ export const renderMapPngCanvas = ({
   if (overlay === 'faction') {
     drawFactionTint({ ctx, tiles, visibleKeys: allKeys, factionColorMap, theme });
     drawTerritoryBorders(ctx, tiles, allKeys, factionColorMap, theme);
+  }
+
+  // Freehand annotations sit on top of everything, in screen-space pixels.
+  if (strokes && strokes.length > 0) {
+    drawAnnotations(ctx, strokes, width, height);
   }
 
   return canvas;

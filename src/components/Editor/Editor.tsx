@@ -12,6 +12,7 @@ import ForagePanel from '../ForagePanel/ForagePanel';
 import NotesPanel from '../NotesPanel/NotesPanel';
 import MapModeToggle from '../MapModeToggle/MapModeToggle';
 import KeyboardShortcutsPanel from '../KeyboardShortcutsPanel/KeyboardShortcutsPanel';
+import ExportPngView from '../ExportPngView/ExportPngView';
 import useLocalStorageSync from '../../hooks/useLocalStorageSync';
 import useKeyboardShortcuts from '../../hooks/useKeyboardShortcuts';
 import { useAppSelector } from '../../app/hooks';
@@ -32,10 +33,19 @@ const CanvasArea = styled.div`
 
 const Editor = (): React.ReactElement => {
   useLocalStorageSync();
-  useKeyboardShortcuts();
+  const exporting = useAppSelector((state) => {
+    return state.ui.exporting;
+  });
+  // Editor shortcuts don't apply to the export image.
+  useKeyboardShortcuts(!exporting);
   const selectedArmyId = useAppSelector((state) => {
     return state.ui.selectedArmyId;
   });
+
+  if (exporting) {
+    return <ExportPngView />;
+  }
+
   return (
     <AppShell>
       <Toolbar />

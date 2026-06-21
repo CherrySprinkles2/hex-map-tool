@@ -28,6 +28,8 @@ export interface UiState {
   activePaintBrush: string | null;
   showShortcuts: boolean;
   editingTownTile: string | null;
+  /** Full-screen PNG export view is active (replaces the editor shell). */
+  exporting: boolean;
 }
 
 export interface CurrentMapState {

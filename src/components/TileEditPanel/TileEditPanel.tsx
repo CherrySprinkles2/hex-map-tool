@@ -34,7 +34,7 @@ const PanelTitle = styled.h2`
   letter-spacing: 0.08em;
 `;
 
-const CloseBtn = styled.button`
+const CloseBtn = styled.button<{ $desktopHidden?: boolean }>`
   position: absolute;
   top: 16px;
   right: 16px;
@@ -51,9 +51,9 @@ const CloseBtn = styled.button`
     }};
   }
 
-  @media (min-width: 601px) {
-    display: none;
-  }
+  ${({ $desktopHidden }) => {
+    return $desktopHidden ? '@media (min-width: 601px) { display: none; }' : '';
+  }}
 `;
 
 const TileEditPanel = (): React.ReactElement => {
@@ -117,7 +117,7 @@ const TileEditPanel = (): React.ReactElement => {
       ) : (
         <>
           <PanelTitle>{t('tilePanel.title')}</PanelTitle>
-          <CloseBtn onClick={handleClose}>
+          <CloseBtn $desktopHidden={!selectedKey} onClick={handleClose}>
             <CloseIcon width="1em" height="1em" />
           </CloseBtn>
 

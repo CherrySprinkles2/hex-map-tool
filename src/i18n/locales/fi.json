@@ -126,10 +126,20 @@
   },
   "exportPng": {
     "title": "Vie PNG-kuva",
+    "area": "Vientialue",
     "fullMap": "Koko kartta",
     "currentView": "Nykyinen näkymä",
+    "overlayLabel": "Näkymä",
     "exportingAs": "Viedään: {{overlay}}-näkymä",
-    "download": "Lataa"
+    "download": "Lataa",
+    "annotate": "Merkinnät",
+    "undo": "Kumoa",
+    "redo": "Tee uudelleen",
+    "clear": "Tyhjennä",
+    "width": "Leveys",
+    "switchAreaTitle": "Vaihdetaanko vientialue?",
+    "switchAreaMessage": "Vientialueen vaihtaminen poistaa merkintäsi. Jatketaanko?",
+    "switchAreaConfirm": "Hylkää"
   },
   "mapModeToggle": {
     "terrain": "Maasto",
