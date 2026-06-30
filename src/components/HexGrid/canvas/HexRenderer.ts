@@ -36,6 +36,7 @@ import {
   setHexOrientation,
 } from '../../../utils/hexUtils';
 import { registerRepaintOnLoad } from '../../../utils/svgCache';
+import { recordMainPaint, recordOverlayPaint } from '../../../utils/renderMetrics';
 import type { store as appStore } from '../../../app/store';
 import type { ViewportState } from '../../../types/state';
 import type { Army } from '../../../types/domain';
@@ -196,11 +197,27 @@ export class HexRenderer {
       this.scheduleRepaint();
     });
 
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', this.onVisibilityChange);
+    }
+
     this.scheduleRepaint();
     this.scheduleOverlay();
   }
 
+  // Paused into a hidden tab/display the rAF loops stop; on resume (notably waking
+  // from sleep) force a fresh main repaint and restart the overlay loop if anything
+  // is still active, so the canvas reflects the latest state.
+  private onVisibilityChange = (): void => {
+    if (document.hidden) return;
+    this.scheduleRepaint();
+    this.scheduleOverlay();
+  };
+
   detach(): void {
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    }
     if (this.rafMain !== null) {
       cancelAnimationFrame(this.rafMain);
       this.rafMain = null;
@@ -272,6 +289,9 @@ export class HexRenderer {
 
   scheduleRepaint(): void {
     if (this.rafMain !== null) return;
+    // Don't paint into a hidden tab/display; onResume() forces a fresh repaint
+    // with the latest state when the document becomes visible again.
+    if (typeof document !== 'undefined' && document.hidden) return;
     this.rafMain = requestAnimationFrame(() => {
       this.rafMain = null;
       this.paintMain();
@@ -283,6 +303,10 @@ export class HexRenderer {
   // paint once more to clear the canvas, then stop the loop.
   private scheduleOverlay(): void {
     if (this.rafOverlay !== null) return;
+    // Pause the continuous marching-ants loop while the tab/display is hidden.
+    // This is the loop that, left running across a machine sleep, resumes on wake
+    // and repaints every frame. onResume() restarts it when visible again.
+    if (typeof document !== 'undefined' && document.hidden) return;
     this.rafOverlay = requestAnimationFrame((t) => {
       this.rafOverlay = null;
       this.paintOverlay(t);
@@ -337,6 +361,7 @@ export class HexRenderer {
     if (!this.mainCtx || !this.mainCanvas) return;
     const vp = this.viewportRef.current;
     if (!vp) return;
+    recordMainPaint();
 
     const ctx = this.mainCtx;
     this.applyViewportTransform(ctx);
@@ -465,6 +490,7 @@ export class HexRenderer {
     if (!this.overlayCtx || !this.overlayCanvas) return;
     const vp = this.viewportRef.current;
     if (!vp) return;
+    recordOverlayPaint();
 
     const ctx = this.overlayCtx;
     this.applyViewportTransform(ctx);

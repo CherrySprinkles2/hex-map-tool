@@ -6,6 +6,7 @@ import viewportReducer from '../features/viewport/viewportSlice';
 import uiReducer from '../features/ui/uiSlice';
 import currentMapReducer from '../features/currentMap/currentMapSlice';
 import terrainConfigReducer from '../features/terrainConfig/terrainConfigSlice';
+import { actionLogMiddleware } from './actionLog';
 
 const store = configureStore({
   reducer: {
@@ -16,6 +17,9 @@ const store = configureStore({
     ui: uiReducer,
     currentMap: currentMapReducer,
     terrainConfig: terrainConfigReducer,
+  },
+  middleware: (getDefaultMiddleware) => {
+    return getDefaultMiddleware().concat(actionLogMiddleware);
   },
 });
 

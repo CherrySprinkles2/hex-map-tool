@@ -124,6 +124,35 @@
     "languageLabel": "Language",
     "nameTaken": "A map with that name already exists."
   },
+  "exportReminder": {
+    "title": "Back up your map",
+    "body": "You haven't exported <bold>{{name}}</bold> in over a week. Export a backup so you don't lose your work?",
+    "export": "Export now",
+    "snooze": "No thanks"
+  },
+  "settings": {
+    "title": "Settings",
+    "menuItem": "Settings",
+    "close": "Close",
+    "storageHeading": "Storage",
+    "orientationHeading": "Hex orientation",
+    "languageHeading": "Language",
+    "bugReportHeading": "Diagnostics"
+  },
+  "bugReport": {
+    "description": "Downloads a JSON file with the last 60 seconds of activity (recent actions, render stats, and device info) to help diagnose issues. Your map is anonymised. The file reveals nothing about your map's contents.",
+    "button": "Download bug report"
+  },
+  "storagePersistence": {
+    "introTitle": "Keep your maps on this device",
+    "introBody": "Your browser can clear locally-stored maps when space runs low. Enable persistent storage to help keep them from being deleted.",
+    "enable": "Enable",
+    "notNow": "Not now",
+    "statusPersisted": "✓ Saved on this device — your maps won't be cleared automatically.",
+    "statusNotPersisted": "⚠ Not persisted — your browser may clear maps when storage runs low.",
+    "statusUnsupported": "Storage persistence isn't supported in this browser.",
+    "usage": "{{used}} used"
+  },
   "exportPng": {
     "title": "Export PNG",
     "area": "Export area",

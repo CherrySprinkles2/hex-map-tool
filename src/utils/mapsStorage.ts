@@ -14,6 +14,9 @@ import { slugify } from './slugify';
 import type { MapEntry, MapData, Faction, TerrainConfig, HexOrientation } from '../types/domain';
 import type { TilesState, ArmiesState } from '../types/state';
 
+// All of this app's localStorage keys share this prefix.
+const APP_KEY_PREFIX = 'hex-map-tool-';
+
 const INDEX_KEY = 'hex-map-tool-index';
 const DATA_KEY = (id: string): string => {
   return `hex-map-tool-data-${id}`;
@@ -29,6 +32,34 @@ const LEGACY_ARMIES_KEY = (id: string): string => {
 };
 const LEGACY_FACTIONS_KEY = (id: string): string => {
   return `hex-map-tool-factions-${id}`;
+};
+
+// ── App storage usage ──────────────────────────────────────────────────────────
+
+const textEncoder = typeof TextEncoder !== 'undefined' ? new TextEncoder() : null;
+
+const byteLength = (s: string): number => {
+  return textEncoder ? textEncoder.encode(s).length : s.length;
+};
+
+/**
+ * Sum the UTF-8 byte size of this app's own localStorage entries (keys prefixed
+ * `hex-map-tool-`). Unlike `navigator.storage.estimate()`, this measures only the
+ * maps/settings this app stored — not the whole (browser-padded) origin — so it
+ * reflects what the user actually has saved.
+ */
+export const getAppStorageUsageBytes = (): number => {
+  let total = 0;
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith(APP_KEY_PREFIX)) continue;
+      total += byteLength(key) + byteLength(localStorage.getItem(key) ?? '');
+    }
+  } catch {
+    /* localStorage may be unavailable (private mode); report what we have */
+  }
+  return total;
 };
 
 // ── Quota-safe write ──────────────────────────────────────────────────────────
@@ -121,7 +152,8 @@ export const createMap = (name = 'Untitled Map'): MapEntry => {
       n++;
     finalName = `${name} (${n})`;
   }
-  const entry: MapEntry = { id, name: finalName, updatedAt: new Date().toISOString() };
+  const now = new Date().toISOString();
+  const entry: MapEntry = { id, name: finalName, updatedAt: now, createdAt: now };
   writeIndex([...maps, entry]);
   safeSetItem(DATA_KEY(id), JSON.stringify({ version: 2, tiles: {}, armies: {}, factions: [] }));
   return entry;
@@ -162,6 +194,23 @@ export const touchMap = (id: string): void => {
     getAllMaps().map((m) => {
       return m.id === id ? { ...m, updatedAt: new Date().toISOString() } : m;
     })
+  );
+};
+
+// Stamps the last-export timestamp on a map's index entry (called from JSON export).
+export const markMapExported = (id: string): void => {
+  writeIndex(
+    getAllMaps().map((m) => {
+      return m.id === id ? { ...m, lastExportedAt: new Date().toISOString() } : m;
+    })
+  );
+};
+
+export const getLastExportedAt = (id: string): string | null => {
+  return (
+    getAllMaps().find((m) => {
+      return m.id === id;
+    })?.lastExportedAt ?? null
   );
 };
 

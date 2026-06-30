@@ -124,6 +124,35 @@
     "languageLabel": "Kieli",
     "nameTaken": "Tällä nimellä on jo olemassa kartta."
   },
+  "exportReminder": {
+    "title": "Varmuuskopioi kartta",
+    "body": "Et ole vienyt karttaa <bold>{{name}}</bold> yli viikkoon. Vie varmuuskopio, jotta et menetä työtäsi?",
+    "export": "Vie nyt",
+    "snooze": "Ei kiitos"
+  },
+  "settings": {
+    "title": "Asetukset",
+    "menuItem": "Asetukset",
+    "close": "Sulje",
+    "storageHeading": "Tallennustila",
+    "orientationHeading": "Heksan suunta",
+    "languageHeading": "Kieli",
+    "bugReportHeading": "Vianmääritys"
+  },
+  "bugReport": {
+    "description": "Lataa JSON-tiedoston, joka sisältää viimeisten 60 sekunnin toiminnan (viimeisimmät toiminnot, renderöintitilastot ja laitetiedot) ongelmien selvittämiseksi. Karttasi anonymisoidaan. Tiedosto ei paljasta mitään karttasi sisällöstä.",
+    "button": "Lataa vikailmoitus"
+  },
+  "storagePersistence": {
+    "introTitle": "Säilytä kartat tällä laitteella",
+    "introBody": "Selain voi poistaa paikallisesti tallennetut kartat, kun tila käy vähiin. Ota pysyvä tallennustila käyttöön, jotta niitä ei poisteta.",
+    "enable": "Ota käyttöön",
+    "notNow": "Ei nyt",
+    "statusPersisted": "✓ Tallennettu tälle laitteelle — karttojasi ei poisteta automaattisesti.",
+    "statusNotPersisted": "⚠ Ei pysyvä — selain voi poistaa kartat, kun tallennustila käy vähiin.",
+    "statusUnsupported": "Tämä selain ei tue pysyvää tallennustilaa.",
+    "usage": "{{used}} käytössä"
+  },
   "exportPng": {
     "title": "Vie PNG-kuva",
     "area": "Vientialue",

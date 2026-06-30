@@ -98,6 +98,10 @@ export interface MapEntry {
   id: string;
   name: string;
   updatedAt: string;
+  /** ISO timestamp the map was first created — used as the age clock for never-exported maps. */
+  createdAt?: string;
+  /** ISO timestamp of the last JSON backup export; absent → never exported. */
+  lastExportedAt?: string;
 }
 
 export interface MapData {
@@ -117,6 +121,7 @@ export interface MapEnvelope {
   factions: Faction[];
   terrainConfig?: TerrainConfig;
   thumbnail?: string;
+  orientation?: HexOrientation;
 }
 
 export interface ExampleMap {

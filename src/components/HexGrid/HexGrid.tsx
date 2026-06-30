@@ -115,8 +115,15 @@ const HexGrid = (): React.ReactElement => {
     viewportRef.current = { ...store.getState().viewport };
     applyTransform();
 
+    // The viewport slice only gets a new reference when the viewport reducer runs,
+    // so gate on reference identity: unrelated dispatches (tile/army/ui changes)
+    // must not trigger a full canvas repaint through this subscription.
+    let lastViewport = store.getState().viewport;
     const unsubscribe = store.subscribe(() => {
-      viewportRef.current = { ...store.getState().viewport };
+      const vp = store.getState().viewport;
+      if (vp === lastViewport) return;
+      lastViewport = vp;
+      viewportRef.current = { ...vp };
       applyTransform();
     });
 

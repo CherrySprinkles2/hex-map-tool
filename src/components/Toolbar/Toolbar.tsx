@@ -4,14 +4,12 @@ import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { Backdrop, SheetItem, SheetIcon } from '../shared/sheet';
 import { LanguageToggle } from '../shared/LanguageToggle';
-import { LanguageModal } from '../shared/LanguageModal';
 import { SettingsButton } from '../shared/SettingsButton';
 import {
   KeyboardIcon,
   SettingsIcon,
   FlagIcon,
   MapIcon,
-  GlobeIcon,
   DownloadIcon,
   QuestionIcon,
 } from '../../assets/icons/ui';
@@ -27,11 +25,11 @@ import {
 } from '../../features/ui/uiSlice';
 import { renameCurrentMap, unloadMap } from '../../features/currentMap/currentMapSlice';
 import { renameMap } from '../../utils/mapsStorage';
-import { captureThumbnail } from '../../utils/captureThumbnail';
+import { exportMapJson } from '../../utils/exportMapJson';
 import { captureMapViewMetrics } from '../../utils/mapViewMetrics';
-import { useAppDispatch, useAppSelector, useAppStore } from '../../app/hooks';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import TerrainConfigModal from '../TerrainConfigModal/TerrainConfigModal';
-import { OrientationModal } from '../OrientationModal/OrientationModal';
+import { SettingsModal } from '../SettingsModal/SettingsModal';
 
 const Bar = styled.div<{ $rightPanelOpen: boolean }>`
   display: flex;
@@ -308,15 +306,6 @@ const Toolbar = (): React.ReactElement => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const tiles = useAppSelector((state) => {
-    return state.tiles;
-  });
-  const armies = useAppSelector((state) => {
-    return state.armies;
-  });
-  const factions = useAppSelector((state) => {
-    return state.factions;
-  });
   const mapName = useAppSelector((state) => {
     return state.currentMap.name;
   });
@@ -339,10 +328,8 @@ const Toolbar = (): React.ReactElement => {
   const [editing, setEditing] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [langModalOpen, setLangModalOpen] = useState(false);
   const [terrainConfigOpen, setTerrainConfigOpen] = useState(false);
-  const [orientationModalOpen, setOrientationModalOpen] = useState(false);
-  const store = useAppStore();
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
   const rightPanelOpen =
     overlay === 'terrain' ||
@@ -392,26 +379,7 @@ const Toolbar = (): React.ReactElement => {
 
   const handleExport = () => {
     setSettingsOpen(false);
-    const terrainConfig = store.getState().terrainConfig;
-    const thumbnail = captureThumbnail(tiles, terrainConfig.custom);
-    const orientation = store.getState().currentMap.orientation ?? 'pointy-top';
-    const payload = {
-      name: mapName || 'hex-map',
-      tiles,
-      armies,
-      factions,
-      terrainConfig,
-      thumbnail,
-      orientation,
-    };
-    const json = JSON.stringify(payload, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${mapName || 'hex-map'}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    exportMapJson();
   };
 
   const handleStartPngExport = () => {
@@ -551,15 +519,16 @@ const Toolbar = (): React.ReactElement => {
           {t('terrainConfig.title')}
         </SheetItem>
         <SheetItem
+          data-testid="settings-btn"
           onClick={() => {
             setSettingsOpen(false);
-            setOrientationModalOpen(true);
+            setSettingsModalOpen(true);
           }}
         >
           <SheetIcon>
-            <MapIcon aria-hidden />
+            <SettingsIcon aria-hidden />
           </SheetIcon>
-          {t('orientation.title')}
+          {t('settings.menuItem')}
         </SheetItem>
         <SheetItem data-testid="export-json-btn" onClick={handleExport}>
           <SheetIcon>
@@ -573,29 +542,7 @@ const Toolbar = (): React.ReactElement => {
           </SheetIcon>
           {t('toolbar.exportPNG')}
         </SheetItem>
-        <SheetItem
-          $desktopHide
-          onClick={() => {
-            setSettingsOpen(false);
-            setLangModalOpen(true);
-          }}
-        >
-          <SheetIcon>
-            <GlobeIcon aria-hidden />
-          </SheetIcon>
-          {t('toolbar.languageLabel')}
-        </SheetItem>
       </Sheet>
-
-      <LanguageModal
-        open={langModalOpen}
-        onClose={() => {
-          return setLangModalOpen(false);
-        }}
-        onAfterSelect={() => {
-          return setSettingsOpen(false);
-        }}
-      />
 
       {terrainConfigOpen && (
         <TerrainConfigModal
@@ -604,10 +551,10 @@ const Toolbar = (): React.ReactElement => {
           }}
         />
       )}
-      <OrientationModal
-        open={orientationModalOpen}
+      <SettingsModal
+        open={settingsModalOpen}
         onClose={() => {
-          return setOrientationModalOpen(false);
+          return setSettingsModalOpen(false);
         }}
       />
     </>

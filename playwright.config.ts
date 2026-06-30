@@ -4,13 +4,17 @@ export default defineConfig({
   testDir: './e2e/tests',
   fullyParallel: true,
   retries: 1,
-  workers: undefined, // use Playwright default (half of CPU cores)
+  // Cap concurrency: the default (half of CPU cores) spins up far too many browsers
+  // on high-core machines, saturating CPU/RAM. 4 local browsers is plenty.
+  workers: process.env.CI ? 2 : 4,
   reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
   use: {
     baseURL: 'http://localhost:3000',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-    trace: 'retain-on-failure',
+    // Record video/trace only when a test is retried after failing, not for every
+    // test — 'retain-on-failure' records always and just discards on success.
+    video: 'on-first-retry',
+    trace: 'on-first-retry',
   },
   projects: [
     {

@@ -5,6 +5,7 @@ import { theme } from './styles/theme';
 import GlobalStyles from './styles/GlobalStyles';
 import HomeScreen from './components/HomeScreen/HomeScreen';
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
+import { PersistencePromptHost } from './components/PersistencePromptHost/PersistencePromptHost';
 import { migrateFromLegacy } from './utils/mapsStorage';
 import { useAppSelector } from './app/hooks';
 
@@ -69,6 +70,7 @@ const App = (): React.ReactElement => {
           />
         </Routes>
       </Suspense>
+      <PersistencePromptHost />
     </ThemeProvider>
   );
 };

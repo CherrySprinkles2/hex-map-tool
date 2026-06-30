@@ -12,6 +12,12 @@ export const test = base.extend<AppFixtures>({
     await page.evaluate(() => {
       return localStorage.clear();
     });
+    // Suppress the one-time persistent-storage explainer by default so it doesn't
+    // block interactions in unrelated tests. The dedicated persistence spec clears
+    // this flag to exercise the modal.
+    await page.evaluate(() => {
+      return localStorage.setItem('hex-map-tool-persistence-prompt-seen', 'true');
+    });
     await page.reload();
     // Wait for the HomeScreen to be ready
     await page.waitForSelector('[data-testid="new-map-card"]', { timeout: 15_000 });
